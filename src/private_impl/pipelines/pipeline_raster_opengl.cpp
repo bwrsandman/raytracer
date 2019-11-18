@@ -62,7 +62,7 @@ PipelineRasterOpenGL::create(const PipelineCreateInfo& info)
 
   int32_t is_linked = 0;
   glGetProgramiv(program, GL_LINK_STATUS, &is_linked);
-  if (is_linked) {
+  if (!is_linked) {
     glDeleteShader(vertex_shader);
     glDeleteShader(fragment_shader);
     glDeleteProgram(program);

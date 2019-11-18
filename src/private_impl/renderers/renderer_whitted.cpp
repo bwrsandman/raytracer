@@ -1,8 +1,5 @@
 #include "renderer_whitted.h"
 
-#include <string_view>
-
-#include <SDL.h>
 #include <SDL_video.h>
 
 #include <glad/glad.h>
@@ -57,6 +54,14 @@ RendererWhitted::RendererWhitted(const Window& window)
   : width(0)
   , height(0)
 {
+  // Request opengl 4.6 context.
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
+
+  // Turn on double buffering with a 24bit Z buffer.
+  SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+  SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+
   context = SDL_GL_CreateContext(window.get_native_handle());
   gladLoadGL();
 
@@ -80,6 +85,14 @@ RendererWhitted::run(std::chrono::microseconds dt)
 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   glClearBufferfv(GL_COLOR, 0, clear_color);
+
+  screen_space_pipeline->bind();
+  fullscreen_quad->bind();
+  glDrawElements(GL_TRIANGLES,
+                 sizeof(fullscreen_quad_indices) /
+                   sizeof(fullscreen_quad_indices[0]),
+                 GL_UNSIGNED_SHORT,
+                 nullptr);
 }
 
 void
