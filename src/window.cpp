@@ -12,3 +12,15 @@ Window::~Window() {
 	SDL_DestroyWindow(handle);
 	SDL_Quit();
 }
+
+SDL_Window*
+Window::get_native_handle() const
+{
+  return handle;
+}
+
+void
+Window::swap() const
+{
+  SDL_GL_SwapWindow(handle);
+}

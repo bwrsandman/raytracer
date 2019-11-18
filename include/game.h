@@ -4,6 +4,7 @@
 
 class Window;
 class Input;
+class Renderer;
 
 class Game {
 public:
@@ -15,4 +16,5 @@ public:
 private:
 	std::unique_ptr<Window> window;
 	std::unique_ptr<Input> input;
+        std::unique_ptr<Renderer> renderer;
 };
