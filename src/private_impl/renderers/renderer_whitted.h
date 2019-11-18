@@ -47,6 +47,7 @@ private:
 
   std::vector<Pixel> cpu_buffer;
   uint32_t gpu_buffer;
+  uint32_t linear_sampler;
   std::unique_ptr<Pipeline> screen_space_pipeline;
   std::unique_ptr<IndexedMesh> fullscreen_quad;
 };

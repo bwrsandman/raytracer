@@ -66,6 +66,17 @@ RendererWhitted::RendererWhitted(const Window& window)
   gladLoadGL();
 
   glGenTextures(1, &gpu_buffer);
+  glObjectLabel(GL_TEXTURE, gpu_buffer, -1, "CPU-GPU buffer");
+
+  glGenSamplers(1, &linear_sampler);
+  int32_t linear = GL_LINEAR;
+  int32_t clamp_to_edge = GL_CLAMP_TO_EDGE;
+  glSamplerParameteriv(linear_sampler, GL_TEXTURE_WRAP_S, &clamp_to_edge);
+  glSamplerParameteriv(linear_sampler, GL_TEXTURE_WRAP_T, &clamp_to_edge);
+  glSamplerParameteriv(linear_sampler, GL_TEXTURE_MIN_FILTER, &linear);
+  glSamplerParameteriv(linear_sampler, GL_TEXTURE_MAG_FILTER, &linear);
+  glObjectLabel(GL_SAMPLER, linear_sampler, -1, "Linear Sampler");
+
   create_geometry();
   create_pipeline();
 }
@@ -73,6 +84,7 @@ RendererWhitted::RendererWhitted(const Window& window)
 RendererWhitted::~RendererWhitted()
 {
   glDeleteTextures(1, &gpu_buffer);
+  glDeleteSamplers(1, &linear_sampler);
 }
 
 void
@@ -80,6 +92,7 @@ RendererWhitted::run(std::chrono::microseconds dt)
 {
   static const float clear_color[4] = { 1.0f, 1.0f, 0.0f, 1.0f };
 
+  glBindTexture(GL_TEXTURE_2D, gpu_buffer);
   glTexSubImage2D(
     GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_FLOAT, cpu_buffer.data());
 
@@ -88,6 +101,8 @@ RendererWhitted::run(std::chrono::microseconds dt)
 
   screen_space_pipeline->bind();
   fullscreen_quad->bind();
+  glBindTextureUnit(0, gpu_buffer);
+  glBindSampler(0, linear_sampler);
   glDrawElements(GL_TRIANGLES,
                  sizeof(fullscreen_quad_indices) /
                    sizeof(fullscreen_quad_indices[0]),
@@ -111,9 +126,25 @@ RendererWhitted::rebuild_backbuffers()
 {
   cpu_buffer.resize(width * height);
 
+  for (uint32_t y = 0; y < height; ++y) {
+    for (uint32_t x = 0; x < width; ++x) {
+      cpu_buffer[y * width + x].r = y % 2;
+      cpu_buffer[y * width + x].g = y % 2;
+      cpu_buffer[y * width + x].b = y % 2;
+      cpu_buffer[y * width + x].a = 1.0f;
+    }
+  }
+
   glBindTexture(GL_TEXTURE_2D, gpu_buffer);
-  glTexImage2D(
-    GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_FLOAT, cpu_buffer.data());
+  glTexImage2D(GL_TEXTURE_2D,
+               0,
+               GL_RGBA,
+               width,
+               height,
+               0,
+               GL_RGBA,
+               GL_FLOAT,
+               cpu_buffer.data());
 }
 
 void
