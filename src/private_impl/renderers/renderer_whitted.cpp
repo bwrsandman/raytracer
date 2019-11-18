@@ -1,11 +1,20 @@
 #include "renderer_whitted.h"
 
+#include <string_view>
+
 #include <SDL.h>
 #include <SDL_video.h>
 
 #include <glad/glad.h>
 
 #include "window.h"
+
+#include "pipeline.h"
+
+#include "shaders/passthrough_vs.h"
+#include "shaders/fullscreen_fs.h"
+
+#include "../../shaders/bridging_header.h"
 
 RendererWhitted::RendererWhitted(const Window& window)
   : width(0)
@@ -15,6 +24,7 @@ RendererWhitted::RendererWhitted(const Window& window)
   gladLoadGL();
 
   glGenTextures(1, &gpu_buffer);
+  create_pipeline();
 }
 
 RendererWhitted::~RendererWhitted()
@@ -53,4 +63,17 @@ RendererWhitted::rebuild_backbuffers()
   glBindTexture(GL_TEXTURE_2D, gpu_buffer);
   glTexImage2D(
     GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_FLOAT, cpu_buffer.data());
+}
+
+void
+RendererWhitted::create_pipeline()
+{
+  PipelineCreateInfo info;
+  info.vertex_shader_binary = passthrough_vs;
+  info.vertex_shader_size = sizeof(passthrough_vs);
+  info.vertex_shader_entry_point = "main";
+  info.fragment_shader_binary = fullscreen_fs;
+  info.fragment_shader_size = sizeof(fullscreen_fs);
+  info.fragment_shader_entry_point = "main";
+  screen_space_pipeline = Pipeline::create(Pipeline::Type::RaterOpenGL, info);
 }
