@@ -16,6 +16,43 @@
 
 #include "../../shaders/bridging_header.h"
 
+namespace
+{
+static const float fullscreen_quad_vertices[8] = {
+    // Top left
+    0.0f,
+    0.0f,
+    // Top right
+    1.0f,
+    0.0f,
+    // Bottom left
+    1.0f,
+    1.0f,
+    // Bottom right
+    0.0f,
+    1.0f,
+};
+static const uint16_t fullscreen_quad_indices[6] = { 0, 1, 2, 2, 3, 0 };
+}
+
+IndexedMesh::IndexedMesh(uint32_t vertex_buffer, uint32_t index_buffer, uint32_t vao)
+    : vertex_buffer(vertex_buffer)
+    , index_buffer(index_buffer)
+    , vao(vao)
+{
+}
+
+IndexedMesh::~IndexedMesh()
+{
+    glDeleteBuffers(2, reinterpret_cast<uint32_t*>(this));
+    glDeleteVertexArrays(1, &vao);
+}
+
+void IndexedMesh::bind() const
+{
+    glBindVertexArray(vao);
+}
+
 RendererWhitted::RendererWhitted(const Window& window)
   : width(0)
   , height(0)
@@ -24,6 +61,7 @@ RendererWhitted::RendererWhitted(const Window& window)
   gladLoadGL();
 
   glGenTextures(1, &gpu_buffer);
+  create_geometry();
   create_pipeline();
 }
 
@@ -63,6 +101,30 @@ RendererWhitted::rebuild_backbuffers()
   glBindTexture(GL_TEXTURE_2D, gpu_buffer);
   glTexImage2D(
     GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_FLOAT, cpu_buffer.data());
+}
+
+void
+RendererWhitted::create_geometry()
+{
+  uint32_t buffers[2];
+  uint32_t vao;
+  glCreateBuffers(2, buffers);
+  glGenVertexArrays(1, &vao);
+  fullscreen_quad = std::make_unique<IndexedMesh>(buffers[0], buffers[1], vao);
+  glBindVertexArray(fullscreen_quad->vao);
+  glBindBuffer(GL_ARRAY_BUFFER, fullscreen_quad->vertex_buffer);
+  glEnableVertexAttribArray(0);
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), nullptr);
+
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, fullscreen_quad->index_buffer);
+  glBufferStorage(GL_ARRAY_BUFFER,
+                  sizeof(fullscreen_quad_vertices),
+                  fullscreen_quad_vertices,
+                  GL_MAP_READ_BIT);
+  glBufferStorage(GL_ELEMENT_ARRAY_BUFFER,
+                  sizeof(fullscreen_quad_indices),
+                  fullscreen_quad_indices,
+                  GL_MAP_READ_BIT);
 }
 
 void

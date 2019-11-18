@@ -16,6 +16,17 @@ struct Pixel
 
 class Pipeline;
 
+struct IndexedMesh
+{
+  const uint32_t vertex_buffer;
+  const uint32_t index_buffer;
+  const uint32_t vao;
+
+  IndexedMesh(uint32_t vertex_buffer, uint32_t index_buffer, uint32_t vao);
+  virtual ~IndexedMesh();
+  void bind() const;
+};
+
 class RendererWhitted : public Renderer
 {
 public:
@@ -27,6 +38,7 @@ public:
 
 private:
   void rebuild_backbuffers();
+  void create_geometry();
   void create_pipeline();
 
   SDL_GLContext context;
@@ -36,4 +48,5 @@ private:
   std::vector<Pixel> cpu_buffer;
   uint32_t gpu_buffer;
   std::unique_ptr<Pipeline> screen_space_pipeline;
+  std::unique_ptr<IndexedMesh> fullscreen_quad;
 };
