@@ -1,4 +1,4 @@
-#include <renderer_whitted.h>
+#include "renderer_whitted.h"
 
 #include <SDL.h>
 #include <SDL_video.h>
@@ -8,8 +8,7 @@
 #include "window.h"
 
 RendererWhitted::RendererWhitted(const Window& window)
-  : Renderer(window)
-  , width(0)
+  : width(0)
   , height(0)
 {
   context = SDL_GL_CreateContext(window.get_native_handle());

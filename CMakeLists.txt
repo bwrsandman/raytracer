@@ -3,8 +3,9 @@ project (Whitted_Raytracing)
 
 file(GLOB sources CONFIGURE_DEPENDS src/*.cpp)
 file(GLOB headers CONFIGURE_DEPENDS include/*.h)
+file(GLOB_RECURSE private_impl_sources CONFIGURE_DEPENDS src/private_impl/*)
 
-add_executable(Whitted_Raytracing ${sources} ${headers} )
+add_executable(Whitted_Raytracing ${sources} ${headers} ${private_impl_sources})
 
 find_package(SDL2 REQUIRED)
 
