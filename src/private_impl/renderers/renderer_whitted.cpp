@@ -128,9 +128,9 @@ RendererWhitted::rebuild_backbuffers()
 
   for (uint32_t y = 0; y < height; ++y) {
     for (uint32_t x = 0; x < width; ++x) {
-      cpu_buffer[y * width + x].r = y % 2;
-      cpu_buffer[y * width + x].g = y % 2;
-      cpu_buffer[y * width + x].b = y % 2;
+      cpu_buffer[y * width + x].r = ((y / 4) % 2) * static_cast<float>(x) / width;
+      cpu_buffer[y * width + x].g = ((y / 4) % 2) * static_cast<float>(y) / height;
+      cpu_buffer[y * width + x].b = 0;
       cpu_buffer[y * width + x].a = 1.0f;
     }
   }
