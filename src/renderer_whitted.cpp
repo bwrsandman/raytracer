@@ -1,9 +1,9 @@
 #include <renderer_whitted.h>
 
 #include <SDL.h>
-#include <SDL_opengl.h>
-#include <SDL_opengl_glext.h>
 #include <SDL_video.h>
+
+#include<glad/glad.h>
 
 #include "window.h"
 
@@ -11,6 +11,7 @@ RendererWhitted::RendererWhitted(const Window& window)
   : Renderer(window)
 {
   context = SDL_GL_CreateContext(window.get_native_handle());
+  gladLoadGL();
 }
 
 void

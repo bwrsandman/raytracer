@@ -6,10 +6,10 @@ file(GLOB headers CONFIGURE_DEPENDS include/*.h)
 
 add_executable(Whitted_Raytracing ${sources} ${headers} )
 
-set(OpenGL_GL_PREFERENCE GLVND)
-find_package(OpenGL REQUIRED)
 find_package(SDL2 REQUIRED)
 
+add_subdirectory(3rd_party/glad)
+
 target_include_directories(Whitted_Raytracing PRIVATE include/)
-target_link_libraries(Whitted_Raytracing PRIVATE SDL2::SDL2 OpenGL::GL)
-target_compile_definitions(Whitted_Raytracing PRIVATE SDL_MAIN_HANDLED GL_GLEXT_PROTOTYPES)
+target_link_libraries(Whitted_Raytracing PRIVATE SDL2::SDL2 glad)
+target_compile_definitions(Whitted_Raytracing PRIVATE SDL_MAIN_HANDLED)
