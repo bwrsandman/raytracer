@@ -29,7 +29,7 @@ RendererWhitted::run(std::chrono::microseconds dt)
   static const float clear_color[4] = { 1.0f, 1.0f, 0.0f, 1.0f };
 
   glTexSubImage2D(
-    GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_FLOAT, cpu_buffer);
+    GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_FLOAT, cpu_buffer.data());
 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   glClearBufferfv(GL_COLOR, 0, clear_color);
@@ -53,5 +53,5 @@ RendererWhitted::rebuild_backbuffers()
 
   glBindTexture(GL_TEXTURE_2D, gpu_buffer);
   glTexImage2D(
-    GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_FLOAT, cpu_buffer);
+    GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_FLOAT, cpu_buffer.data());
 }
