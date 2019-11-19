@@ -15,6 +15,23 @@
 
 namespace
 {
+void GLAPIENTRY
+MessageCallback(GLenum source,
+                GLenum type,
+                GLuint id,
+                GLenum severity,
+                GLsizei length,
+                const GLchar* message,
+                const void* userParam)
+{
+  fprintf(stderr,
+          "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
+          (type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : ""),
+          type,
+          severity,
+          message);
+}
+
 static const float fullscreen_quad_vertices[8] = {
     // Top left
     0.0f,
@@ -64,6 +81,9 @@ RendererWhitted::RendererWhitted(const Window& window)
 
   context = SDL_GL_CreateContext(window.get_native_handle());
   gladLoadGL();
+
+  glEnable(GL_DEBUG_OUTPUT);
+  glDebugMessageCallback(MessageCallback, this);
 
   glGenTextures(1, &gpu_buffer);
   glObjectLabel(GL_TEXTURE, gpu_buffer, -1, "CPU-GPU buffer");
