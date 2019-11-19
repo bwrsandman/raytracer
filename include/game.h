@@ -14,6 +14,7 @@ public:
   virtual ~Game();
 
   void run();
+  bool main_loop();
 
 private:
   std::unique_ptr<Window> window;

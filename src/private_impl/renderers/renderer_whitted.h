@@ -18,11 +18,20 @@ class Pipeline;
 
 struct IndexedMesh
 {
+  struct MeshAttributes
+  {
+    uint32_t type;
+    uint32_t count;
+  };
   const uint32_t vertex_buffer;
   const uint32_t index_buffer;
   const uint32_t vao;
+  const std::vector<MeshAttributes> attributes;
 
-  IndexedMesh(uint32_t vertex_buffer, uint32_t index_buffer, uint32_t vao);
+  IndexedMesh(uint32_t vertex_buffer,
+              uint32_t index_buffer,
+              uint32_t vao,
+              std::vector<MeshAttributes> attributes);
   virtual ~IndexedMesh();
   void bind() const;
 };
@@ -33,7 +42,7 @@ public:
   explicit RendererWhitted(const Window& window);
   ~RendererWhitted() override;
 
-  void run(std::chrono::microseconds dt) override;
+  void run() override;
   void set_backbuffer_size(uint16_t w, uint16_t h) override;
 
 private:

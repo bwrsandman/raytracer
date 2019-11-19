@@ -4,6 +4,11 @@
 
 #include <glad/glad.h>
 
+#if __EMSCRIPTEN__
+#include <emscripten/emscripten.h>
+#include <emscripten/html5.h>
+#endif
+
 #include "window.h"
 
 #include "pipeline.h"
@@ -49,10 +54,14 @@ static const float fullscreen_quad_vertices[8] = {
 static const uint16_t fullscreen_quad_indices[6] = { 0, 1, 2, 2, 3, 0 };
 }
 
-IndexedMesh::IndexedMesh(uint32_t vertex_buffer, uint32_t index_buffer, uint32_t vao)
-    : vertex_buffer(vertex_buffer)
-    , index_buffer(index_buffer)
-    , vao(vao)
+IndexedMesh::IndexedMesh(uint32_t vertex_buffer,
+                         uint32_t index_buffer,
+                         uint32_t vao,
+                         std::vector<MeshAttributes> attributes)
+  : vertex_buffer(vertex_buffer)
+  , index_buffer(index_buffer)
+  , vao(vao)
+  , attributes(std::move(attributes))
 {
 }
 
@@ -65,28 +74,57 @@ IndexedMesh::~IndexedMesh()
 void IndexedMesh::bind() const
 {
     glBindVertexArray(vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
+    uint32_t attr_index = 0;
+    uintptr_t attr_offset = 0;
+    for (auto& attr : attributes) {
+      auto size = attr.count;
+      switch (attr.type) {
+        case GL_FLOAT:
+          size *= sizeof(float);
+          break;
+        default:
+          printf("unsupported type\n");
+          return;
+      }
+      glEnableVertexAttribArray(attr_index);
+      glVertexAttribPointer(attr_index,
+                            attr.count,
+                            attr.type,
+                            GL_FALSE,
+                            size,
+                            reinterpret_cast<const void*>(attr_offset));
+      attr_index++;
+      attr_offset += size;
+    }
 }
 
 RendererWhitted::RendererWhitted(const Window& window)
   : width(0)
   , height(0)
 {
-  // Request opengl 4.6 context.
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
+  // Request opengl 3.2 context.
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+#if __EMSCRIPTEN__
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+#else
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
+#endif
 
   // Turn on double buffering with a 24bit Z buffer.
   SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
   SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 
   context = SDL_GL_CreateContext(window.get_native_handle());
-  gladLoadGL();
+  gladLoadGLES2Loader(SDL_GL_GetProcAddress);
 
+#if !__EMSCRIPTEN__
   glEnable(GL_DEBUG_OUTPUT);
   glDebugMessageCallback(MessageCallback, this);
+#endif
 
   glGenTextures(1, &gpu_buffer);
-  glObjectLabel(GL_TEXTURE, gpu_buffer, -1, "CPU-GPU buffer");
 
   glGenSamplers(1, &linear_sampler);
   int32_t linear = GL_LINEAR;
@@ -95,7 +133,9 @@ RendererWhitted::RendererWhitted(const Window& window)
   glSamplerParameteriv(linear_sampler, GL_TEXTURE_WRAP_T, &clamp_to_edge);
   glSamplerParameteriv(linear_sampler, GL_TEXTURE_MIN_FILTER, &linear);
   glSamplerParameteriv(linear_sampler, GL_TEXTURE_MAG_FILTER, &linear);
+#if !__EMSCRIPTEN__
   glObjectLabel(GL_SAMPLER, linear_sampler, -1, "Linear Sampler");
+#endif
 
   create_geometry();
   create_pipeline();
@@ -108,7 +148,7 @@ RendererWhitted::~RendererWhitted()
 }
 
 void
-RendererWhitted::run(std::chrono::microseconds dt)
+RendererWhitted::run()
 {
   static const float clear_color[4] = { 1.0f, 1.0f, 0.0f, 1.0f };
 
@@ -121,13 +161,16 @@ RendererWhitted::run(std::chrono::microseconds dt)
 
   screen_space_pipeline->bind();
   fullscreen_quad->bind();
-  glBindTextureUnit(0, gpu_buffer);
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, gpu_buffer);
   glBindSampler(0, linear_sampler);
   glDrawElements(GL_TRIANGLES,
                  sizeof(fullscreen_quad_indices) /
                    sizeof(fullscreen_quad_indices[0]),
                  GL_UNSIGNED_SHORT,
                  nullptr);
+
+  glFinish();
 }
 
 void
@@ -158,15 +201,18 @@ RendererWhitted::rebuild_backbuffers()
   glBindTexture(GL_TEXTURE_2D, gpu_buffer);
   glTexImage2D(GL_TEXTURE_2D,
                0,
-               GL_RGBA,
+               GL_RGBA32F,
                width,
                height,
                0,
                GL_RGBA,
                GL_FLOAT,
                cpu_buffer.data());
+#if !__EMSCRIPTEN__
+  glObjectLabel(GL_TEXTURE, gpu_buffer, -1, "CPU-GPU buffer");
+#endif
 
-    glViewport(0, 0, width, height);
+  glViewport(0, 0, width, height);
 }
 
 void
@@ -174,23 +220,23 @@ RendererWhitted::create_geometry()
 {
   uint32_t buffers[2];
   uint32_t vao;
-  glCreateBuffers(2, buffers);
+  glGenBuffers(2, buffers);
   glGenVertexArrays(1, &vao);
-  fullscreen_quad = std::make_unique<IndexedMesh>(buffers[0], buffers[1], vao);
-  glBindVertexArray(fullscreen_quad->vao);
-  glBindBuffer(GL_ARRAY_BUFFER, fullscreen_quad->vertex_buffer);
-  glEnableVertexAttribArray(0);
-  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), nullptr);
-
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, fullscreen_quad->index_buffer);
-  glBufferStorage(GL_ARRAY_BUFFER,
-                  sizeof(fullscreen_quad_vertices),
-                  fullscreen_quad_vertices,
-                  GL_MAP_READ_BIT);
-  glBufferStorage(GL_ELEMENT_ARRAY_BUFFER,
-                  sizeof(fullscreen_quad_indices),
-                  fullscreen_quad_indices,
-                  GL_MAP_READ_BIT);
+  fullscreen_quad = std::make_unique<IndexedMesh>(
+    buffers[0],
+    buffers[1],
+    vao,
+    std::vector<IndexedMesh::MeshAttributes>{
+      IndexedMesh::MeshAttributes{ GL_FLOAT, 2 } });
+  fullscreen_quad->bind();
+  glBufferData(GL_ARRAY_BUFFER,
+               sizeof(fullscreen_quad_vertices),
+               fullscreen_quad_vertices,
+               GL_STATIC_DRAW);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+               sizeof(fullscreen_quad_indices),
+               fullscreen_quad_indices,
+               GL_STATIC_DRAW);
 }
 
 void
@@ -198,10 +244,10 @@ RendererWhitted::create_pipeline()
 {
   PipelineCreateInfo info;
   info.vertex_shader_binary = passthrough_vs;
-  info.vertex_shader_size = sizeof(passthrough_vs);
+  info.vertex_shader_size = sizeof(passthrough_vs) / sizeof(passthrough_vs[0]);
   info.vertex_shader_entry_point = "main";
   info.fragment_shader_binary = fullscreen_fs;
-  info.fragment_shader_size = sizeof(fullscreen_fs);
+  info.fragment_shader_size = sizeof(fullscreen_fs) / sizeof(fullscreen_fs[0]);
   info.fragment_shader_entry_point = "main";
   screen_space_pipeline = Pipeline::create(Pipeline::Type::RaterOpenGL, info);
 }

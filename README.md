@@ -14,7 +14,7 @@ Make sure to set the global environment variable `VCPKG_DEFAULT_TRIPLET=x64-wind
 
 Install the dependencies
 ```
-vcpkg install sdl2 glslang
+vcpkg install sdl2 glslang spirv-cross
 ```
 
 When generating the cmake project use the vcpkg toolchain file.
@@ -24,5 +24,5 @@ When generating the cmake project use the vcpkg toolchain file.
 Install the following packages
 
 ```bash
-pacman -S mingw-w64-x86_64-sdl2 mingw-w64-x86_64-glslang
+pacman -S mingw-w64-x86_64-sdl2 mingw-w64-x86_64-glslang mingw-w64-x86_64-spirv-cross
 ```

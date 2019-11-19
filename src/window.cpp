@@ -38,7 +38,7 @@ Window::get_dimensions(uint16_t& width, uint16_t& height)
 {
   int w, h;
 
-  SDL_GL_GetDrawableSize(handle, &w, &h);
+  SDL_GetWindowSize(handle, &w, &h);
   width = w;
   height = h;
 }
