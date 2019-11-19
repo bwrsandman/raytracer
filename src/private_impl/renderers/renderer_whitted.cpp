@@ -145,6 +145,8 @@ RendererWhitted::rebuild_backbuffers()
                GL_RGBA,
                GL_FLOAT,
                cpu_buffer.data());
+
+    glViewport(0, 0, width, height);
 }
 
 void

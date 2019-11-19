@@ -11,7 +11,7 @@ Window::Window(std::string name, uint16_t width, uint16_t height)
                             SDL_WINDOWPOS_UNDEFINED,
                             width,
                             height,
-                            SDL_WINDOW_OPENGL);
+                            SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
 }
 
 Window::~Window()
