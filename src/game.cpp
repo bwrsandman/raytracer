@@ -1,13 +1,13 @@
 #include "game.h"
 
 #include "input.h"
-#include "renderer_whitted.h"
+#include "renderer.h"
 #include "window.h"
 
 Game::Game() {
   window = std::make_unique<Window>("Whitted_Raytracing", 800, 600);
   input = std::make_unique<Input>();
-  renderer = std::make_unique<RendererWhitted>(*window);
+  renderer = Renderer::create(Renderer::Type::Whitted, *window);
 }
 Game::~Game() = default;
 
