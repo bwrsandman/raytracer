@@ -2,12 +2,14 @@
 
 #include "input.h"
 #include "renderer.h"
+#include "ui.h"
 #include "window.h"
 
 Game::Game() {
   window = std::make_unique<Window>("Whitted_Raytracing", 800, 600);
   input = std::make_unique<Input>();
   renderer = Renderer::create(Renderer::Type::Whitted, *window);
+  ui = std::make_unique<Ui>(window->get_native_handle());
 }
 Game::~Game() = default;
 
@@ -22,6 +24,7 @@ void Game::run() {
     window->get_dimensions(width, height);
     renderer->set_backbuffer_size(width, height);
     renderer->run(dt);
+    ui->run();
     input->run();
     window->swap();
     now = std::chrono::high_resolution_clock::now();

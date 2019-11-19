@@ -34,11 +34,12 @@ endforeach()
 add_executable(Whitted_Raytracing ${sources} ${headers}  ${private_impl_sources})
 
 add_subdirectory(3rd_party/glad)
+add_subdirectory(3rd_party/imgui-1.73)
 
 target_include_directories(Whitted_Raytracing
   PRIVATE
     include/
     # Compiled shaders
     ${CMAKE_CURRENT_BINARY_DIR}/src)
-target_link_libraries(Whitted_Raytracing PRIVATE SDL2::SDL2 glad)
+target_link_libraries(Whitted_Raytracing PRIVATE SDL2::SDL2 glad imgui)
 target_compile_definitions(Whitted_Raytracing PRIVATE SDL_MAIN_HANDLED)
