@@ -9,17 +9,20 @@
 #include <emscripten/html5.h>
 #endif
 
+#include "pipeline.h"
 #include "window.h"
 
-#include "pipeline.h"
+#include "ray.h"
+#include "object.h"
+#include "camera.h"
+#include "material.h"
 
-#include "shaders/passthrough_vs.h"
 #include "shaders/fullscreen_fs.h"
+#include "shaders/passthrough_vs.h"
 
 #include "../../shaders/bridging_header.h"
 
-namespace
-{
+namespace {
 void GLAPIENTRY
 MessageCallback(GLenum source,
                 GLenum type,
@@ -38,18 +41,18 @@ MessageCallback(GLenum source,
 }
 
 static const float fullscreen_quad_vertices[8] = {
-    // Top left
-    0.0f,
-    0.0f,
-    // Top right
-    1.0f,
-    0.0f,
-    // Bottom left
-    1.0f,
-    1.0f,
-    // Bottom right
-    0.0f,
-    1.0f,
+  // Top left
+  0.0f,
+  0.0f,
+  // Top right
+  1.0f,
+  0.0f,
+  // Bottom left
+  1.0f,
+  1.0f,
+  // Bottom right
+  0.0f,
+  1.0f,
 };
 static const uint16_t fullscreen_quad_indices[6] = { 0, 1, 2, 2, 3, 0 };
 }
@@ -62,42 +65,42 @@ IndexedMesh::IndexedMesh(uint32_t vertex_buffer,
   , index_buffer(index_buffer)
   , vao(vao)
   , attributes(std::move(attributes))
-{
-}
+{}
 
 IndexedMesh::~IndexedMesh()
 {
-    glDeleteBuffers(2, reinterpret_cast<uint32_t*>(this));
-    glDeleteVertexArrays(1, &vao);
+  glDeleteBuffers(2, reinterpret_cast<uint32_t*>(this));
+  glDeleteVertexArrays(1, &vao);
 }
 
-void IndexedMesh::bind() const
+void
+IndexedMesh::bind() const
 {
-    glBindVertexArray(vao);
-    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
-    uint32_t attr_index = 0;
-    uintptr_t attr_offset = 0;
-    for (auto& attr : attributes) {
-      auto size = attr.count;
-      switch (attr.type) {
-        case GL_FLOAT:
-          size *= sizeof(float);
-          break;
-        default:
-          printf("unsupported type\n");
-          return;
-      }
-      glEnableVertexAttribArray(attr_index);
-      glVertexAttribPointer(attr_index,
-                            attr.count,
-                            attr.type,
-                            GL_FALSE,
-                            size,
-                            reinterpret_cast<const void*>(attr_offset));
-      attr_index++;
-      attr_offset += size;
+  glBindVertexArray(vao);
+  glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
+  uint32_t attr_index = 0;
+  uintptr_t attr_offset = 0;
+  for (auto& attr : attributes) {
+    auto size = attr.count;
+    switch (attr.type) {
+      case GL_FLOAT:
+        size *= sizeof(float);
+        break;
+      default:
+        printf("unsupported type\n");
+        return;
     }
+    glEnableVertexAttribArray(attr_index);
+    glVertexAttribPointer(attr_index,
+                          attr.count,
+                          attr.type,
+                          GL_FALSE,
+                          size,
+                          reinterpret_cast<const void*>(attr_offset));
+    attr_index++;
+    attr_offset += size;
+  }
 }
 
 RendererWhitted::RendererWhitted(const Window& window)
@@ -147,18 +150,84 @@ RendererWhitted::~RendererWhitted()
   glDeleteSamplers(1, &linear_sampler);
 }
 
+vec3
+RendererWhitted::color(const Ray& r, Object* world, int depth)
+{
+  hit_record rec;
+  if (world->hit(r, 0.001, FLT_MAX, rec)) {
+    Ray scattered;
+    vec3 attenuation;
+    if (depth < 50 && rec.mat_ptr->scatter(r, rec, attenuation, scattered)) {
+      return attenuation * color(scattered, world, depth + 1);
+    } else {
+      return vec3(0, 0, 0);
+    }
+
+  } else {
+    vec3 unit_direction = unit_vector(r.direction());
+    float t = 0.5 * (unit_direction.y() + 1.0);
+    return (1.0 - t) * vec3(1.0, 1.0, 1.0) + t * vec3(0.5, 0.7, 1.0);
+  }
+}
+
+
+
 void
 RendererWhitted::run()
 {
   static const float clear_color[4] = { 1.0f, 1.0f, 0.0f, 1.0f };
 
-  glBindTexture(GL_TEXTURE_2D, gpu_buffer);
-  glTexSubImage2D(
-    GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_FLOAT, cpu_buffer.data());
+  vec3 lower_left_corner(-4.0, 3.0, -3.0);
+  vec3 horizontal(8.0, 0.0, 0.0);
+  vec3 vertical(0.0, -6.0, 0.0);
+  vec3 origin(0.0, 0.0, 0.0);
 
+  Object* list[4];
+  list[0] =
+    new Sphere(vec3(0, 0, -1), 0.5, new Lambertian(vec3(0.8, 0.3, 0.3)));
+  list[1] =
+    new Sphere(vec3(0, -100.5, -1), 100, new Lambertian(vec3(0.8, 0.8, 0.0)));
+  list[2] = new Sphere(vec3(1, 0, -1), 0.5, new Metal(vec3(0.8, 0.6, 0.2)));
+  list[3] = new Sphere(vec3(-1, 0, -1), 0.5, new Metal(vec3(0.8, 0.8, 0.8)));
+  Object* world = new ObjectList(list, 4);
+
+  Camera cam;
+
+  // raytracing
+  for (uint32_t y = 0; y < height; ++y) {
+    for (uint32_t x = 0; x < width; ++x) {
+
+      float u = static_cast<float>(x) / width; // 
+      float v = static_cast<float>(y) / height;
+
+      //Ray r(origin, lower_left_corner + u * horizontal + v * vertical);
+      Ray r = cam.get_ray(u, v);
+
+      //vec3 p = r.point_at_parameter(2.0);
+      vec3 col = color(r, world, 0);
+
+      cpu_buffer[y * width + x] = { sqrt(col.r()), sqrt(col.g()), sqrt(col.b()), 1.0f };
+     
+    }
+  }
+
+  // binding texture
+  glBindTexture(GL_TEXTURE_2D, gpu_buffer);
+  glTexSubImage2D(GL_TEXTURE_2D,
+                  0,
+                  0,
+                  0,
+                  width,
+                  height,
+                  GL_RGBA,
+                  GL_FLOAT,
+                  cpu_buffer.data());
+
+  // clearing screen
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   glClearBufferfv(GL_COLOR, 0, clear_color);
 
+  // Actually putting it to the screen?
   screen_space_pipeline->bind();
   fullscreen_quad->bind();
   glActiveTexture(GL_TEXTURE0);
@@ -191,8 +260,10 @@ RendererWhitted::rebuild_backbuffers()
 
   for (uint32_t y = 0; y < height; ++y) {
     for (uint32_t x = 0; x < width; ++x) {
-      cpu_buffer[y * width + x].r = ((y / 4) % 2) * static_cast<float>(x) / width;
-      cpu_buffer[y * width + x].g = ((y / 4) % 2) * static_cast<float>(y) / height;
+      cpu_buffer[y * width + x].r =
+        ((y / 4) % 2) * static_cast<float>(x) / width;
+      cpu_buffer[y * width + x].g =
+        ((y / 4) % 2) * static_cast<float>(y) / height;
       cpu_buffer[y * width + x].b = 0;
       cpu_buffer[y * width + x].a = 1.0f;
     }

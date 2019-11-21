@@ -1,11 +1,16 @@
 #pragma once
 
 #include "renderer.h"
+#include <memory>
 #include <vector>
 
-#include <memory>
+#include "vec3.h"
+class Ray;
+class Object;
+class Camera;
 
-typedef void* SDL_GLContext;
+
+  typedef void* SDL_GLContext;
 struct Pixel
 {
   float r;
@@ -49,6 +54,9 @@ private:
   void rebuild_backbuffers();
   void create_geometry();
   void create_pipeline();
+  vec3 color(const Ray& r, Object* world, int depth);
+  //vec3 color(const Ray& r, Object* world);
+
 
   SDL_GLContext context;
   uint16_t width;
