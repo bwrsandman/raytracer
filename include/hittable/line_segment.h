@@ -2,14 +2,10 @@
 
 #include "object.h"
 
-#include <memory>
-#include <vector>
-
-class ObjectList : public Object
+class LineSegment : public Object
 {
 public:
-  explicit ObjectList(std::vector<std::unique_ptr<Object>>&& l);
-  ~ObjectList() override;
+  LineSegment(vec3 pos[2], uint16_t m);
   bool hit(const Ray& r,
            float tmin,
            float tmax,
@@ -17,5 +13,6 @@ public:
   vec3 random_point() const override;
 
 private:
-  std::vector<std::unique_ptr<Object>> list;
+  const vec3 position[2];
+  const uint16_t mat_id;
 };

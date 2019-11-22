@@ -3,19 +3,20 @@
 
 #include "vec3.h"
 
-class Ray
+struct Ray
 {
 public:
-  Ray() {}
+  Ray()
+    : origin()
+    , direction()
+  {}
   Ray(const vec3& a, const vec3& b)
+    : origin(a)
+    , direction(b)
   {
-    A = a;
-    B = b;
   }
-  vec3 origin() const { return A; }
-  vec3 direction() const { return B; }
-  vec3 point_at_parameter(float t) const { return A + t * B; }
+  vec3 point_at_parameter(float t) const { return origin + t * direction; }
 
-  vec3 A;
-  vec3 B;
+  vec3 origin;
+  vec3 direction;
 };

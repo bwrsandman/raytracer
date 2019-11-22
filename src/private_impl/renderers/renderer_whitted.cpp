@@ -18,7 +18,7 @@
 #include "hittable/object_list.h"
 #include "hittable/sphere.h"
 #include "material.h"
-#include "materials/lambert.h"
+#include "materials/lambert_scatter.h"
 #include "materials/metal.h"
 #include "ray.h"
 
@@ -160,17 +160,17 @@ RendererWhitted::color(const Ray& r, const Scene& scene, int depth)
 {
   hit_record rec;
   if (scene.get_world().hit(r, 0.001, std::numeric_limits<float>::max(), rec)) {
-    Ray scattered;
-    vec3 attenuation;
+    Ray scattered{};
+    vec3 attenuation = vec3(0.0f, 0.0f, 0.0f);
     if (depth < 50 && scene.get_material(rec.mat_id)
-                        .scatter(r, rec, attenuation, scattered)) {
+                        .scatter(scene, r, rec, attenuation, scattered)) {
       return attenuation * color(scattered, scene, depth + 1);
     } else {
-      return vec3(0, 0, 0);
+      return attenuation;
     }
 
   } else {
-    vec3 unit_direction = unit_vector(r.direction());
+    vec3 unit_direction = unit_vector(r.direction);
     float t = 0.5 * (unit_direction.y() + 1.0);
     return (1.0 - t) * vec3(1.0, 1.0, 1.0) + t * vec3(0.5, 0.7, 1.0);
   }
@@ -192,14 +192,14 @@ RendererWhitted::run(const Scene& scene)
   for (uint32_t y = 0; y < height; ++y) {
     for (uint32_t x = 0; x < width; ++x) {
 
-      float u = static_cast<float>(x) / width; // 
+      float u = static_cast<float>(x) / width;
       float v = static_cast<float>(y) / height;
 
       //Ray r(origin, lower_left_corner + u * horizontal + v * vertical);
       Ray r = cam.get_ray(u, v);
 
       //vec3 p = r.point_at_parameter(2.0);
-      vec3 col = color(r, scene, 0);
+      vec3 col = saturate(color(r, scene, 0));
 
       cpu_buffer[y * width + x] = { sqrt(col.r()), sqrt(col.g()), sqrt(col.b()), 1.0f };
      

@@ -1,16 +1,27 @@
 #include "scene.h"
 
 #include "hittable/object_list.h"
+#include "hittable/point.h"
 #include "hittable/sphere.h"
-#include "materials/lambert.h"
+#include "materials/emissive_linear_drop_off.h"
+#include "materials/lambert_scatter.h"
+#include "materials/lambert_shadow_ray.h"
 #include "materials/metal.h"
 
 Scene::Scene()
 {
-  materials.emplace_back(std::make_unique<Lambertian>(vec3(0.8, 0.3, 0.3)));
-  materials.emplace_back(std::make_unique<Lambertian>(vec3(0.8, 0.8, 0.0)));
+  materials.emplace_back(
+    std::make_unique<LambertShadowRay>(vec3(0.8, 0.3, 0.3)));
+  materials.emplace_back(
+    std::make_unique<LambertShadowRay>(vec3(0.8, 0.8, 0.8)));
   materials.emplace_back(std::make_unique<Metal>(vec3(0.8, 0.6, 0.2)));
   materials.emplace_back(std::make_unique<Metal>(vec3(0.8, 0.8, 0.8)));
+  materials.emplace_back(
+    std::make_unique<EmissiveLinearDropOff>(vec3(0.8, 0, 0), 0.01f));
+  materials.emplace_back(
+    std::make_unique<EmissiveLinearDropOff>(vec3(0, 0, 0.8), 0.01f));
+  materials.emplace_back(
+    std::make_unique<EmissiveLinearDropOff>(vec3(0.8, 0.8, 0.8), 0.01f));
 
   std::vector<std::unique_ptr<Object>> list;
   list.emplace_back(std::make_unique<Sphere>(vec3(0, 0, -1), 0.5, 0));
@@ -18,12 +29,24 @@ Scene::Scene()
   list.emplace_back(std::make_unique<Sphere>(vec3(1, 0, -1), 0.5, 2));
   list.emplace_back(std::make_unique<Sphere>(vec3(-1, 0, -1), 0.5, 3));
   world_objects = std::make_unique<ObjectList>(std::move(list));
+
+  std::vector<std::unique_ptr<Object>> light_list;
+  //  light_list.emplace_back(std::make_unique<Point>(vec3(100, 100, -1), 4));
+  //  light_list.emplace_back(std::make_unique<Point>(vec3(-100, 100, -1), 5));
+  light_list.emplace_back(std::make_unique<Point>(vec3(0, 1000, -1), 6));
+  lights = std::make_unique<ObjectList>(std::move(light_list));
 }
 
 const Object&
 Scene::get_world() const
 {
   return *world_objects;
+}
+
+const Object&
+Scene::get_lights() const
+{
+  return *lights;
 }
 
 const Material&

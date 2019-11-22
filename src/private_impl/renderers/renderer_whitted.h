@@ -6,7 +6,7 @@
 
 #include "vec3.h"
 
-class Ray;
+struct Ray;
 class Object;
 class Camera;
 class Pipeline;

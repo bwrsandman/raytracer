@@ -6,7 +6,8 @@ class Dielectric : public Material
 {
 public:
   explicit Dielectric(float ri);
-  bool scatter(const Ray& r_in,
+  bool scatter(const Scene& scene,
+               const Ray& r_in,
                const hit_record& rec,
                vec3& attenuation,
                Ray& scattered) const override;

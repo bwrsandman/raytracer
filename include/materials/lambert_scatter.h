@@ -4,17 +4,16 @@
 
 #include "vec3.h"
 
-struct Ray;
-struct hit_record;
-
-class Metal : public Material
+class LambertianScatter : public Material
 {
 public:
-  explicit Metal(const vec3& a);
+  explicit LambertianScatter(const vec3& a);
   bool scatter(const Scene& scene,
                const Ray& r_in,
                const hit_record& rec,
                vec3& attenuation,
                Ray& scattered) const override;
+
+private:
   vec3 albedo;
 };

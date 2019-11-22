@@ -1,7 +1,6 @@
 #include "hittable/sphere.h"
 
 #include "hit_record.h"
-#include "material.h"
 #include "ray.h"
 
 Sphere::Sphere(vec3 cen, float r, uint16_t m)
@@ -15,9 +14,9 @@ Sphere::~Sphere() = default;
 bool
 Sphere::hit(const Ray& r, float t_min, float t_max, hit_record& rec) const
 {
-  vec3 oc = r.origin() - center;
-  float a = dot(r.direction(), r.direction());
-  float b = dot(oc, r.direction());
+  vec3 oc = r.origin - center;
+  float a = dot(r.direction, r.direction);
+  float b = dot(oc, r.direction);
   float c = dot(oc, oc) - radius * radius;
   float discriminant = b * b - a * c;
   if (discriminant > 0) {
@@ -39,4 +38,10 @@ Sphere::hit(const Ray& r, float t_min, float t_max, hit_record& rec) const
     }
   }
   return false;
+}
+
+vec3
+Sphere::random_point() const
+{
+  return random_in_unit_sphere() * radius + center;
 }
