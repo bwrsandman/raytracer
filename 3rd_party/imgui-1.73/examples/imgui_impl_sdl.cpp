@@ -325,9 +325,12 @@ void ImGui_ImplSDL2_NewFrame(SDL_Window* window)
     // Setup display size (every frame to accommodate for window resizing)
     int w, h;
     int display_w, display_h;
+#if _WIN32
     w = SDL_GetWindowSurface(window)->w;
     h = SDL_GetWindowSurface(window)->h;
-    //SDL_GetWindowSize(window, &w, &h);
+#else
+    SDL_GetWindowSize(window, &w, &h);
+#endif
     SDL_GL_GetDrawableSize(window, &display_w, &display_h);
     io.DisplaySize = ImVec2((float)w, (float)h);
     if (w > 0 && h > 0)
