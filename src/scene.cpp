@@ -1,4 +1,5 @@
 #include "scene.h"
+#include <hittable/line_segment.h>
 
 #include "hittable/object_list.h"
 #include "hittable/point.h"
@@ -26,14 +27,15 @@ Scene::Scene()
   std::vector<std::unique_ptr<Object>> list;
   list.emplace_back(std::make_unique<Sphere>(vec3(0, 0, -1), 0.5, 0));
   list.emplace_back(std::make_unique<Sphere>(vec3(0, -100.5, -1), 100, 1));
-  list.emplace_back(std::make_unique<Sphere>(vec3(1, 0, -1), 0.5, 2));
-  list.emplace_back(std::make_unique<Sphere>(vec3(-1, 0, -1), 0.5, 3));
+  list.emplace_back(std::make_unique<Sphere>(vec3(1, 0, -1.1), 0.5, 2));
+  list.emplace_back(std::make_unique<Sphere>(vec3(-1, 0, -1.1), 0.5, 3));
   world_objects = std::make_unique<ObjectList>(std::move(list));
 
   std::vector<std::unique_ptr<Object>> light_list;
-  //  light_list.emplace_back(std::make_unique<Point>(vec3(100, 100, -1), 4));
-  //  light_list.emplace_back(std::make_unique<Point>(vec3(-100, 100, -1), 5));
-  light_list.emplace_back(std::make_unique<Point>(vec3(0, 1000, -1), 6));
+  light_list.emplace_back(std::make_unique<Point>(vec3(100, 100, -1), 4));
+  light_list.emplace_back(std::make_unique<Point>(vec3(-100, 100, -1), 5));
+  vec3 line_segment[2] = { vec3(-10, 100, 0), vec3(10, 100, 0) };
+  light_list.emplace_back(std::make_unique<LineSegment>(line_segment, 6));
   lights = std::make_unique<ObjectList>(std::move(light_list));
 }
 

@@ -2,6 +2,7 @@
 
 #include <cmath>
 
+#include "hit_record.h"
 #include "ray.h"
 
 Point::Point(vec3 pos, uint16_t m)
