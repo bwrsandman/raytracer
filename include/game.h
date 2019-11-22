@@ -5,6 +5,7 @@
 class Window;
 class Input;
 class Renderer;
+class Scene;
 class Ui;
 
 class Game
@@ -21,4 +22,5 @@ private:
   std::unique_ptr<Input> input;
   std::unique_ptr<Renderer> renderer;
   std::unique_ptr<Ui> ui;
+  std::unique_ptr<Scene> scene;
 };

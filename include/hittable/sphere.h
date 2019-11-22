@@ -2,22 +2,20 @@
 
 #include "object.h"
 
-#include "vec3.h"
+#include <memory>
 
-class Material;
+#include "vec3.h"
 
 class Sphere : public Object
 {
 public:
-  Sphere(vec3 cen, float r, Material* m)
-    : center(cen)
-    , radius(r)
-    , mat_ptr(m){};
+  Sphere(vec3 cen, float r, uint16_t m);
+  ~Sphere() override;
   bool hit(const Ray& r,
            float tmin,
            float tmax,
            hit_record& rec) const override;
-  vec3 center;
-  float radius;
-  Material* mat_ptr;
+  const vec3 center;
+  const float radius;
+  const uint16_t mat_id;
 };

@@ -2,14 +2,19 @@
 
 #include "object.h"
 
+#include <memory>
+#include <vector>
+
 class ObjectList : public Object
 {
 public:
-  ObjectList(Object** l, int n);
+  explicit ObjectList(std::vector<std::unique_ptr<Object>>&& l);
+  ~ObjectList() override;
   bool hit(const Ray& r,
            float tmin,
            float tmax,
            hit_record& rec) const override;
-  Object** list;
-  int list_size;
+
+private:
+  std::vector<std::unique_ptr<Object>> list;
 };

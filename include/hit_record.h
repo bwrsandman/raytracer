@@ -2,12 +2,12 @@
 
 #include "vec3.h"
 
-class Material;
+#include <cstdint>
 
 struct hit_record
 {
   float t;
   vec3 p;
   vec3 normal;
-  Material* mat_ptr;
+  uint16_t mat_id;
 };

@@ -1,7 +1,16 @@
 #include "hittable/sphere.h"
 
 #include "hit_record.h"
+#include "material.h"
 #include "ray.h"
+
+Sphere::Sphere(vec3 cen, float r, uint16_t m)
+  : center(cen)
+  , radius(r)
+  , mat_id(m)
+{}
+
+Sphere::~Sphere() = default;
 
 bool
 Sphere::hit(const Ray& r, float t_min, float t_max, hit_record& rec) const
@@ -17,7 +26,7 @@ Sphere::hit(const Ray& r, float t_min, float t_max, hit_record& rec) const
       rec.t = temp;
       rec.p = r.point_at_parameter(rec.t);
       rec.normal = (rec.p - center) / radius;
-      rec.mat_ptr = mat_ptr;
+      rec.mat_id = mat_id;
       return true;
     }
     temp = (-b + sqrt(discriminant)) / a;
@@ -25,7 +34,7 @@ Sphere::hit(const Ray& r, float t_min, float t_max, hit_record& rec) const
       rec.t = temp;
       rec.p = r.point_at_parameter(rec.t);
       rec.normal = (rec.p - center) / radius;
-      rec.mat_ptr = mat_ptr;
+      rec.mat_id = mat_id;
       return true;
     }
   }
