@@ -154,7 +154,7 @@ vec3
 RendererWhitted::color(const Ray& r, Object* world, int depth)
 {
   hit_record rec;
-  if (world->hit(r, 0.001, FLT_MAX, rec)) {
+  if (world->hit(r, 0.001, std::numeric_limits<float>::max(), rec)) {
     Ray scattered;
     vec3 attenuation;
     if (depth < 50 && rec.mat_ptr->scatter(r, rec, attenuation, scattered)) {
