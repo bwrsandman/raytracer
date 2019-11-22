@@ -2,6 +2,7 @@
 
 #include "input.h"
 #include "renderer.h"
+#include "scene.h"
 #include "ui.h"
 #include "window.h"
 
@@ -14,7 +15,9 @@ Game::Game() {
   input = std::make_unique<Input>();
   renderer = Renderer::create(Renderer::Type::Whitted, *window);
   ui = std::make_unique<Ui>(window->get_native_handle());
+  scene = std::make_unique<Scene>();
 }
+
 Game::~Game() = default;
 
 bool
@@ -23,7 +26,7 @@ Game::main_loop()
   uint16_t width, height;
   window->get_dimensions(width, height);
   renderer->set_backbuffer_size(width, height);
-  renderer->run();
+  renderer->run(*scene);
   ui->run();
   window->swap();
   input->run();

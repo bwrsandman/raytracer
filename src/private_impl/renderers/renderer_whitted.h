@@ -5,12 +5,14 @@
 #include <vector>
 
 #include "vec3.h"
+
 class Ray;
 class Object;
 class Camera;
+class Pipeline;
 
+typedef void* SDL_GLContext;
 
-  typedef void* SDL_GLContext;
 struct Pixel
 {
   float r;
@@ -18,8 +20,6 @@ struct Pixel
   float b;
   float a;
 };
-
-class Pipeline;
 
 struct IndexedMesh
 {
@@ -47,16 +47,14 @@ public:
   explicit RendererWhitted(const Window& window);
   ~RendererWhitted() override;
 
-  void run() override;
+  void run(const Scene& scene) override;
   void set_backbuffer_size(uint16_t w, uint16_t h) override;
 
 private:
   void rebuild_backbuffers();
   void create_geometry();
   void create_pipeline();
-  vec3 color(const Ray& r, Object* world, int depth);
-  //vec3 color(const Ray& r, Object* world);
-
+  vec3 color(const Ray& r, const Scene& scene, int depth);
 
   SDL_GLContext context;
   uint16_t width;

@@ -3,6 +3,7 @@
 #include <SDL_video.h>
 
 #include <glad/glad.h>
+#include <scene.h>
 
 #if __EMSCRIPTEN__
 #include <emscripten/emscripten.h>
@@ -12,10 +13,14 @@
 #include "pipeline.h"
 #include "window.h"
 
-#include "ray.h"
-#include "object.h"
 #include "camera.h"
+#include "hit_record.h"
+#include "hittable/object_list.h"
+#include "hittable/sphere.h"
 #include "material.h"
+#include "materials/lambert.h"
+#include "materials/metal.h"
+#include "ray.h"
 
 #include "shaders/fullscreen_fs.h"
 #include "shaders/passthrough_vs.h"
@@ -151,14 +156,15 @@ RendererWhitted::~RendererWhitted()
 }
 
 vec3
-RendererWhitted::color(const Ray& r, Object* world, int depth)
+RendererWhitted::color(const Ray& r, const Scene& scene, int depth)
 {
   hit_record rec;
-  if (world->hit(r, 0.001, FLT_MAX, rec)) {
+  if (scene.get_world().hit(r, 0.001, std::numeric_limits<float>::max(), rec)) {
     Ray scattered;
     vec3 attenuation;
-    if (depth < 50 && rec.mat_ptr->scatter(r, rec, attenuation, scattered)) {
-      return attenuation * color(scattered, world, depth + 1);
+    if (depth < 50 && scene.get_material(rec.mat_id)
+                        .scatter(r, rec, attenuation, scattered)) {
+      return attenuation * color(scattered, scene, depth + 1);
     } else {
       return vec3(0, 0, 0);
     }
@@ -170,10 +176,8 @@ RendererWhitted::color(const Ray& r, Object* world, int depth)
   }
 }
 
-
-
 void
-RendererWhitted::run()
+RendererWhitted::run(const Scene& scene)
 {
   static const float clear_color[4] = { 1.0f, 1.0f, 0.0f, 1.0f };
 
@@ -181,15 +185,6 @@ RendererWhitted::run()
   vec3 horizontal(8.0, 0.0, 0.0);
   vec3 vertical(0.0, -6.0, 0.0);
   vec3 origin(0.0, 0.0, 0.0);
-
-  Object* list[4];
-  list[0] =
-    new Sphere(vec3(0, 0, -1), 0.5, new Lambertian(vec3(0.8, 0.3, 0.3)));
-  list[1] =
-    new Sphere(vec3(0, -100.5, -1), 100, new Lambertian(vec3(0.8, 0.8, 0.0)));
-  list[2] = new Sphere(vec3(1, 0, -1), 0.5, new Metal(vec3(0.8, 0.6, 0.2)));
-  list[3] = new Sphere(vec3(-1, 0, -1), 0.5, new Metal(vec3(0.8, 0.8, 0.8)));
-  Object* world = new ObjectList(list, 4);
 
   Camera cam;
 
@@ -204,7 +199,7 @@ RendererWhitted::run()
       Ray r = cam.get_ray(u, v);
 
       //vec3 p = r.point_at_parameter(2.0);
-      vec3 col = color(r, world, 0);
+      vec3 col = color(r, scene, 0);
 
       cpu_buffer[y * width + x] = { sqrt(col.r()), sqrt(col.g()), sqrt(col.b()), 1.0f };
      

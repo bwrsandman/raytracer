@@ -1,27 +1,16 @@
-#include "object.h"
+#include "hittable/sphere.h"
 
-#include "ray.h"
+#include "hit_record.h"
 #include "material.h"
+#include "ray.h"
 
-bool
-ObjectList::hit(const Ray& r,
-                   float t_min,
-                   float t_max,
-                   hit_record& rec) const
-{
+Sphere::Sphere(vec3 cen, float r, uint16_t m)
+  : center(cen)
+  , radius(r)
+  , mat_id(m)
+{}
 
-  hit_record temp_rec;
-  bool hit_anything = false;
-  double closest_so_far = t_max;
-  for (int i = 0; i < list_size; i++) {
-    if (list[i]->hit(r, t_min, closest_so_far, temp_rec)) {
-      hit_anything = true;
-      closest_so_far = temp_rec.t;
-      rec = temp_rec;
-    }
-  }
-  return hit_anything;
-}
+Sphere::~Sphere() = default;
 
 bool
 Sphere::hit(const Ray& r, float t_min, float t_max, hit_record& rec) const
@@ -37,7 +26,7 @@ Sphere::hit(const Ray& r, float t_min, float t_max, hit_record& rec) const
       rec.t = temp;
       rec.p = r.point_at_parameter(rec.t);
       rec.normal = (rec.p - center) / radius;
-      rec.mat_ptr = mat_ptr;
+      rec.mat_id = mat_id;
       return true;
     }
     temp = (-b + sqrt(discriminant)) / a;
@@ -45,7 +34,7 @@ Sphere::hit(const Ray& r, float t_min, float t_max, hit_record& rec) const
       rec.t = temp;
       rec.p = r.point_at_parameter(rec.t);
       rec.normal = (rec.p - center) / radius;
-      rec.mat_ptr = mat_ptr;
+      rec.mat_id = mat_id;
       return true;
     }
   }

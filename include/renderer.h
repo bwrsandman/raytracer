@@ -3,6 +3,7 @@
 #include <chrono>
 #include <memory>
 
+class Scene;
 class Window;
 
 /// Abstract Base Class of renderer
@@ -20,7 +21,7 @@ public:
     Whitted,
   };
   virtual ~Renderer() = default;
-  virtual void run() = 0;
+  virtual void run(const Scene& world) = 0;
   virtual void set_backbuffer_size(uint16_t width, uint16_t height) = 0;
 
   /// Factory function from which all types of renderers can be created
