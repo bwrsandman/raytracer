@@ -3,8 +3,8 @@ project (Whitted_Raytracing)
 
 find_program(GLSLVALIDATOR glslangValidator)
 
-file(GLOB sources CONFIGURE_DEPENDS src/*.cpp)
-file(GLOB headers CONFIGURE_DEPENDS include/*.h)
+file(GLOB sources CONFIGURE_DEPENDS src/*.cpp src/materials/*.cpp src/hittable/*.cpp)
+file(GLOB_RECURSE headers CONFIGURE_DEPENDS include/*.h)
 file(GLOB_RECURSE private_impl_sources CONFIGURE_DEPENDS src/private_impl/*)
 
 file(GLOB shaders CONFIGURE_DEPENDS src/shaders/*.glsl)

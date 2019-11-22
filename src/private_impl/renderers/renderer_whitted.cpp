@@ -12,10 +12,14 @@
 #include "pipeline.h"
 #include "window.h"
 
-#include "ray.h"
-#include "object.h"
 #include "camera.h"
+#include "hit_record.h"
+#include "hittable/object_list.h"
+#include "hittable/sphere.h"
 #include "material.h"
+#include "materials/lambert.h"
+#include "materials/metal.h"
+#include "ray.h"
 
 #include "shaders/fullscreen_fs.h"
 #include "shaders/passthrough_vs.h"
