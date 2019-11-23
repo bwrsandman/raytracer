@@ -45,6 +45,7 @@ if (EMSCRIPTEN)
       spirv-cross
       URL https://github.com/KhronosGroup/SPIRV-Cross/archive/2019-11-01.tar.gz
       URL_HASH MD5=841d5055ef364a4dea7b06378336212a
+      CMAKE_CACHE_ARGS "-DSPIRV_CROSS_CLI:STRING=OFF -DSPIRV_CROSS_ENABLE_TESTS:STRING=OFF"
     )
     FetchContent_MakeAvailable(spirv-cross)
     set(LIBRARIES glad imgui spirv-cross-glsl)
