@@ -36,7 +36,8 @@ if (EMSCRIPTEN)
     set_target_properties(Whitted_Raytracing PROPERTIES
       COMPILE_FLAGS_DEBUG "-g4"
       LINK_FLAGS_DEBUG "-g4"
-      LINK_FLAGS "-s USE_SDL=2 -s FULL_ES3=1 -s GL_ASSERTIONS=1 -s USE_WEBGL2=1 --emrun"
+      COMPILE_FLAGS "-s USE_PTHREADS=1"
+      LINK_FLAGS "-s USE_SDL=2 -s FULL_ES3=1 -s GL_ASSERTIONS=1 -s USE_WEBGL2=1 -s USE_PTHREADS=1 --emrun"
       SUFFIX ".html"
     )
     list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules/backport")
@@ -48,6 +49,11 @@ if (EMSCRIPTEN)
       CMAKE_CACHE_ARGS "-DSPIRV_CROSS_CLI:STRING=OFF -DSPIRV_CROSS_ENABLE_TESTS:STRING=OFF"
     )
     FetchContent_MakeAvailable(spirv-cross)
+    set_target_properties(spirv-cross-glsl PROPERTIES
+      COMPILE_FLAGS_DEBUG "-g4"
+      LINK_FLAGS_DEBUG "-g4"
+      COMPILE_FLAGS "-s USE_PTHREADS=1"
+      LINK_FLAGS "-s USE_PTHREADS=1")
     set(LIBRARIES glad imgui spirv-cross-glsl)
 else()
     find_package(SDL2 REQUIRED)
