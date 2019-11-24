@@ -7,7 +7,9 @@
 class vec3
 {
 public:
-  vec3() {}
+  vec3()
+    : e{ 0.0f, 0.0f, 0.0f }
+  {}
   vec3(float e0, float e1, float e2)
   {
     e[0] = e0;
@@ -219,4 +221,38 @@ refract(const vec3& v, const vec3& n, float ni_over_nt, vec3& refracted)
     return true;
   } else
     return false;
+}
+
+static vec3
+min(const vec3& lhs, const vec3& rhs)
+{
+  return vec3(std::min(lhs.e[0], rhs.e[0]),
+              std::min(lhs.e[1], rhs.e[1]),
+              std::min(lhs.e[2], rhs.e[2]));
+}
+
+static vec3
+max(const vec3& lhs, const vec3& rhs)
+{
+  return vec3(std::max(lhs.e[0], rhs.e[0]),
+              std::max(lhs.e[1], rhs.e[1]),
+              std::max(lhs.e[2], rhs.e[2]));
+}
+
+static vec3
+clamp(const vec3& val, const vec3& minimum, const vec3& maximum)
+{
+  return min(maximum, max(minimum, val));
+}
+
+static vec3
+saturate(const vec3& val)
+{
+  return clamp(val, vec3(0.0f, 0.0f, 0.0f), vec3(1.0f, 1.0f, 1.0f));
+}
+
+static vec3
+lerp(const vec3& from, const vec3& to, float t)
+{
+  return from * t + to * (1.0f - t);
 }

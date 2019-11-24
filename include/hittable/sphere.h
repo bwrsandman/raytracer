@@ -15,6 +15,9 @@ public:
            float tmin,
            float tmax,
            hit_record& rec) const override;
+  vec3 random_point() const override;
+
+private:
   const vec3 center;
   const float radius;
   const uint16_t mat_id;

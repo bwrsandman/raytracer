@@ -4,17 +4,16 @@
 
 #include "vec3.h"
 
-struct Ray;
-struct hit_record;
-
-class Metal : public Material
+class EmissiveLinearDropOff : public Material
 {
 public:
-  explicit Metal(const vec3& a);
+  EmissiveLinearDropOff(const vec3& a, float factor);
   bool scatter(const Scene& scene,
                const Ray& r_in,
                const hit_record& rec,
                vec3& attenuation,
                Ray& scattered) const override;
-  vec3 albedo;
+
+  const vec3 albedo;
+  const float drop_off_factor;
 };
