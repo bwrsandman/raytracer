@@ -160,11 +160,17 @@ RendererWhitted::color(const Ray& r, const Scene& scene, int depth)
 {
   hit_record rec;
   if (scene.get_world().hit(r, 0.001, std::numeric_limits<float>::max(), rec)) {
-    Ray scattered{};
+    //Ray scattered{};
     vec3 attenuation = vec3(0.0f, 0.0f, 0.0f);
+    Ray scattered[2];
     if (depth < 50 && scene.get_material(rec.mat_id)
                         .scatter(scene, r, rec, attenuation, scattered)) {
-      return attenuation * color(scattered, scene, depth + 1);
+      if (rec.mat_id == 7) { // hot fix for glass
+        return attenuation * color(scattered[0], scene, depth + 1) +
+               (vec3(1.f,1.f,1.f) - attenuation) * color(scattered[1], scene, depth + 1);
+      } else {
+        return attenuation * color(scattered[0], scene, depth + 1);
+      }
     } else {
       return attenuation;
     }

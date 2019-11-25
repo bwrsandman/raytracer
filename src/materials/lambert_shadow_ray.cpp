@@ -14,7 +14,7 @@ LambertShadowRay::scatter(const Scene& scene,
                           const Ray& r_in,
                           const hit_record& rec,
                           vec3& attenuation,
-                          Ray& scattered) const
+                          Ray (&scattered)[2]) const
 {
   vec3 target = scene.get_lights().random_point();
   auto direction = target - rec.p;
@@ -25,7 +25,7 @@ LambertShadowRay::scatter(const Scene& scene,
   float distance = (target - shadow_ray.origin).length(); // FIXME: a sqrt here
   if (scene.get_world().hit(shadow_ray, 0.001, distance, shadow_rec)) {
     return false;
-  } else {
+  } else {// doing extra work?
     if (scene.get_lights().hit(
           shadow_ray, 0.001f, std::numeric_limits<float>::max(), shadow_rec)) {
       vec3 light_emission;

@@ -8,6 +8,7 @@
 #include "materials/lambert_scatter.h"
 #include "materials/lambert_shadow_ray.h"
 #include "materials/metal.h"
+#include "materials/dielectric.h"
 
 Scene::Scene()
 {
@@ -22,18 +23,21 @@ Scene::Scene()
   materials.emplace_back(
     std::make_unique<EmissiveLinearDropOff>(vec3(0, 0, 0.8), 0.01f));
   materials.emplace_back(
-    std::make_unique<EmissiveLinearDropOff>(vec3(0.8, 0.8, 0.8), 0.01f));
+    std::make_unique<EmissiveLinearDropOff>(vec3(0.5, 0.5, 0.5), 0.01f));
+  materials.emplace_back(
+    std::make_unique<Dielectric>( 1.5f));
 
   std::vector<std::unique_ptr<Object>> list;
   list.emplace_back(std::make_unique<Sphere>(vec3(0, 0, -1), 0.5, 0));
   list.emplace_back(std::make_unique<Sphere>(vec3(0, -100.5, -1), 100, 1));
   list.emplace_back(std::make_unique<Sphere>(vec3(1, 0, -1.1), 0.5, 2));
-  list.emplace_back(std::make_unique<Sphere>(vec3(-1, 0, -1.1), 0.5, 3));
+  list.emplace_back(std::make_unique<Sphere>(vec3(-1, 0, -1.1), 0.5, 7));
+  //list.emplace_back(std::make_unique<Sphere>(vec3(-1, 0, -1.1), -0.4, 7));
   world_objects = std::make_unique<ObjectList>(std::move(list));
 
   std::vector<std::unique_ptr<Object>> light_list;
-  light_list.emplace_back(std::make_unique<Point>(vec3(100, 100, -1), 4));
-  light_list.emplace_back(std::make_unique<Point>(vec3(-100, 100, -1), 5));
+  light_list.emplace_back(std::make_unique<Point>(vec3(100, 100, -1), 6));
+  light_list.emplace_back(std::make_unique<Point>(vec3(-100, 100, -1), 6));
   vec3 line_segment[2] = { vec3(-10, 100, 0), vec3(10, 100, 0) };
   light_list.emplace_back(std::make_unique<LineSegment>(line_segment, 6));
   lights = std::make_unique<ObjectList>(std::move(light_list));

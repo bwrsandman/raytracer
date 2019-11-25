@@ -12,7 +12,7 @@ EmissiveLinearDropOff::scatter(const Scene& scene,
                                const Ray& r_in,
                                const hit_record& rec,
                                vec3& attenuation,
-                               Ray& scattered) const
+                               Ray (&scattered)[2]) const
 {
   attenuation = albedo / (rec.t * drop_off_factor);
   return false;

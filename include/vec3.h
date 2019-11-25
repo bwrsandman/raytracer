@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <iostream>
 #include <math.h>
 #include <stdlib.h>
@@ -209,18 +210,61 @@ reflect(const vec3& v, const vec3& n)
   return v - 2 * dot(v, n) * n;
 }
 
-// Not entirely sure this is Snells law
+// Snells law
 inline bool
 refract(const vec3& v, const vec3& n, float ni_over_nt, vec3& refracted)
 {
   vec3 uv = unit_vector(v);
-  float dt = dot(uv, n);
-  float discriminant = 1.0 - ni_over_nt * ni_over_nt * (1 - dt * dt);
-  if (discriminant > 0) {
-    refracted = ni_over_nt * (uv - n * dt) - n * sqrt(discriminant);
+  float cosi = dot(uv, n); // cosi()
+  float discriminant = 1.0 - ni_over_nt * ni_over_nt * (1 - cosi * cosi);
+  if (discriminant > 0) { // Refraction
+    refracted = ni_over_nt * (uv - n * cosi) - n * sqrt(discriminant);
     return true;
-  } else
+  } else // Total internal reflection
     return false;
+}
+
+// Fresnels law
+inline vec3
+fresnel_rate(const vec3& v, const vec3& n, float ni, float nt)
+{
+  //	  1 // ni cosi - nt cost \2   / ni cost - nt cosi \2\
+  // Fr = - || ----------------- |  + | ----------------- | |
+  //	  2 \\ ni cosi + nt cost /    \ ni cost + nt cosi / /
+
+  //			---------------------
+  //		   /	/ ni		\2
+  // cost =	  / 1 - | -- * sini |
+  //		\/		\ nt		/
+  float ni_over_nt = (ni / nt);
+  vec3 uv = unit_vector(v);
+  float cosi = dot(uv, n);
+
+  // using Snells law (from cosi to sini to sint)
+  float cost2 = 1.f - (ni_over_nt  * ni_over_nt * (1 - cosi * cosi));
+  // Total internal reflection
+  if (cost2 <= 0) {
+    return vec3(1.0, 1.0, 1.0);
+  }
+
+  // from sint to cost
+  float cost = sqrtf(cost2);
+  cosi = fabsf(cosi);
+
+  float rs = (ni * cosi - nt * cost) / (ni * cost + nt * cosi);
+  float rp = (ni * cosi - nt * cost) / (ni * cost + nt * cosi);
+
+  float fr = (rs * rs + rp * rp) * 0.5f;
+
+  return vec3(fr, fr, fr);
+  // As a consequence of the conservation of energy, transmittance is given by:
+  // kt = 1 - kr;
+}
+
+inline vec3
+reciprocal(const vec3& v)
+{
+  return vec3(1.0 / v.e[0], 1.0 / v.e[1], 1.0 / v.e[2]);
 }
 
 static vec3

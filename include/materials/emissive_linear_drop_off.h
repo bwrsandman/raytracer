@@ -12,7 +12,7 @@ public:
                const Ray& r_in,
                const hit_record& rec,
                vec3& attenuation,
-               Ray& scattered) const override;
+               Ray (&scattered)[2]) const override;
 
   const vec3 albedo;
   const float drop_off_factor;

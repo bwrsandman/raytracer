@@ -10,7 +10,7 @@ public:
                const Ray& r_in,
                const hit_record& rec,
                vec3& attenuation,
-               Ray& scattered) const override;
+               Ray(& scattered)[2]) const override;
 
   float ref_idx;
 };

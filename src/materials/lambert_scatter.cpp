@@ -13,10 +13,10 @@ LambertianScatter::scatter(const Scene& scene,
                            const Ray& r_in,
                            const hit_record& rec,
                            vec3& attenuation,
-                           Ray& scattered) const
+                           Ray (&scattered)[2]) const
 {
   vec3 target = rec.p + rec.normal + random_in_unit_sphere();
-  scattered = Ray(rec.p, target - rec.p);
+  scattered[0] = Ray(rec.p, target - rec.p);
   attenuation = albedo;
   return true;
 }

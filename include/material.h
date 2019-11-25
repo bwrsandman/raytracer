@@ -13,5 +13,5 @@ public:
                        const Ray& r_in,
                        const hit_record& rec,
                        vec3& attenuation,
-                       Ray& scattered) const = 0;
+                       Ray (&scattered)[2]) const = 0;
 };
