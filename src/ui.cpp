@@ -9,6 +9,14 @@
 #include "hittable/object_list.h"
 #include "hittable/point.h"
 #include "hittable/sphere.h"
+#include "material.h"
+#include "materials/dielectric.h"
+#include "materials/emissive.h"
+#include "materials/emissive_linear_drop_off.h"
+#include "materials/emissive_quadratic_drop_off.h"
+#include "materials/lambert_scatter.h"
+#include "materials/lambert_shadow_ray.h"
+#include "materials/metal.h"
 #include "scene.h"
 
 Ui::Ui(SDL_Window* window)
@@ -30,6 +38,53 @@ Ui::run(Scene& scene) const
   ImGui::NewFrame();
 
   if (ImGui::Begin("Configuration ")) {
+    if (ImGui::CollapsingHeader("Materials", ImGuiTreeNodeFlags_DefaultOpen)) {
+      auto& material_list = scene.get_material_list();
+      uint32_t i = 0;
+      for (auto itr = material_list.begin(); itr < material_list.end(); ++itr) {
+        auto& light = *itr;
+        if (light) {
+          ImGui::PushID(i);
+          if (auto mat = dynamic_cast<Dielectric*>(light.get())) {
+            ImGui::Text("%u. Dielectric", i);
+          } else if (auto mat = dynamic_cast<Emissive*>(light.get())) {
+            ImGui::Text("%u. Emissive (No Drop Off)", i);
+            ImGui::InputFloat3("albedo",
+                               reinterpret_cast<float*>(&mat->albedo));
+          } else if (auto mat =
+                       dynamic_cast<EmissiveLinearDropOff*>(light.get())) {
+            ImGui::Text("%u. Emissive (Linear Drop Off)", i);
+            ImGui::InputFloat3("albedo",
+                               reinterpret_cast<float*>(&mat->albedo));
+            ImGui::InputFloat("drop-off factor",
+                              reinterpret_cast<float*>(&mat->drop_off_factor));
+          } else if (auto mat =
+                       dynamic_cast<EmissiveQuadraticDropOff*>(light.get())) {
+            ImGui::Text("%u. Emissive (Quadratic Drop Off)", i);
+            ImGui::InputFloat3("albedo",
+                               reinterpret_cast<float*>(&mat->albedo));
+            ImGui::InputFloat("drop-off factor",
+                              reinterpret_cast<float*>(&mat->drop_off_factor));
+          } else if (auto mat = dynamic_cast<LambertianScatter*>(light.get())) {
+            ImGui::Text("%u. Lambert (Scatter)", i);
+            ImGui::InputFloat3("albedo",
+                               reinterpret_cast<float*>(&mat->albedo));
+          } else if (auto mat = dynamic_cast<LambertShadowRay*>(light.get())) {
+            ImGui::Text("%u. Lambert (Shadow Ray)", i);
+            ImGui::InputFloat3("albedo",
+                               reinterpret_cast<float*>(&mat->albedo));
+          } else if (auto mat = dynamic_cast<Metal*>(light.get())) {
+            ImGui::Text("%u. Metal", i);
+            ImGui::InputFloat3("albedo",
+                               reinterpret_cast<float*>(&mat->albedo));
+          } else {
+            ImGui::Text("%u. Material", i);
+          }
+          ImGui::PopID();
+          ++i;
+        }
+      }
+    }
     if (ImGui::CollapsingHeader("Lights", ImGuiTreeNodeFlags_DefaultOpen)) {
       auto& light_list = dynamic_cast<ObjectList&>(scene.get_lights()).list;
       uint32_t i = 0;

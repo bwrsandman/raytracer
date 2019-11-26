@@ -4,9 +4,8 @@
 
 #include "vec3.h"
 
-class EmissiveLinearDropOff : public Material
+struct EmissiveLinearDropOff : public Material
 {
-public:
   EmissiveLinearDropOff(const vec3& a, float factor);
   bool scatter(const Scene& scene,
                const Ray& r_in,
@@ -14,6 +13,6 @@ public:
                vec3& attenuation,
                Ray& scattered) const override;
 
-  const vec3 albedo;
-  const float drop_off_factor;
+  vec3 albedo;
+  float drop_off_factor;
 };

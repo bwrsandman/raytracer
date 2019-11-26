@@ -4,9 +4,8 @@
 
 #include "vec3.h"
 
-class Emissive : public Material
+struct Emissive : public Material
 {
-public:
   explicit Emissive(const vec3& a);
   bool scatter(const Scene& scene,
                const Ray& r_in,
@@ -14,5 +13,5 @@ public:
                vec3& attenuation,
                Ray& scattered) const override;
 
-  const vec3 albedo;
+  vec3 albedo;
 };
