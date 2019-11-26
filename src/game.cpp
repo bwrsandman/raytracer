@@ -26,10 +26,11 @@ Game::main_loop()
   uint16_t width, height;
   window->get_dimensions(width, height);
   renderer->set_backbuffer_size(width, height);
-  renderer->run(*scene);
+  input->run(*ui);
   ui->run();
+  renderer->run(*scene);
+  ui->draw();
   window->swap();
-  input->run();
 
   return !input->should_quit();
 }
