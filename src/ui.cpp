@@ -41,6 +41,8 @@ Ui::run(Scene& scene) const
     if (ImGui::CollapsingHeader("Materials")) {
       auto& material_list = scene.get_material_list();
       uint32_t i = 0;
+      std::vector<std::vector<std::unique_ptr<Material>>::iterator>
+        remove_index;
       for (auto itr = material_list.begin(); itr < material_list.end(); ++itr) {
         auto& light = *itr;
         if (light) {
@@ -82,7 +84,41 @@ Ui::run(Scene& scene) const
           }
           ImGui::PopID();
           ++i;
+          if (ImGui::Button("Remove##materials")) {
+            remove_index.push_back(itr);
+          }
         }
+      }
+      for (auto itr : remove_index) {
+        material_list.erase(itr);
+      }
+
+      if (ImGui::Button("New Dielectric")) {
+        material_list.emplace_back(new Dielectric(1.0f));
+      }
+      if (ImGui::Button("Emissive (No Drop Off)")) {
+        const vec3 albedo(1.0f, 1.0f, 1.0f);
+        material_list.emplace_back(new Emissive(albedo));
+      }
+      if (ImGui::Button("Emissive (Linear Drop Off)")) {
+        const vec3 albedo(1.0f, 1.0f, 1.0f);
+        material_list.emplace_back(new EmissiveLinearDropOff(albedo, 1.0f));
+      }
+      if (ImGui::Button("Emissive (Quadratic Drop Off)")) {
+        const vec3 albedo(1.0f, 1.0f, 1.0f);
+        material_list.emplace_back(new EmissiveQuadraticDropOff(albedo, 1.0f));
+      }
+      if (ImGui::Button("Lambert (Scatter)")) {
+        const vec3 albedo(1.0f, 1.0f, 1.0f);
+        material_list.emplace_back(new LambertianScatter(albedo));
+      }
+      if (ImGui::Button("Lambert (Shadow Ray)")) {
+        const vec3 albedo(1.0f, 1.0f, 1.0f);
+        material_list.emplace_back(new LambertShadowRay(albedo));
+      }
+      if (ImGui::Button("Metal")) {
+        const vec3 albedo(1.0f, 1.0f, 1.0f);
+        material_list.emplace_back(new Metal(albedo));
       }
     }
     if (ImGui::CollapsingHeader("Geometry", ImGuiTreeNodeFlags_DefaultOpen)) {
@@ -118,7 +154,7 @@ Ui::run(Scene& scene) const
             ImGui::Text("%u. %s", i + 1, typeid(*light).name());
           }
           ++i;
-          if (ImGui::Button("Remove")) {
+          if (ImGui::Button("Remove##geometry")) {
             remove_index.push_back(itr);
           }
           ImGui::PopID();
