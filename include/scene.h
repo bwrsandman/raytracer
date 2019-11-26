@@ -14,6 +14,7 @@ public:
 
   const Object& get_world() const;
   const Object& get_lights() const;
+  Object& get_lights();
   const Material& get_material(uint16_t id) const;
 
 private:

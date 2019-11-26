@@ -4,7 +4,7 @@
 #include "hit_record.h"
 #include "ray.h"
 
-LineSegment::LineSegment(vec3 pos[2], uint16_t m)
+LineSegment::LineSegment(const vec3 pos[2], uint16_t m)
   : position{ pos[0], pos[1] }
   , mat_id(m)
 {}

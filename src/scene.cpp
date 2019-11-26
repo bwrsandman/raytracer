@@ -51,6 +51,12 @@ Scene::get_lights() const
   return *lights;
 }
 
+Object&
+Scene::get_lights()
+{
+  return *lights;
+}
+
 const Material&
 Scene::get_material(uint16_t id) const
 {
