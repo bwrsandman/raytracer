@@ -38,7 +38,7 @@ Ui::run(Scene& scene) const
   ImGui::NewFrame();
 
   if (ImGui::Begin("Configuration ")) {
-    if (ImGui::CollapsingHeader("Materials", ImGuiTreeNodeFlags_DefaultOpen)) {
+    if (ImGui::CollapsingHeader("Materials")) {
       auto& material_list = scene.get_material_list();
       uint32_t i = 0;
       for (auto itr = material_list.begin(); itr < material_list.end(); ++itr) {
@@ -85,6 +85,65 @@ Ui::run(Scene& scene) const
         }
       }
     }
+    if (ImGui::CollapsingHeader("Geometry", ImGuiTreeNodeFlags_DefaultOpen)) {
+      auto& geometry_list = dynamic_cast<ObjectList&>(scene.get_world()).list;
+      uint32_t i = 0;
+      std::vector<std::vector<std::unique_ptr<Object>>::iterator> remove_index;
+      for (auto itr = geometry_list.begin(); itr < geometry_list.end(); ++itr) {
+        auto& light = *itr;
+        if (light) {
+          ImGui::PushID(i);
+          if (auto point = dynamic_cast<Point*>(light.get())) {
+            ImGui::Text("%u. Point", i + 1);
+            ImGui::InputFloat3("position",
+                               reinterpret_cast<float*>(&point->position));
+            ImGui::InputScalar("mat_id", ImGuiDataType_U16, &point->mat_id);
+          } else if (auto line_segment =
+                       dynamic_cast<LineSegment*>(light.get())) {
+            ImGui::Text("%u. Line", i + 1);
+            ImGui::InputFloat3(
+              "start", reinterpret_cast<float*>(&line_segment->position[0]));
+            ImGui::InputFloat3(
+              "end", reinterpret_cast<float*>(&line_segment->position[1]));
+            ImGui::InputScalar(
+              "mat_id", ImGuiDataType_U16, &line_segment->mat_id);
+          } else if (auto sphere = dynamic_cast<Sphere*>(light.get())) {
+            ImGui::Text("%u. Sphere", i + 1);
+            ImGui::InputFloat3("center",
+                               reinterpret_cast<float*>(&sphere->center));
+            ImGui::InputFloat("radius",
+                              reinterpret_cast<float*>(&sphere->radius));
+            ImGui::InputScalar("mat_id", ImGuiDataType_U16, &sphere->mat_id);
+          } else {
+            ImGui::Text("%u. %s", i + 1, typeid(*light).name());
+          }
+          ++i;
+          if (ImGui::Button("Remove")) {
+            remove_index.push_back(itr);
+          }
+          ImGui::PopID();
+        }
+      }
+      for (auto itr : remove_index) {
+        geometry_list.erase(itr);
+      }
+
+      if (ImGui::Button("New Line")) {
+        const vec3 position[2] = {
+          vec3{ -1, 0, 0 },
+          vec3{ 1, 0, 0 },
+        };
+        geometry_list.emplace_back(new LineSegment(position, 0));
+      }
+      if (ImGui::Button("New Point")) {
+        const vec3 position = { 0, 0, 0 };
+        geometry_list.emplace_back(new Point(position, 0));
+      }
+      if (ImGui::Button("New Sphere")) {
+        const vec3 position = { 0, 0, 0 };
+        geometry_list.emplace_back(new Sphere(position, 1, 0));
+      }
+    }
     if (ImGui::CollapsingHeader("Lights", ImGuiTreeNodeFlags_DefaultOpen)) {
       auto& light_list = dynamic_cast<ObjectList&>(scene.get_lights()).list;
       uint32_t i = 0;
@@ -95,23 +154,34 @@ Ui::run(Scene& scene) const
           ImGui::PushID(i);
           if (auto point = dynamic_cast<Point*>(light.get())) {
             ImGui::Text("%u. Point Light", i + 1);
-            ImGui::InputFloat3("position",
+            ImGui::InputFloat3("position##light",
                                reinterpret_cast<float*>(&point->position));
-            ImGui::InputScalar("mat_id", ImGuiDataType_U16, &point->mat_id);
+            ImGui::InputScalar(
+              "mat_id##light", ImGuiDataType_U16, &point->mat_id);
           } else if (auto line_segment =
                        dynamic_cast<LineSegment*>(light.get())) {
             ImGui::Text("%u. Line Light", i + 1);
             ImGui::InputFloat3(
-              "start", reinterpret_cast<float*>(&line_segment->position[0]));
+              "start##light",
+              reinterpret_cast<float*>(&line_segment->position[0]));
             ImGui::InputFloat3(
-              "end", reinterpret_cast<float*>(&line_segment->position[1]));
+              "end##light",
+              reinterpret_cast<float*>(&line_segment->position[1]));
             ImGui::InputScalar(
-              "mat_id", ImGuiDataType_U16, &line_segment->mat_id);
+              "mat_id##light", ImGuiDataType_U16, &line_segment->mat_id);
+          } else if (auto sphere = dynamic_cast<Sphere*>(light.get())) {
+            ImGui::Text("%u. Sphere Light", i + 1);
+            ImGui::InputFloat3("center##light",
+                               reinterpret_cast<float*>(&sphere->center));
+            ImGui::InputFloat("radius##light",
+                              reinterpret_cast<float*>(&sphere->radius));
+            ImGui::InputScalar(
+              "mat_id##light", ImGuiDataType_U16, &sphere->mat_id);
           } else {
             ImGui::Text("%u. Light(%s)", i + 1, typeid(*light).name());
           }
           ++i;
-          if (ImGui::Button("Remove")) {
+          if (ImGui::Button("Remove##light")) {
             remove_index.push_back(itr);
           }
           ImGui::PopID();
@@ -121,18 +191,18 @@ Ui::run(Scene& scene) const
         light_list.erase(itr);
       }
 
-      if (ImGui::Button("New Line")) {
+      if (ImGui::Button("New Line##light")) {
         const vec3 position[2] = {
           vec3{ -1, 0, 0 },
           vec3{ 1, 0, 0 },
         };
         light_list.emplace_back(new LineSegment(position, 0));
       }
-      if (ImGui::Button("New Point")) {
+      if (ImGui::Button("New Point##light")) {
         const vec3 position = { 0, 0, 0 };
         light_list.emplace_back(new Point(position, 0));
       }
-      if (ImGui::Button("New Sphere")) {
+      if (ImGui::Button("New Sphere##light")) {
         const vec3 position = { 0, 0, 0 };
         light_list.emplace_back(new Sphere(position, 1, 0));
       }

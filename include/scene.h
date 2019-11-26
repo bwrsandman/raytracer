@@ -13,6 +13,7 @@ public:
   virtual ~Scene();
 
   const Object& get_world() const;
+  Object& get_world();
   const Object& get_lights() const;
   Object& get_lights();
   const Material& get_material(uint16_t id) const;

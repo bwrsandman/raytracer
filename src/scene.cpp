@@ -47,6 +47,12 @@ Scene::get_world() const
   return *world_objects;
 }
 
+Object&
+Scene::get_world()
+{
+  return *world_objects;
+}
+
 const Object&
 Scene::get_lights() const
 {
