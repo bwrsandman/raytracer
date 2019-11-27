@@ -206,6 +206,18 @@ RendererWhitted::color(const Ray& r, const Scene& scene, int depth)
 }
 
 void
+RendererWhitted::ray_gen(const Camera& camera)
+{
+  for (uint32_t y = 0; y < height; ++y) {
+    for (uint32_t x = 0; x < width; ++x) {
+      float u = static_cast<float>(x) / width;
+      float v = static_cast<float>(y) / height;
+      rays[x + y * width] = camera.get_ray(u, v);
+    }
+  }
+}
+
+void
 RendererWhitted::run(const Scene& scene)
 {
   static const float clear_color[4] = { 1.0f, 1.0f, 0.0f, 1.0f };
@@ -213,34 +225,23 @@ RendererWhitted::run(const Scene& scene)
   auto& cam = scene.get_camera();
 
   // raytracing
+  if (cam.is_dirty()) {
+    ray_gen(scene.get_camera());
+  }
+
   std::vector<std::thread> threads;
-  uint32_t num_cores = 1; // std::thread::hardware_concurrency();
+  uint32_t num_cores = std::thread::hardware_concurrency();
+  auto block_height = height / num_cores;
   for (uint32_t i = 0; i < num_cores; ++i) {
-    threads.emplace_back([this, i, num_cores, &cam, &scene]() {
-      for (uint32_t j = 0; j < height / num_cores; ++j) {
-        uint32_t y = j + i * height / num_cores;
-        for (uint32_t x = 0; x < width; ++x) {
+    auto offset = i * block_height * width;
+    auto length = block_height * width;
 
-          float u = static_cast<float>(x) / width;
-          float v = static_cast<float>(y) / height;
-
-          if (x == 0 && y == 150) {
-            printf("tadaa");
-          }
-
-          // Ray r(origin, lower_left_corner + u * horizontal + v * vertical);
-          Ray r = cam.get_ray(u, v);
-
-          // vec3 p = r.point_at_parameter(2.0);
-          vec3 col = saturate(color(r, scene, 0));
-          if (col.r() == 0.f && col.g() == 0.f && col.b() == 0.f) {
-            //             printf("black color at: %i, %i \n", x, y);
-          }
-
-          cpu_buffer[y * width + x] = {
-            sqrt(col.r()), sqrt(col.g()), sqrt(col.b()), 1.0f
-          };
-        }
+    threads.emplace_back([this, offset, length, &scene]() {
+      for (uint32_t i = 0; i < length; ++i) {
+        vec3 col = saturate(color(rays[offset + i], scene, 0));
+        cpu_buffer[offset + i] = {
+          sqrt(col.r()), sqrt(col.g()), sqrt(col.b()), 1.0f
+        };
       }
     });
   }
@@ -322,6 +323,8 @@ RendererWhitted::rebuild_backbuffers()
 #endif
 
   glViewport(0, 0, width, height);
+
+  rays.resize(width * height);
 }
 
 void

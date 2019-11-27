@@ -23,8 +23,10 @@ public:
 
   void set_aspect(float aspect)
   {
-    screen_aspect = aspect;
-    calculate_camera();
+    if (aspect != screen_aspect) {
+      screen_aspect = aspect;
+      calculate_camera();
+    }
   }
 
   void change_camera(vec3 c_lookfrom,
@@ -38,6 +40,7 @@ public:
     v_up += c_vup;
     v_fov += c_vfov;
     screen_aspect += c_aspect;
+    calculate_camera();
   }
 
   void calculate_camera()
@@ -55,7 +58,15 @@ public:
     lower_left_corner = origin - half_width * u - half_height * v - w;
     horizontal = 2 * half_width * u;
     vertical = 2 * half_height * v;
+
+    dirty = true;
   }
+
+  /// Call to know if camera related cached changes need to be refreshed
+  bool is_dirty() const { return dirty; }
+
+  /// Call once per frame to reset dirty flag
+  void set_clean() { dirty = false; }
 
   vec3 look_from;
   vec3 look_at;
@@ -67,4 +78,8 @@ public:
   vec3 lower_left_corner;
   vec3 horizontal;
   vec3 vertical;
+
+  /// Has the camera been changed this frame?
+  /// If not, then we can skip a lot of computation.
+  bool dirty;
 };

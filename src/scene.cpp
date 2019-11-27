@@ -55,6 +55,7 @@ Scene::~Scene() = default;
 void
 Scene::run(float width, float height)
 {
+  camera->set_clean();
   camera->set_aspect(width / height);
 }
 

@@ -47,6 +47,7 @@ public:
   explicit RendererWhitted(const Window& window);
   ~RendererWhitted() override;
 
+  void ray_gen(const Camera& camera);
   void run(const Scene& scene) override;
   void set_backbuffer_size(uint16_t w, uint16_t h) override;
 
@@ -60,6 +61,7 @@ private:
   uint16_t width;
   uint16_t height;
 
+  std::vector<Ray> rays;
   std::vector<Pixel> cpu_buffer;
   uint32_t gpu_buffer;
   uint32_t linear_sampler;
