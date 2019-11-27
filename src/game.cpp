@@ -26,6 +26,7 @@ Game::main_loop()
   uint16_t width, height;
   window->get_dimensions(width, height);
   renderer->set_backbuffer_size(width, height);
+  scene->run(width, height);
   input->run(*ui);
   ui->run(*scene);
   renderer->run(*scene);

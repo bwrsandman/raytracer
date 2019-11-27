@@ -210,8 +210,7 @@ RendererWhitted::run(const Scene& scene)
 {
   static const float clear_color[4] = { 1.0f, 1.0f, 0.0f, 1.0f };
 
-  Camera cam(
-    vec3(0, 0, 0), vec3(0, 0, -1), vec3(0, 1, 0), 90, (width / height));
+  auto& cam = scene.get_camera();
 
   // raytracing
   std::vector<std::thread> threads;

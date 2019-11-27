@@ -14,11 +14,17 @@ public:
   {
     calculate_camera();
   }
-  Ray get_ray(float s, float t)
+  Ray get_ray(float s, float t) const
   {
     auto direction = lower_left_corner + s * horizontal + t * vertical - origin;
     direction.make_unit_vector();
     return Ray(origin, direction);
+  }
+
+  void set_aspect(float aspect)
+  {
+    screen_aspect = aspect;
+    calculate_camera();
   }
 
   void change_camera(vec3 c_lookfrom,

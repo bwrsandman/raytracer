@@ -1,6 +1,7 @@
 #include "scene.h"
-#include <hittable/line_segment.h>
 
+#include "camera.h"
+#include "hittable/line_segment.h"
 #include "hittable/object_list.h"
 #include "hittable/plane.h"
 #include "hittable/point.h"
@@ -12,6 +13,11 @@
 #include "materials/metal.h"
 
 Scene::Scene()
+  : camera(std::make_unique<Camera>(vec3(0, 0, 0),
+                                    vec3(0, 0, -1),
+                                    vec3(0, 1, 0),
+                                    90,
+                                    1))
 {
   materials.emplace_back(
     std::make_unique<LambertShadowRay>(vec3(0.8, 0.3, 0.3)));
@@ -45,6 +51,18 @@ Scene::Scene()
 }
 
 Scene::~Scene() = default;
+
+void
+Scene::run(float width, float height)
+{
+  camera->set_aspect(width / height);
+}
+
+const Camera&
+Scene::get_camera() const
+{
+  return *camera;
+}
 
 const Object&
 Scene::get_world() const
