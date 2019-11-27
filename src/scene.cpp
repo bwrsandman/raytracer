@@ -2,13 +2,14 @@
 #include <hittable/line_segment.h>
 
 #include "hittable/object_list.h"
+#include "hittable/plane.h"
 #include "hittable/point.h"
 #include "hittable/sphere.h"
+#include "materials/dielectric.h"
 #include "materials/emissive_linear_drop_off.h"
 #include "materials/lambert_scatter.h"
 #include "materials/lambert_shadow_ray.h"
 #include "materials/metal.h"
-#include "materials/dielectric.h"
 
 Scene::Scene()
 {
@@ -24,8 +25,7 @@ Scene::Scene()
     std::make_unique<EmissiveLinearDropOff>(vec3(0, 0, 0.8), 0.01f));
   materials.emplace_back(
     std::make_unique<EmissiveLinearDropOff>(vec3(0.5, 0.5, 0.5), 0.01f));
-  materials.emplace_back(
-    std::make_unique<Dielectric>( 1.5f));
+  materials.emplace_back(std::make_unique<Dielectric>(1.5f));
 
   std::vector<std::unique_ptr<Object>> list;
   list.emplace_back(std::make_unique<Sphere>(vec3(0, 0, -1), 0.5, 0));
@@ -33,6 +33,7 @@ Scene::Scene()
   list.emplace_back(std::make_unique<Sphere>(vec3(1, 0, -1.1), 0.5, 2));
   list.emplace_back(std::make_unique<Sphere>(vec3(-1, 0, -1.1), 0.5, 7));
   //list.emplace_back(std::make_unique<Sphere>(vec3(-1, 0, -1.1), -0.4, 7));
+  //list.emplace_back(std::make_unique<Plane>(0.5, 1.5, -0.5, 0.5, -2, 2));
   world_objects = std::make_unique<ObjectList>(std::move(list));
 
   std::vector<std::unique_ptr<Object>> light_list;

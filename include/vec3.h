@@ -212,16 +212,30 @@ reflect(const vec3& v, const vec3& n)
 
 // Snells law
 inline bool
-refract(const vec3& v, const vec3& n, float ni_over_nt, vec3& refracted)
+refract(const vec3& v, vec3& n, float ni, float nt, vec3& refracted)
 {
   vec3 uv = unit_vector(v);
   float cosi = dot(uv, n); // cosi()
-  float discriminant = 1.0 - ni_over_nt * ni_over_nt * (1 - cosi * cosi);
-  if (discriminant > 0) { // Refraction
-    refracted = ni_over_nt * (uv - n * cosi) - n * sqrt(discriminant);
-    return true;
-  } else // Total internal reflection
+
+  if (cosi < 0) {
+    // Total internal reflection
+    cosi = -cosi;
+    //return false;
+  } else {
+    std::swap(ni, nt);
+    n = vec3(-n);
+  }
+  float ni_over_nt = ni / nt;
+
+  // Refraction
+  float cost2 = 1.0 - ni_over_nt * ni_over_nt * (1 - cosi * cosi);
+  if (cost2 < 0)
     return false;
+  
+  refracted = ni_over_nt * (uv - n * cosi) - n * sqrt(cost2);
+
+  //refracted = ni_over_nt * uv + (ni_over_nt * cosi - sqrt(cost2)) * n;
+  return true;
 }
 
 // Fresnels law
@@ -240,10 +254,15 @@ fresnel_rate(const vec3& v, const vec3& n, float ni, float nt)
   vec3 uv = unit_vector(v);
   float cosi = dot(uv, n);
 
+  if (cosi > 0) {
+    // Inside object
+    std::swap(ni, nt);
+  }
+
   // using Snells law (from cosi to sini to sint)
-  float cost2 = 1.f - (ni_over_nt  * ni_over_nt * (1 - cosi * cosi));
+  float cost2 = 1.f - (ni_over_nt * ni_over_nt * (1 - cosi * cosi));
   // Total internal reflection
-  if (cost2 <= 0) {
+  if (cost2 < 0) {
     return vec3(1.0, 1.0, 1.0);
   }
 
@@ -258,7 +277,7 @@ fresnel_rate(const vec3& v, const vec3& n, float ni, float nt)
 
   return vec3(fr, fr, fr);
   // As a consequence of the conservation of energy, transmittance is given by:
-  // kt = 1 - kr;
+  // ft = 1 - fr;
 }
 
 inline vec3

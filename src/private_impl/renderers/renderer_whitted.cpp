@@ -160,14 +160,15 @@ RendererWhitted::color(const Ray& r, const Scene& scene, int depth)
 {
   hit_record rec;
   if (scene.get_world().hit(r, 0.001, std::numeric_limits<float>::max(), rec)) {
-    //Ray scattered{};
+    // Ray scattered{};
     vec3 attenuation = vec3(0.0f, 0.0f, 0.0f);
     Ray scattered[2];
     if (depth < 50 && scene.get_material(rec.mat_id)
                         .scatter(scene, r, rec, attenuation, scattered)) {
       if (rec.mat_id == 7) { // hot fix for glass
         return attenuation * color(scattered[0], scene, depth + 1) +
-               (vec3(1.f,1.f,1.f) - attenuation) * color(scattered[1], scene, depth + 1);
+               (vec3(1.f, 1.f, 1.f) - attenuation) *
+                 color(scattered[1], scene, depth + 1);
       } else {
         return attenuation * color(scattered[0], scene, depth + 1);
       }
@@ -187,12 +188,8 @@ RendererWhitted::run(const Scene& scene)
 {
   static const float clear_color[4] = { 1.0f, 1.0f, 0.0f, 1.0f };
 
-  vec3 lower_left_corner(-4.0, 3.0, -3.0);
-  vec3 horizontal(8.0, 0.0, 0.0);
-  vec3 vertical(0.0, -6.0, 0.0);
-  vec3 origin(0.0, 0.0, 0.0);
-
-  Camera cam;
+  Camera cam(
+    vec3(0, 0, 0), vec3(0, 0, -1), vec3(0, 1, 0), 90, (width / height));
 
   // raytracing
   for (uint32_t y = 0; y < height; ++y) {
@@ -201,14 +198,15 @@ RendererWhitted::run(const Scene& scene)
       float u = static_cast<float>(x) / width;
       float v = static_cast<float>(y) / height;
 
-      //Ray r(origin, lower_left_corner + u * horizontal + v * vertical);
+      // Ray r(origin, lower_left_corner + u * horizontal + v * vertical);
       Ray r = cam.get_ray(u, v);
 
-      //vec3 p = r.point_at_parameter(2.0);
+      // vec3 p = r.point_at_parameter(2.0);
       vec3 col = saturate(color(r, scene, 0));
 
-      cpu_buffer[y * width + x] = { sqrt(col.r()), sqrt(col.g()), sqrt(col.b()), 1.0f };
-     
+      cpu_buffer[y * width + x] = {
+        sqrt(col.r()), sqrt(col.g()), sqrt(col.b()), 1.0f
+      };
     }
   }
 
