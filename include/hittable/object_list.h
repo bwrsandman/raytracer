@@ -5,9 +5,8 @@
 #include <memory>
 #include <vector>
 
-class ObjectList : public Object
+struct ObjectList : public Object
 {
-public:
   explicit ObjectList(std::vector<std::unique_ptr<Object>>&& l);
   ~ObjectList() override;
   bool hit(const Ray& r,
@@ -16,6 +15,5 @@ public:
            hit_record& rec) const override;
   vec3 random_point() const override;
 
-private:
   std::vector<std::unique_ptr<Object>> list;
 };

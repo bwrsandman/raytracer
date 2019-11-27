@@ -4,9 +4,8 @@
 
 #include "vec3.h"
 
-class LambertShadowRay : public Material
+struct LambertShadowRay : public Material
 {
-public:
   explicit LambertShadowRay(const vec3& a);
   bool scatter(const Scene& scene,
                const Ray& r_in,
@@ -14,6 +13,5 @@ public:
                vec3& attenuation,
                Ray (&scattered)[2]) const override;
 
-private:
   vec3 albedo;
 };

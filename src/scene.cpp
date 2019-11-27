@@ -44,8 +44,16 @@ Scene::Scene()
   lights = std::make_unique<ObjectList>(std::move(light_list));
 }
 
+Scene::~Scene() = default;
+
 const Object&
 Scene::get_world() const
+{
+  return *world_objects;
+}
+
+Object&
+Scene::get_world()
 {
   return *world_objects;
 }
@@ -56,10 +64,20 @@ Scene::get_lights() const
   return *lights;
 }
 
+Object&
+Scene::get_lights()
+{
+  return *lights;
+}
+
 const Material&
 Scene::get_material(uint16_t id) const
 {
   return *materials[id];
 }
 
-Scene::~Scene() = default;
+std::vector<std::unique_ptr<Material>>&
+Scene::get_material_list()
+{
+  return materials;
+}

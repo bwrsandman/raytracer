@@ -13,8 +13,11 @@ public:
   virtual ~Scene();
 
   const Object& get_world() const;
+  Object& get_world();
   const Object& get_lights() const;
+  Object& get_lights();
   const Material& get_material(uint16_t id) const;
+  std::vector<std::unique_ptr<Material>>& get_material_list();
 
 private:
   std::vector<std::unique_ptr<Material>> materials;
