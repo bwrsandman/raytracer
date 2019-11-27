@@ -1,17 +1,15 @@
 #include "renderer_whitted.h"
 
+#include <thread>
+
 #include <SDL_video.h>
 
 #include <glad/glad.h>
-#include <scene.h>
 
 #if __EMSCRIPTEN__
 #include <emscripten/emscripten.h>
 #include <emscripten/html5.h>
 #endif
-
-#include "pipeline.h"
-#include "window.h"
 
 #include "camera.h"
 #include "hit_record.h"
@@ -20,7 +18,10 @@
 #include "material.h"
 #include "materials/lambert_scatter.h"
 #include "materials/metal.h"
+#include "pipeline.h"
 #include "ray.h"
+#include "scene.h"
+#include "window.h"
 
 #include "shaders/fullscreen_fs.h"
 #include "shaders/passthrough_vs.h"
@@ -192,22 +193,33 @@ RendererWhitted::run(const Scene& scene)
     vec3(0, 0, 0), vec3(0, 0, -1), vec3(0, 1, 0), 90, (width / height));
 
   // raytracing
-  for (uint32_t y = 0; y < height; ++y) {
-    for (uint32_t x = 0; x < width; ++x) {
+  std::vector<std::thread> threads;
+  uint32_t num_cores = std::thread::hardware_concurrency();
+  for (uint32_t i = 0; i < num_cores; ++i) {
+    threads.emplace_back([this, i, num_cores, &cam, &scene]() {
+      for (uint32_t j = 0; j < height / num_cores; ++j) {
+        uint32_t y = j + i * height / num_cores;
+        for (uint32_t x = 0; x < width; ++x) {
 
-      float u = static_cast<float>(x) / width;
-      float v = static_cast<float>(y) / height;
+          float u = static_cast<float>(x) / width;
+          float v = static_cast<float>(y) / height;
 
-      // Ray r(origin, lower_left_corner + u * horizontal + v * vertical);
-      Ray r = cam.get_ray(u, v);
+          // Ray r(origin, lower_left_corner + u * horizontal + v * vertical);
+          Ray r = cam.get_ray(u, v);
 
-      // vec3 p = r.point_at_parameter(2.0);
-      vec3 col = saturate(color(r, scene, 0));
+          // vec3 p = r.point_at_parameter(2.0);
+          vec3 col = saturate(color(r, scene, 0));
 
-      cpu_buffer[y * width + x] = {
-        sqrt(col.r()), sqrt(col.g()), sqrt(col.b()), 1.0f
-      };
-    }
+          cpu_buffer[y * width + x] = {
+            sqrt(col.r()), sqrt(col.g()), sqrt(col.b()), 1.0f
+          };
+        }
+      }
+    });
+  }
+
+  for (auto& t : threads) {
+    t.join();
   }
 
   // binding texture

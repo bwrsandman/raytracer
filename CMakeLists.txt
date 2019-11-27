@@ -34,9 +34,10 @@ add_executable(Whitted_Raytracing ${sources} ${headers}  ${private_impl_sources}
 
 if (EMSCRIPTEN)
     set_target_properties(Whitted_Raytracing PROPERTIES
-      COMPILE_FLAGS "-s MAIN_MODULE=1"
-      LINK_FLAGS "-s USE_SDL=2 -s MAIN_MODULE=1 -s FULL_ES3=1 -s GL_ASSERTIONS=1 -s USE_WEBGL2=1 --emrun"
-      POSITION_INDEPENDENT_CODE ON
+      COMPILE_FLAGS_DEBUG "-g4"
+      LINK_FLAGS_DEBUG "-g4"
+      COMPILE_FLAGS "-s USE_PTHREADS=1 -s PTHREAD_POOL_SIZE=64 -s TOTAL_MEMORY=64MB"
+      LINK_FLAGS "-s USE_SDL=2 -s FULL_ES3=1 -s GL_ASSERTIONS=1 -s USE_WEBGL2=1 -s USE_PTHREADS=1 -s PTHREAD_POOL_SIZE=64 -s TOTAL_MEMORY=64MB --emrun"
       SUFFIX ".html"
     )
     list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules/backport")
@@ -45,18 +46,14 @@ if (EMSCRIPTEN)
       spirv-cross
       URL https://github.com/KhronosGroup/SPIRV-Cross/archive/2019-11-01.tar.gz
       URL_HASH MD5=841d5055ef364a4dea7b06378336212a
+      CMAKE_CACHE_ARGS "-DSPIRV_CROSS_CLI:STRING=OFF -DSPIRV_CROSS_ENABLE_TESTS:STRING=OFF"
     )
     FetchContent_MakeAvailable(spirv-cross)
-    set_target_properties(spirv-cross-core PROPERTIES
-      COMPILE_FLAGS "-s SIDE_MODULE=1"
-      LINK_FLAGS "-s SIDE_MODULE=1"
-      POSITION_INDEPENDENT_CODE ON
-    )
     set_target_properties(spirv-cross-glsl PROPERTIES
-      COMPILE_FLAGS "-s SIDE_MODULE=1"
-      LINK_FLAGS "-s SIDE_MODULE=1"
-      POSITION_INDEPENDENT_CODE ON
-    )
+      COMPILE_FLAGS_DEBUG "-g4"
+      LINK_FLAGS_DEBUG "-g4"
+      COMPILE_FLAGS "-s USE_PTHREADS=1"
+      LINK_FLAGS "-s USE_PTHREADS=1")
     set(LIBRARIES glad imgui spirv-cross-glsl)
 else()
     find_package(SDL2 REQUIRED)
