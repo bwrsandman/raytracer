@@ -13,14 +13,6 @@ class Pipeline;
 
 typedef void* SDL_GLContext;
 
-struct Pixel
-{
-  float r;
-  float g;
-  float b;
-  float a;
-};
-
 struct IndexedMesh
 {
   struct MeshAttributes
@@ -62,7 +54,7 @@ private:
   uint16_t height;
 
   std::vector<Ray> rays;
-  std::vector<Pixel> cpu_buffer;
+  std::vector<vec3> cpu_buffer;
   uint32_t gpu_buffer;
   uint32_t linear_sampler;
   std::unique_ptr<Pipeline> screen_space_pipeline;

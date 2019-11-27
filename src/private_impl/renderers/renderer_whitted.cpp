@@ -238,10 +238,7 @@ RendererWhitted::run(const Scene& scene)
 
     threads.emplace_back([this, offset, length, &scene]() {
       for (uint32_t i = 0; i < length; ++i) {
-        vec3 col = saturate(color(rays[offset + i], scene, 0));
-        cpu_buffer[offset + i] = {
-          sqrt(col.r()), sqrt(col.g()), sqrt(col.b()), 1.0f
-        };
+        cpu_buffer[offset + i] = color(rays[offset + i], scene, 0);
       }
     });
   }
@@ -252,15 +249,8 @@ RendererWhitted::run(const Scene& scene)
 
   // binding texture
   glBindTexture(GL_TEXTURE_2D, gpu_buffer);
-  glTexSubImage2D(GL_TEXTURE_2D,
-                  0,
-                  0,
-                  0,
-                  width,
-                  height,
-                  GL_RGBA,
-                  GL_FLOAT,
-                  cpu_buffer.data());
+  glTexSubImage2D(
+    GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGB, GL_FLOAT, cpu_buffer.data());
 
   // clearing screen
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -299,23 +289,22 @@ RendererWhitted::rebuild_backbuffers()
 
   for (uint32_t y = 0; y < height; ++y) {
     for (uint32_t x = 0; x < width; ++x) {
-      cpu_buffer[y * width + x].r =
+      cpu_buffer[y * width + x][0] =
         ((y / 4) % 2) * static_cast<float>(x) / width;
-      cpu_buffer[y * width + x].g =
+      cpu_buffer[y * width + x][1] =
         ((y / 4) % 2) * static_cast<float>(y) / height;
-      cpu_buffer[y * width + x].b = 0;
-      cpu_buffer[y * width + x].a = 1.0f;
+      cpu_buffer[y * width + x][2] = 0;
     }
   }
 
   glBindTexture(GL_TEXTURE_2D, gpu_buffer);
   glTexImage2D(GL_TEXTURE_2D,
                0,
-               GL_RGBA32F,
+               GL_RGB32F,
                width,
                height,
                0,
-               GL_RGBA,
+               GL_RGB,
                GL_FLOAT,
                cpu_buffer.data());
 #if !__EMSCRIPTEN__
