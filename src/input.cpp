@@ -2,6 +2,8 @@
 
 #include <SDL.h>
 
+#include "camera.h"
+#include "scene.h"
 #include "ui.h"
 
 Input::Input()
@@ -11,12 +13,13 @@ Input::Input()
 Input::~Input() = default;
 
 void
-Input::run(Ui& ui)
+Input::run(Ui& ui, Scene& scene)
 {
   SDL_Event event;
 
   while (SDL_PollEvent(&event)) {
     ui.process_event(event);
+    scene.get_camera().process_event(event);
     switch (event.type) {
       case SDL_QUIT:
         quit = true;
@@ -36,10 +39,6 @@ Input::run(Ui& ui)
   }
 
 }
-
-void
-Input::update_camera(Camera& camera) const
-{}
 
 bool
 Input::should_quit() const

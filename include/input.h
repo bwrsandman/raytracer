@@ -1,14 +1,13 @@
 #pragma once
 
-class Camera;
+class Scene;
 class Ui;
 
 class Input {
 public:
   Input();
   virtual ~Input();
-  void run(Ui& ui);
-  void update_camera(Camera& camera) const;
+  void run(Ui& ui, Scene& scene);
   bool should_quit() const;
 
 private:

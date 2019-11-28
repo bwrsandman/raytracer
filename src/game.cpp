@@ -27,7 +27,7 @@ Game::main_loop()
   window->get_dimensions(width, height);
   renderer->set_backbuffer_size(width, height);
   scene->run(width, height);
-  input->run(*ui);
+  input->run(*ui, *scene);
   ui->run(*scene);
   renderer->run(*scene);
   //ui->draw();

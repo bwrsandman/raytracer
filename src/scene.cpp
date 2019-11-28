@@ -59,6 +59,12 @@ Scene::run(float width, float height)
   camera->set_aspect(width / height);
 }
 
+Camera&
+Scene::get_camera()
+{
+  return *camera;
+}
+
 const Camera&
 Scene::get_camera() const
 {

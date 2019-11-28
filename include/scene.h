@@ -15,6 +15,7 @@ public:
 
   void run(float width, float height);
 
+  Camera& get_camera();
   const Camera& get_camera() const;
   const Object& get_world() const;
   Object& get_world();
