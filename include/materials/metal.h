@@ -9,10 +9,14 @@ struct hit_record;
 
 struct Metal : public Material
 {
-  explicit Metal(const vec3& a);
+  Metal(const vec3& a,
+        uint16_t albedo_texture_id = std::numeric_limits<uint16_t>::max(),
+        uint16_t normal_texture_id = std::numeric_limits<uint16_t>::max());
   void fill_type_data(const Scene& scene,
                       RayPayload& payload,
-                      float (&texture_coordinates)[2]) const override;
+                      const float (&texture_coordinates)[2]) const override;
 
   vec3 albedo;
+  uint16_t albedo_texture_id;
+  uint16_t normal_texture_id;
 };

@@ -1,9 +1,9 @@
 #pragma once
 
 #include <algorithm>
+#include <cmath>
+#include <cstdlib>
 #include <iostream>
-#include <math.h>
-#include <stdlib.h>
 
 class vec3
 {
@@ -344,4 +344,12 @@ static vec3
 lerp(const vec3& from, const vec3& to, float t)
 {
   return from * t + to * (1.0f - t);
+}
+
+namespace std {
+inline vec3
+sqrt(const vec3& v)
+{
+  return vec3(std::sqrt(v.e[0]), std::sqrt(v.e[1]), std::sqrt(v.e[2]));
+}
 }

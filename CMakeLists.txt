@@ -9,6 +9,8 @@ file(GLOB_RECURSE private_impl_sources CONFIGURE_DEPENDS src/private_impl/*)
 
 file(GLOB shaders CONFIGURE_DEPENDS src/shaders/*.glsl)
 
+file(GLOB_RECURSE textures CONFIGURE_DEPENDS assets/*.jpg assets/*.tga)
+
 # Tell CMake how to compile shaders into SPIV, then into headers
 foreach(shader ${shaders})
     file(RELATIVE_PATH shader_relative_path "${CMAKE_CURRENT_SOURCE_DIR}" "${shader}")
@@ -30,6 +32,19 @@ foreach(shader ${shaders})
     list(APPEND sources ${compiled_shader})
 endforeach()
 
+# Tell CMake how to include assets
+foreach(texture ${textures})
+    get_filename_component(texture_name ${texture} NAME)
+    set(texture_output ${CMAKE_CURRENT_BINARY_DIR}/${texture_name})
+    add_custom_command(
+            OUTPUT ${texture_output}
+            COMMAND ${CMAKE_COMMAND} -E copy ${texture} ${texture_output}
+            DEPENDS ${texture}
+    )
+    list(APPEND sources ${texture_output})
+    set(EMBED_FILES "${EMBED_FILES} --embed-file ${texture_name}")
+endforeach()
+
 add_executable(Whitted_Raytracing ${sources} ${headers}  ${private_impl_sources})
 
 if (EMSCRIPTEN)
@@ -37,7 +52,7 @@ if (EMSCRIPTEN)
       COMPILE_FLAGS_DEBUG "-g4"
       LINK_FLAGS_DEBUG "-g4"
       COMPILE_FLAGS "-s USE_PTHREADS=1 -s PTHREAD_POOL_SIZE=64 -s TOTAL_MEMORY=64MB"
-      LINK_FLAGS "-s USE_SDL=2 -s FULL_ES3=1 -s GL_ASSERTIONS=1 -s USE_WEBGL2=1 -s USE_PTHREADS=1 -s PTHREAD_POOL_SIZE=64 -s TOTAL_MEMORY=64MB --emrun"
+      LINK_FLAGS "-s USE_SDL=2 -s FULL_ES3=1 -s GL_ASSERTIONS=1 -s USE_WEBGL2=1 -s USE_PTHREADS=1 -s PTHREAD_POOL_SIZE=64 -s TOTAL_MEMORY=512MB ${EMBED_FILES} --emrun"
       SUFFIX ".html"
     )
     list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules/backport")
@@ -68,6 +83,7 @@ add_subdirectory(3rd_party/imgui-1.73)
 target_include_directories(Whitted_Raytracing
   PRIVATE
     include/
+    3rd_party/stb
     # Compiled shaders
     ${CMAKE_CURRENT_BINARY_DIR}/src)
 target_link_libraries(Whitted_Raytracing PRIVATE ${LIBRARIES})

@@ -14,6 +14,9 @@ Sphere::~Sphere() = default;
 bool
 Sphere::hit(const Ray& r, float t_min, float t_max, hit_record& rec) const
 {
+  static constexpr float f32_1_2PI = 0.5f / M_PI;
+  static constexpr float f32_1_PI = 1.0f / M_PI;
+
   vec3 oc = r.origin - center;
   float a = dot(r.direction, r.direction);
   float b = dot(oc, r.direction);
@@ -30,9 +33,11 @@ Sphere::hit(const Ray& r, float t_min, float t_max, hit_record& rec) const
     rec.t = temp;
     rec.p = r.point_at_parameter(rec.t);
     rec.normal = (rec.p - center) / radius;
+    rec.tangent = cross(rec.normal, vec3(0, 1, 0));
+    rec.tangent.make_unit_vector();
     rec.uv[0] =
-      0.5f + std::atan2(-rec.normal.z(), -rec.normal.x()) * M_1_PIf32 * 0.5f;
-    rec.uv[1] = 0.5f - std::asin(-rec.normal.y()) * M_1_PIf32;
+      0.5f + std::atan2(-rec.normal.z(), rec.normal.x()) * f32_1_2PI * 0.5f;
+    rec.uv[1] = 0.5f - std::asin(rec.normal.y()) * f32_1_PI;
     rec.mat_id = mat_id;
     return true;
   }

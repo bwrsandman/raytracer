@@ -11,7 +11,7 @@ Dielectric::Dielectric(float ri, float ni)
 void
 Dielectric::fill_type_data(const Scene& scene,
                            RayPayload& payload,
-                           float (&texture_coordinates)[2]) const
+                           const float (&texture_coordinates)[2]) const
 {
   payload.type = RayPayload::Type::Dielectric;
   payload.dielectric.ni = ni;

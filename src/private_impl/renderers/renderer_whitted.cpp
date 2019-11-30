@@ -182,6 +182,7 @@ RendererWhitted::trace(RayPayload& payload,
   if (hit_anything) {
     payload.distance = rec.t;
     payload.normal = rec.normal;
+    payload.tangent = rec.tangent;
     auto& mat = scene.get_material(rec.mat_id);
     mat.fill_type_data(scene, payload, rec.uv);
   } else {
@@ -365,7 +366,7 @@ RendererWhitted::run(const Scene& scene)
 
     threads.emplace_back([this, offset, length, &scene]() {
       for (uint32_t i = 0; i < length; ++i) {
-        cpu_buffer[offset + i] = raygen(rays[offset + i], scene);
+        cpu_buffer[offset + i] = std::sqrt(raygen(rays[offset + i], scene));
       }
     });
   }

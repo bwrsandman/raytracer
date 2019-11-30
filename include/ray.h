@@ -47,5 +47,6 @@ struct RayPayload
 
   float distance;
   vec3 normal;
+  vec3 tangent;
   Type type;
 };
