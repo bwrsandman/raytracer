@@ -14,7 +14,7 @@
 #include "materials/emissive.h"
 #include "materials/emissive_linear_drop_off.h"
 #include "materials/emissive_quadratic_drop_off.h"
-#include "materials/lambert_shadow_ray.h"
+#include "materials/lambert.h"
 #include "materials/metal.h"
 #include "scene.h"
 
@@ -66,7 +66,7 @@ Ui::run(Scene& scene) const
                                reinterpret_cast<float*>(&mat->albedo));
             ImGui::InputFloat("drop-off factor",
                               reinterpret_cast<float*>(&mat->drop_off_factor));
-          } else if (auto mat = dynamic_cast<LambertShadowRay*>(light.get())) {
+          } else if (auto mat = dynamic_cast<Lambert*>(light.get())) {
             ImGui::Text("%u. Lambert (Shadow Ray)", i);
             ImGui::InputFloat3("albedo",
                                reinterpret_cast<float*>(&mat->albedo));
@@ -105,7 +105,7 @@ Ui::run(Scene& scene) const
       }
       if (ImGui::Button("Lambert (Shadow Ray)")) {
         const vec3 albedo(1.0f, 1.0f, 1.0f);
-        material_list.emplace_back(new LambertShadowRay(albedo));
+        material_list.emplace_back(new Lambert(albedo));
       }
       if (ImGui::Button("Metal")) {
         const vec3 albedo(1.0f, 1.0f, 1.0f);

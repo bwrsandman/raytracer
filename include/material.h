@@ -3,10 +3,12 @@
 #include "vec3.h"
 
 struct RayPayload;
+struct Scene;
 
-class Material
+struct Material
 {
-public:
   virtual ~Material() = default;
-  virtual void fill_type_data(RayPayload& payload) const = 0;
+  virtual void fill_type_data(const Scene& scene,
+                              RayPayload& payload,
+                              float (&texture_coordinates)[2]) const = 0;
 };

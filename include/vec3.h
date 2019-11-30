@@ -23,6 +23,10 @@ public:
   inline float b() const { return e[2]; }
 
   inline const vec3& operator+() const { return *this; }
+  inline vec3 operator-(const vec3& rhs) const
+  {
+    return vec3(e[0] - rhs.e[0], e[1] - rhs.e[1], e[2] - rhs.e[2]);
+  }
   inline vec3 operator-() const { return vec3(-e[0], -e[1], -e[2]); }
   inline float operator[](int i) const { return e[i]; }
   inline float& operator[](int i) { return e[i]; }
@@ -74,12 +78,6 @@ inline vec3
 operator+(const vec3& v1, const vec3& v2)
 {
   return vec3(v1.e[0] + v2.e[0], v1.e[1] + v2.e[1], v1.e[2] + v2.e[2]);
-}
-
-inline vec3
-operator-(const vec3& v1, const vec3& v2)
-{
-  return vec3(v1.e[0] - v2.e[0], v1.e[1] - v2.e[1], v1.e[2] - v2.e[2]);
 }
 
 inline vec3 operator*(const vec3& v1, const vec3& v2)

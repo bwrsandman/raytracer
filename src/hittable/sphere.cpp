@@ -21,21 +21,20 @@ Sphere::hit(const Ray& r, float t_min, float t_max, hit_record& rec) const
   float discriminant = b * b - a * c;
   if (discriminant > 0) {
     float temp = (-b - sqrt(discriminant)) / a;
-    if (temp < t_max && temp > t_min) {
-      rec.t = temp;
-      rec.p = r.point_at_parameter(rec.t);
-      rec.normal = (rec.p - center) / radius;
-      rec.mat_id = mat_id;
-      return true;
+    if (temp >= t_max || temp <= t_min) {
+      temp = (-b + sqrt(discriminant)) / a;
+      if (temp >= t_max || temp <= t_min) {
+        return false;
+      }
     }
-    temp = (-b + sqrt(discriminant)) / a;
-    if (temp < t_max && temp > t_min) {
-      rec.t = temp;
-      rec.p = r.point_at_parameter(rec.t);
-      rec.normal = (rec.p - center) / radius;
-      rec.mat_id = mat_id;
-      return true;
-    }
+    rec.t = temp;
+    rec.p = r.point_at_parameter(rec.t);
+    rec.normal = (rec.p - center) / radius;
+    rec.uv[0] =
+      0.5f + std::atan2(-rec.normal.z(), -rec.normal.x()) * M_1_PIf32 * 0.5f;
+    rec.uv[1] = 0.5f - std::asin(-rec.normal.y()) * M_1_PIf32;
+    rec.mat_id = mat_id;
+    return true;
   }
   return false;
 }

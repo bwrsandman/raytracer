@@ -2,13 +2,14 @@
 
 #include "material.h"
 
-struct Dielectric : public Material
+#include "vec3.h"
+
+struct Lambert : public Material
 {
-  explicit Dielectric(float ri, float ni);
+  explicit Lambert(const vec3& a);
   void fill_type_data(const Scene& scene,
                       RayPayload& payload,
                       float (&texture_coordinates)[2]) const override;
 
-  float ref_idx;
-  float ni;
+  vec3 albedo;
 };

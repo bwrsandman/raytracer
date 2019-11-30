@@ -183,7 +183,7 @@ RendererWhitted::trace(RayPayload& payload,
     payload.distance = rec.t;
     payload.normal = rec.normal;
     auto& mat = scene.get_material(rec.mat_id);
-    mat.fill_type_data(payload);
+    mat.fill_type_data(scene, payload, rec.uv);
   } else {
     payload.distance = 0;
     payload.type = RayPayload::Type::NoHit;

@@ -9,7 +9,7 @@
 #include "materials/dielectric.h"
 #include "materials/emissive_linear_drop_off.h"
 #include "materials/emissive_quadratic_drop_off.h"
-#include "materials/lambert_shadow_ray.h"
+#include "materials/lambert.h"
 #include "materials/metal.h"
 
 std::unique_ptr<Scene>
@@ -20,11 +20,8 @@ Scene::load_test_scene()
 
   auto camera = std::make_unique<Camera>(
     vec3(0, 0, 0), vec3(0, 0, -1), vec3(0, 1, 0), 90, 1);
-
-  materials.emplace_back(
-    std::make_unique<LambertShadowRay>(vec3(0.8, 0.3, 0.3)));
-  materials.emplace_back(
-    std::make_unique<LambertShadowRay>(vec3(0.8, 0.8, 0.8)));
+  materials.emplace_back(std::make_unique<Lambert>(vec3(0.8, 0.3, 0.3)));
+  materials.emplace_back(std::make_unique<Lambert>(vec3(0.8, 0.8, 0.8)));
   materials.emplace_back(std::make_unique<Metal>(vec3(0.8, 0.6, 0.2)));
   materials.emplace_back(std::make_unique<Metal>(vec3(0.8, 0.8, 0.8)));
   materials.emplace_back(
