@@ -39,9 +39,3 @@ Sphere::hit(const Ray& r, float t_min, float t_max, hit_record& rec) const
   }
   return false;
 }
-
-vec3
-Sphere::random_point() const
-{
-  return random_in_unit_sphere() * radius + center;
-}

@@ -280,7 +280,7 @@ fresnel_rate(const vec3& v, const vec3& n, float ni, float nt)
   float ni_over_nt = (ni / nt);
   vec3 uv = unit_vector(v);
   vec3 un = unit_vector(n);
-  float cosi = std::min(1.0f, std::max(-1.0f, dot(uv, un)));
+  float cosi = std::clamp(dot(uv, un), -1.0f, 1.0f);
 
   //if (cosi >= 0) {
   //  // Inside object

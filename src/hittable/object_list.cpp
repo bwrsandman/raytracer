@@ -26,13 +26,3 @@ ObjectList::hit(const Ray& r, float t_min, float t_max, hit_record& rec) const
   }
   return hit_anything;
 }
-
-vec3
-ObjectList::random_point() const
-{
-  thread_local std::random_device random_device;
-  thread_local std::mt19937 engine{ random_device() };
-  std::uniform_int_distribution<int> dist(0, list.size() - 1);
-  auto choice = dist(engine);
-  return list[choice]->random_point();
-}

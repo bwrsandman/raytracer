@@ -2,15 +2,11 @@
 
 #include "material.h"
 
-class Dielectric : public Material
+struct Dielectric : public Material
 {
-public:
-  explicit Dielectric(float ri);
-  bool scatter(const Scene& scene,
-               const Ray& r_in,
-               const hit_record& rec,
-               vec3& attenuation,
-               Ray(& scattered)[2]) const override;
+  explicit Dielectric(float ri, float ni);
+  void fill_type_data(RayPayload& payload) const;
 
   float ref_idx;
+  float ni;
 };

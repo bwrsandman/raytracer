@@ -1,10 +1,13 @@
 #include "renderer_whitted.h"
 
+#include <array>
 #include <thread>
+#include <vector>
 
 #include <SDL_video.h>
 
 #include <glad/glad.h>
+#include <ray.h>
 
 #if __EMSCRIPTEN__
 #include <emscripten/emscripten.h>
@@ -14,10 +17,8 @@
 #include "camera.h"
 #include "hit_record.h"
 #include "hittable/object_list.h"
-#include "hittable/sphere.h"
+#include "hittable/point.h"
 #include "material.h"
-#include "materials/lambert_scatter.h"
-#include "materials/metal.h"
 #include "pipeline.h"
 #include "ray.h"
 #include "scene.h"
@@ -156,57 +157,183 @@ RendererWhitted::~RendererWhitted()
   glDeleteSamplers(1, &linear_sampler);
 }
 
-vec3
-RendererWhitted::color(const Ray& r, const Scene& scene, int depth)
+void
+RendererWhitted::trace(RayPayload& payload,
+                       const Scene& scene,
+                       const Ray& r,
+                       float t_min,
+                       float t_max) const
 {
-  vec3 col = vec3(0.0f, 0.0f, 0.0f);
-
+  auto& object_list = reinterpret_cast<const ObjectList&>(scene.get_world());
   hit_record rec;
-  if (scene.get_world().hit(r, 0.001, std::numeric_limits<float>::max(), rec)) {
-    // Ray scattered{};
-    vec3 attenuation = vec3(0.0f, 0.0f, 0.0f);
-    Ray scattered[2];
-    //
-    // if (depth > 10)
-    //  printf("Depth: %i \n", depth);
+  hit_record temp_rec;
+  bool hit_anything = false;
+  double closest_so_far = t_max;
 
-    if (depth < 10) {
-      if (scene.get_material(rec.mat_id)
-            .scatter(scene, r, rec, attenuation, scattered)) {
-        if (rec.mat_id == 7) { // hot fix for glass
-          vec3 min_att = vec3(1.f, 1.f, 1.f) - attenuation;
+  for (auto& object : object_list.list) {
+    if (object->hit(r, t_min, closest_so_far, temp_rec)) {
+      if (!hit_anything || closest_so_far > temp_rec.t) {
+        hit_anything = true;
+        closest_so_far = temp_rec.t;
+        rec = temp_rec;
+      }
+    }
+  }
+  if (hit_anything) {
+    payload.distance = rec.t;
+    payload.normal = rec.normal;
+    auto& mat = scene.get_material(rec.mat_id);
+    mat.fill_type_data(payload);
+  } else {
+    payload.distance = 0;
+    payload.type = RayPayload::Type::NoHit;
+  }
+}
 
-          if ((attenuation.r() + min_att.r()) != 1.0f) {
-            printf("whut %f \n", (attenuation.r() + min_att.r()));
-          }
-          if (attenuation.r() < 0.f || min_att.r() < 0.f) {
-            printf("whut %f, %f \n", attenuation.r(), min_att.r());
-          }
+constexpr uint8_t MAX_SECONDARY = 20;
 
-          vec3 col_reflect =
-            attenuation * color(scattered[0], scene, depth + 1);
-          vec3 col_refract = min_att * color(scattered[1], scene, depth + 1);
-          col = col_reflect + col_refract;
-        } else {
-          col = attenuation * color(scattered[0], scene, depth + 1);
+vec3
+RendererWhitted::raygen(Ray primary_ray, const Scene& scene) const
+{
+  struct RayPP
+  {
+    Ray ray;
+    vec3 attenuation;
+  };
+  thread_local std::array<RayPP, MAX_SECONDARY> secondary_rays;
+  thread_local std::vector<RayPP> shadow_rays;
+  // TODO: reserve
+  shadow_rays.clear();
+
+  // Insert primary ray as first in queue
+  secondary_rays[0] = RayPP{ primary_ray, vec3(1, 1, 1) };
+  uint8_t next_secondary = 1;
+
+  RayPayload payload;
+  constexpr float t_min = 0.001f;
+  constexpr float t_max = std::numeric_limits<float>::max();
+
+  vec3 color = { 0, 0, 0 };
+
+  // Primary and Secondary rays
+  for (uint8_t i = 0; i < next_secondary && i < MAX_SECONDARY; ++i) {
+    if (dot(secondary_rays[i].attenuation, secondary_rays[i].attenuation) <
+        0.01f) {
+      payload.distance = 1.0f;
+      payload.type = RayPayload::Type::NoHit;
+    } else {
+      trace(payload, scene, secondary_rays[i].ray, t_min, t_max);
+    }
+
+    vec3 hit_pos = secondary_rays[i].ray.origin +
+                   secondary_rays[i].ray.direction * payload.distance;
+
+    if (payload.distance < 0.0f) {
+      // TODO: Add nothing: internal reflection, this should never happen
+      return vec3(1, 1, 0);
+    } else if (payload.type == RayPayload::Type::Lambert) {
+      // Add ray to shadow rays
+      auto& geometry_list =
+        dynamic_cast<const ObjectList&>(scene.get_world()).list;
+      for (auto index : scene.get_light_indices()) {
+        auto point_light =
+          dynamic_cast<const Point*>(geometry_list[index].get());
+        if (point_light == nullptr) {
+          // This is not a point light and is not supported by Whitted
+          // TODO: support textured spot lights, directional lights
+          continue;
         }
-      } else {
-        col = attenuation;
+        vec3 target = point_light->position;
+
+        shadow_rays.emplace_back();
+        auto& ray = shadow_rays.back();
+
+        ray.ray.direction = target - hit_pos;
+        ray.ray.direction.make_unit_vector();
+        ray.ray.origin = hit_pos + ray.ray.direction * t_min;
+        ray.attenuation = secondary_rays[i].attenuation * payload.attenuation *
+                          dot(payload.normal, ray.ray.direction);
+      }
+    } else if (payload.type == RayPayload::Type::Metal) {
+      // Add ray in secondary ray queue
+      if (next_secondary < MAX_SECONDARY) {
+        // fully reflective per light)
+        auto& ray = secondary_rays[next_secondary];
+        ray.ray.origin = hit_pos + payload.normal * 0.001f;
+        ray.ray.direction =
+          reflect(secondary_rays[i].ray.direction, payload.normal);
+        ray.attenuation = secondary_rays[i].attenuation * payload.attenuation;
+        next_secondary++;
+      }
+    } else if (payload.type == RayPayload::Type::Dielectric) {
+      float fraction_refracted = 0.0f;
+      auto& ray = secondary_rays[next_secondary];
+      thread_local vec3 refracted_direction;
+      // Prevent loss of energy
+      if (next_secondary + 2 != MAX_SECONDARY &&
+          refract(secondary_rays[i].ray.direction,
+                  payload.normal,
+                  payload.dielectric.ni,
+                  payload.dielectric.nt,
+                  refracted_direction)) {
+        fraction_refracted =
+          1.0f - fresnel_rate(secondary_rays[i].ray.direction,
+                              payload.normal,
+                              payload.dielectric.ni,
+                              payload.dielectric.nt);
+      }
+
+      // Add refraction in secondary ray queue
+      if (fraction_refracted > 0.001f && next_secondary < MAX_SECONDARY) {
+        auto& new_ray = secondary_rays[next_secondary];
+        new_ray.ray.origin = hit_pos - payload.normal * 0.001f;
+        new_ray.ray.direction = refracted_direction;
+        new_ray.attenuation =
+          secondary_rays[i].attenuation * fraction_refracted;
+        next_secondary++;
+      }
+      // Add reflection in secondary ray queue
+      if (fraction_refracted < 0.999f && next_secondary < MAX_SECONDARY) {
+        auto& new_ray = secondary_rays[next_secondary];
+        new_ray.ray.origin = hit_pos + payload.normal * 0.001f;
+        new_ray.ray.direction =
+          reflect(secondary_rays[i].ray.direction, payload.normal);
+        new_ray.attenuation =
+          secondary_rays[i].attenuation * (1.0f - fraction_refracted);
+        next_secondary++;
       }
     } else {
-      col = attenuation;
+      // No hit or hit light, add sky
+      vec3 unit_direction = unit_vector(secondary_rays[i].ray.direction);
+      float t = 0.5f * (unit_direction.y() + 1.0f);
+      static constexpr vec3 top = vec3(0.5, 0.7, 1.0);
+      static constexpr vec3 bot = vec3(1.0, 1.0, 1.0);
+      color += lerp(top, bot, t) * secondary_rays[i].attenuation;
+      if (payload.type == RayPayload::Type::Emissive) {
+        // Hit a light, this should happen very rarely
+        color += secondary_rays[i].attenuation * payload.emission;
+      } else if (payload.type != RayPayload::Type::NoHit) {
+        // TODO: Add nothing: this should never happen unless there's a new type
+        // of payload
+        return vec3(0, 1, 1);
+      }
     }
-  } else {
-    vec3 unit_direction = unit_vector(r.direction);
-    float t = 0.5f * (unit_direction.y() + 1.0f);
-    col = (1.0f - t) * vec3(1.0f, 1.0f, 1.0f) + t * vec3(0.5f, 0.7f, 1.0f);
   }
 
-  return col;
+  // Shadow Rays
+  for (auto& ray : shadow_rays) {
+    trace(payload, scene, ray.ray, t_min, t_max);
+    if (payload.type == RayPayload::Type::Emissive) {
+      // Accumulate color
+      color += payload.emission * ray.attenuation;
+    }
+  }
+
+  return color;
 }
 
 void
-RendererWhitted::ray_gen(const Camera& camera)
+RendererWhitted::compute_primary_rays(const Camera& camera)
 {
   for (uint32_t y = 0; y < height; ++y) {
     for (uint32_t x = 0; x < width; ++x) {
@@ -226,7 +353,7 @@ RendererWhitted::run(const Scene& scene)
 
   // raytracing
   if (cam.is_dirty()) {
-    ray_gen(scene.get_camera());
+    compute_primary_rays(scene.get_camera());
   }
 
   std::vector<std::thread> threads;
@@ -238,7 +365,7 @@ RendererWhitted::run(const Scene& scene)
 
     threads.emplace_back([this, offset, length, &scene]() {
       for (uint32_t i = 0; i < length; ++i) {
-        cpu_buffer[offset + i] = color(rays[offset + i], scene, 0);
+        cpu_buffer[offset + i] = raygen(rays[offset + i], scene);
       }
     });
   }

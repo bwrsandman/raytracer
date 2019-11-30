@@ -1,18 +1,14 @@
 #include "materials/emissive.h"
 
-#include "hit_record.h"
+#include "ray.h"
 
 Emissive::Emissive(const vec3& a)
   : albedo(a)
 {}
 
-bool
-Emissive::scatter(const Scene& scene,
-                  const Ray& r_in,
-                  const hit_record& rec,
-                  vec3& attenuation,
-                  Ray (&scattered)[2]) const
+void
+Emissive::fill_type_data(RayPayload& payload) const
 {
-  attenuation = albedo;
-  return false;
+  payload.type = RayPayload::Type::Emissive;
+  payload.emission = albedo;
 }

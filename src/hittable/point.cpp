@@ -19,7 +19,7 @@ Point::hit(const Ray& r, float tmin, float tmax, hit_record& rec) const
   ray_origin_to_point /= distance;
   // If ray passes through point, then both ray direction and ray origin to
   // point will be parallel and their dot product will be 1
-  if (dot(ray_origin_to_point, r.direction) > 0.999f) {
+  if (dot(ray_origin_to_point, r.direction) > 0.9999f) {
     rec.t = distance;
     rec.p = position;
     rec.normal = -r.direction;
@@ -27,10 +27,4 @@ Point::hit(const Ray& r, float tmin, float tmax, hit_record& rec) const
     return true;
   }
   return false;
-}
-
-vec3
-Point::random_point() const
-{
-  return position;
 }

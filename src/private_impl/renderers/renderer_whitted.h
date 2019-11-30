@@ -4,9 +4,9 @@
 #include <memory>
 #include <vector>
 
+#include "ray.h"
 #include "vec3.h"
 
-struct Ray;
 class Object;
 class Camera;
 class Pipeline;
@@ -39,7 +39,7 @@ public:
   explicit RendererWhitted(const Window& window);
   ~RendererWhitted() override;
 
-  void ray_gen(const Camera& camera);
+  void compute_primary_rays(const Camera& camera);
   void run(const Scene& scene) override;
   void set_backbuffer_size(uint16_t w, uint16_t h) override;
 
@@ -47,7 +47,12 @@ private:
   void rebuild_backbuffers();
   void create_geometry();
   void create_pipeline();
-  vec3 color(const Ray& r, const Scene& scene, int depth);
+  void trace(RayPayload& payload,
+             const Scene& scene,
+             const Ray& r,
+             float t_min,
+             float t_max) const;
+  vec3 raygen(Ray ray, const Scene& scene) const;
 
   SDL_GLContext context;
   uint16_t width;

@@ -13,7 +13,6 @@ public:
            float tmin,
            float tmax,
            hit_record& rec) const override;
-  vec3 random_point() const override;
 
 private:
   //const float x0, x1, y0, y1, k;

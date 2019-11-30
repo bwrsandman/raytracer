@@ -14,7 +14,6 @@
 #include "materials/emissive.h"
 #include "materials/emissive_linear_drop_off.h"
 #include "materials/emissive_quadratic_drop_off.h"
-#include "materials/lambert_scatter.h"
 #include "materials/lambert_shadow_ray.h"
 #include "materials/metal.h"
 #include "scene.h"
@@ -67,10 +66,6 @@ Ui::run(Scene& scene) const
                                reinterpret_cast<float*>(&mat->albedo));
             ImGui::InputFloat("drop-off factor",
                               reinterpret_cast<float*>(&mat->drop_off_factor));
-          } else if (auto mat = dynamic_cast<LambertianScatter*>(light.get())) {
-            ImGui::Text("%u. Lambert (Scatter)", i);
-            ImGui::InputFloat3("albedo",
-                               reinterpret_cast<float*>(&mat->albedo));
           } else if (auto mat = dynamic_cast<LambertShadowRay*>(light.get())) {
             ImGui::Text("%u. Lambert (Shadow Ray)", i);
             ImGui::InputFloat3("albedo",
@@ -94,7 +89,7 @@ Ui::run(Scene& scene) const
       }
 
       if (ImGui::Button("New Dielectric")) {
-        material_list.emplace_back(new Dielectric(1.0f));
+        material_list.emplace_back(new Dielectric(1.0f, 1.0f));
       }
       if (ImGui::Button("Emissive (No Drop Off)")) {
         const vec3 albedo(1.0f, 1.0f, 1.0f);
@@ -107,10 +102,6 @@ Ui::run(Scene& scene) const
       if (ImGui::Button("Emissive (Quadratic Drop Off)")) {
         const vec3 albedo(1.0f, 1.0f, 1.0f);
         material_list.emplace_back(new EmissiveQuadraticDropOff(albedo, 1.0f));
-      }
-      if (ImGui::Button("Lambert (Scatter)")) {
-        const vec3 albedo(1.0f, 1.0f, 1.0f);
-        material_list.emplace_back(new LambertianScatter(albedo));
       }
       if (ImGui::Button("Lambert (Shadow Ray)")) {
         const vec3 albedo(1.0f, 1.0f, 1.0f);
@@ -181,11 +172,12 @@ Ui::run(Scene& scene) const
       }
     }
     if (ImGui::CollapsingHeader("Lights", ImGuiTreeNodeFlags_DefaultOpen)) {
-      auto& light_list = dynamic_cast<ObjectList&>(scene.get_lights()).list;
+      auto& light_list = scene.get_light_indices();
+      auto& geometry_list = dynamic_cast<ObjectList&>(scene.get_world()).list;
       uint32_t i = 0;
       std::vector<std::vector<std::unique_ptr<Object>>::iterator> remove_index;
-      for (auto itr = light_list.begin(); itr < light_list.end(); ++itr) {
-        auto& light = *itr;
+      for (auto index : light_list) {
+        auto& light = geometry_list[i];
         if (light) {
           ImGui::PushID(i);
           if (auto point = dynamic_cast<Point*>(light.get())) {
@@ -218,13 +210,13 @@ Ui::run(Scene& scene) const
           }
           ++i;
           if (ImGui::Button("Remove##light")) {
-            remove_index.push_back(itr);
+            remove_index.push_back(geometry_list.begin() + i);
           }
           ImGui::PopID();
         }
       }
       for (auto itr : remove_index) {
-        light_list.erase(itr);
+        geometry_list.erase(itr);
       }
 
       if (ImGui::Button("New Line##light")) {
@@ -232,15 +224,18 @@ Ui::run(Scene& scene) const
           vec3{ -1, 0, 0 },
           vec3{ 1, 0, 0 },
         };
-        light_list.emplace_back(new LineSegment(position, 0));
+        light_list.emplace_back(geometry_list.size());
+        geometry_list.emplace_back(new LineSegment(position, 0));
       }
       if (ImGui::Button("New Point##light")) {
         const vec3 position = { 0, 0, 0 };
-        light_list.emplace_back(new Point(position, 0));
+        light_list.emplace_back(geometry_list.size());
+        geometry_list.emplace_back(new Point(position, 0));
       }
       if (ImGui::Button("New Sphere##light")) {
         const vec3 position = { 0, 0, 0 };
-        light_list.emplace_back(new Sphere(position, 1, 0));
+        light_list.emplace_back(geometry_list.size());
+        geometry_list.emplace_back(new Sphere(position, 1, 0));
       }
     }
   }

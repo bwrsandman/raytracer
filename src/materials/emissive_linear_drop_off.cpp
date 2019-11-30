@@ -1,19 +1,15 @@
 #include "materials/emissive_linear_drop_off.h"
 
-#include "hit_record.h"
+#include "ray.h"
 
 EmissiveLinearDropOff::EmissiveLinearDropOff(const vec3& a, float factor)
   : albedo(a)
   , drop_off_factor(factor)
 {}
 
-bool
-EmissiveLinearDropOff::scatter(const Scene& scene,
-                               const Ray& r_in,
-                               const hit_record& rec,
-                               vec3& attenuation,
-                               Ray (&scattered)[2]) const
+void
+EmissiveLinearDropOff::fill_type_data(RayPayload& payload) const
 {
-  attenuation = albedo / (rec.t * drop_off_factor);
-  return false;
+  payload.type = RayPayload::Type::Emissive;
+  payload.emission = albedo / payload.distance * drop_off_factor;
 }
