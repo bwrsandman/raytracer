@@ -2,7 +2,9 @@
 
 #include "object.h"
 
-#include <memory>
+#include <cstdint>
+
+#include "vec3.h"
 
 class Plane : public Object
 {

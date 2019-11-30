@@ -32,10 +32,11 @@ Texture::~Texture()
 }
 
 vec3
-Texture::sample(const float (&texture_coordinates)[2]) const
+Texture::sample(const vec2& texture_coordinates) const
 {
-  uint32_t x = std::clamp(texture_coordinates[0], 0.0f, 1.0f) * width;
-  uint32_t y = std::clamp(texture_coordinates[1], 0.0f, 1.0f) * height;
+  uint32_t x = std::clamp(texture_coordinates.e[0], 0.0f, 1.0f) * width;
+  uint32_t y =
+    (1.0f - std::clamp(texture_coordinates.e[1], 0.0f, 1.0f)) * height;
   auto base = &data[(x + y * width) * num_channels];
   return vec3(base[0], base[1], base[2]);
 }

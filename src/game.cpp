@@ -15,7 +15,7 @@ Game::Game() {
   input = std::make_unique<Input>();
   renderer = Renderer::create(Renderer::Type::Whitted, *window);
   ui = std::make_unique<Ui>(window->get_native_handle());
-  scene = Scene::load_test_scene();
+  scene = Scene::load_cornel_box();
 }
 
 Game::~Game() = default;

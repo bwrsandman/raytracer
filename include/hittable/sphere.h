@@ -2,8 +2,6 @@
 
 #include "object.h"
 
-#include <memory>
-
 #include "vec3.h"
 
 struct Sphere : public Object

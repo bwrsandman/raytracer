@@ -35,9 +35,9 @@ Sphere::hit(const Ray& r, float t_min, float t_max, hit_record& rec) const
     rec.normal = (rec.p - center) / radius;
     rec.tangent = cross(rec.normal, vec3(0, 1, 0));
     rec.tangent.make_unit_vector();
-    rec.uv[0] =
-      0.5f + std::atan2(-rec.normal.z(), rec.normal.x()) * f32_1_2PI * 0.5f;
-    rec.uv[1] = 0.5f - std::asin(rec.normal.y()) * f32_1_PI;
+    rec.uv.e[0] =
+      0.5f + std::atan2(-rec.normal.z(), rec.normal.x()) * f32_1_2PI;
+    rec.uv.e[1] = 0.5f - std::asin(-rec.normal.y()) * f32_1_PI;
     rec.mat_id = mat_id;
     return true;
   }

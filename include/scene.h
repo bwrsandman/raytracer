@@ -13,7 +13,7 @@ class Scene
 public:
   virtual ~Scene();
 
-  static std::unique_ptr<Scene> load_test_scene();
+  static std::unique_ptr<Scene> load_cornel_box();
 
   void run(float width, float height);
 

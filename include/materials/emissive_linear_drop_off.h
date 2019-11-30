@@ -9,7 +9,7 @@ struct EmissiveLinearDropOff : public Material
   EmissiveLinearDropOff(const vec3& a, float factor);
   void fill_type_data(const Scene& scene,
                       RayPayload& payload,
-                      const float (&texture_coordinates)[2]) const override;
+                      const vec2& texture_coordinates) const override;
 
   vec3 albedo;
   float drop_off_factor;

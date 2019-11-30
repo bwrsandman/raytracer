@@ -1,8 +1,9 @@
 #pragma once
 
-#include "vec3.h"
-
 #include <cstdint>
+
+#include "vec2.h"
+#include "vec3.h"
 
 struct hit_record
 {
@@ -10,6 +11,6 @@ struct hit_record
   vec3 p;
   vec3 normal;
   vec3 tangent;
-  float uv[2];
+  vec2 uv;
   uint16_t mat_id;
 };

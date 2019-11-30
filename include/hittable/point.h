@@ -2,6 +2,10 @@
 
 #include "object.h"
 
+#include <cstdint>
+
+#include "vec3.h"
+
 struct Point : public Object
 {
   Point(vec3 pos, uint16_t m);

@@ -1,14 +1,11 @@
 #pragma once
 
-#include <vec3.h>
-
 struct Ray;
 class Scene;
 struct hit_record;
 
-class Object
+struct Object
 {
-public:
   virtual ~Object() = default;
   virtual bool hit(const Ray& r,
                    float t_min,
