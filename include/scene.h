@@ -21,8 +21,8 @@ public:
 
   Camera& get_camera();
   const Camera& get_camera() const;
-  const Object& get_world() const;
-  Object& get_world();
+  const std::vector<std::unique_ptr<Object>>& get_world() const;
+  std::vector<std::unique_ptr<Object>>& get_world();
   const std::vector<uint32_t>& get_light_indices() const;
   std::vector<uint32_t>& get_light_indices();
   const Material& get_material(uint16_t id) const;
@@ -34,13 +34,13 @@ private:
         uint32_t camera_index,
         std::vector<std::unique_ptr<Texture>>&& textures,
         std::vector<std::unique_ptr<Material>>&& materials,
-        std::unique_ptr<Object>&& world_objects,
+        std::vector<std::unique_ptr<Object>>&& world_objects,
         std::vector<uint32_t>&& light_indices);
 
   std::vector<SceneNode> nodes;
   uint32_t camera_index;
   std::vector<std::unique_ptr<Material>> materials;
   std::vector<std::unique_ptr<Texture>> textures;
-  std::unique_ptr<Object> world_objects;
+  std::vector<std::unique_ptr<Object>> world_objects;
   std::vector<uint32_t> light_indices;
 };

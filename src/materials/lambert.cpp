@@ -1,6 +1,5 @@
 #include "materials/lambert.h"
 
-#include "hittable/object_list.h"
 #include "mat3.h"
 #include "ray.h"
 #include "scene.h"

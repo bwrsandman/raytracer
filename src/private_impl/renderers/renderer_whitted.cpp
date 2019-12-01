@@ -16,7 +16,6 @@
 
 #include "camera.h"
 #include "hit_record.h"
-#include "hittable/object_list.h"
 #include "hittable/point.h"
 #include "material.h"
 #include "pipeline.h"
@@ -164,13 +163,13 @@ RendererWhitted::trace(RayPayload& payload,
                        float t_min,
                        float t_max) const
 {
-  auto& object_list = reinterpret_cast<const ObjectList&>(scene.get_world());
+  auto& object_list = scene.get_world();
   hit_record rec;
   hit_record temp_rec;
   bool hit_anything = false;
   double closest_so_far = t_max;
 
-  for (auto& object : object_list.list) {
+  for (auto& object : object_list) {
     if (object->hit(r, t_min, closest_so_far, temp_rec)) {
       if (!hit_anything || closest_so_far > temp_rec.t) {
         hit_anything = true;
@@ -234,8 +233,7 @@ RendererWhitted::raygen(Ray primary_ray, const Scene& scene) const
       return vec3(1, 1, 0);
     } else if (payload.type == RayPayload::Type::Lambert) {
       // Add ray to shadow rays
-      auto& geometry_list =
-        dynamic_cast<const ObjectList&>(scene.get_world()).list;
+      auto& geometry_list = scene.get_world();
       for (auto index : scene.get_light_indices()) {
         auto point_light =
           dynamic_cast<const Point*>(geometry_list[index].get());

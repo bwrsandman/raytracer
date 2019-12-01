@@ -7,7 +7,6 @@
 
 #include "camera.h"
 #include "hittable/line_segment.h"
-#include "hittable/object_list.h"
 #include "hittable/point.h"
 #include "hittable/sphere.h"
 #include "material.h"
@@ -142,7 +141,7 @@ Ui::run(Scene& scene) const
       }
     }
     if (ImGui::CollapsingHeader("Geometry", ImGuiTreeNodeFlags_DefaultOpen)) {
-      auto& geometry_list = dynamic_cast<ObjectList&>(scene.get_world()).list;
+      auto& geometry_list = scene.get_world();
       uint32_t i = 0;
       std::vector<std::vector<std::unique_ptr<Object>>::iterator> remove_index;
       for (auto itr = geometry_list.begin(); itr < geometry_list.end(); ++itr) {
@@ -202,7 +201,7 @@ Ui::run(Scene& scene) const
     }
     if (ImGui::CollapsingHeader("Lights", ImGuiTreeNodeFlags_DefaultOpen)) {
       auto& light_list = scene.get_light_indices();
-      auto& geometry_list = dynamic_cast<ObjectList&>(scene.get_world()).list;
+      auto& geometry_list = scene.get_world();
       uint32_t i = 0;
       std::vector<std::vector<std::unique_ptr<Object>>::iterator> remove_index;
       for (auto index : light_list) {

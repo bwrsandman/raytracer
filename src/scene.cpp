@@ -3,7 +3,6 @@
 
 #include "camera.h"
 #include "hittable/line_segment.h"
-#include "hittable/object_list.h"
 #include "hittable/plane.h"
 #include "hittable/point.h"
 #include "hittable/sphere.h"
@@ -176,20 +175,19 @@ Scene::load_cornel_box()
     list.emplace_back(std::move(light));
   }
 
-  return std::unique_ptr<Scene>(
-    new Scene(std::move(nodes),
-              1,
-              std::move(textures),
-              std::move(materials),
-              std::make_unique<ObjectList>(std::move(list)),
-              std::move(light_indices)));
+  return std::unique_ptr<Scene>(new Scene(std::move(nodes),
+                                          1,
+                                          std::move(textures),
+                                          std::move(materials),
+                                          std::move(list),
+                                          std::move(light_indices)));
 }
 
 Scene::Scene(std::vector<SceneNode>&& nodes,
              uint32_t camera_index,
              std::vector<std::unique_ptr<Texture>>&& textures,
              std::vector<std::unique_ptr<Material>>&& materials,
-             std::unique_ptr<Object>&& world_objects,
+             std::vector<std::unique_ptr<Object>>&& world_objects,
              std::vector<uint32_t>&& light_indices)
   : nodes(std::move(nodes))
   , camera_index(camera_index)
@@ -225,16 +223,16 @@ Scene::get_camera() const
   return *nodes[camera_index].camera;
 }
 
-const Object&
+const std::vector<std::unique_ptr<Object>>&
 Scene::get_world() const
 {
-  return *world_objects;
+  return world_objects;
 }
 
-Object&
+std::vector<std::unique_ptr<Object>>&
 Scene::get_world()
 {
-  return *world_objects;
+  return world_objects;
 }
 
 const Material&
