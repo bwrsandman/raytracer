@@ -5,6 +5,7 @@
 #include <examples/imgui_impl_opengl3.h>
 #include <examples/imgui_impl_sdl.h>
 
+#include "camera.h"
 #include "hittable/line_segment.h"
 #include "hittable/object_list.h"
 #include "hittable/point.h"
@@ -37,6 +38,34 @@ Ui::run(Scene& scene) const
   ImGui::NewFrame();
 
   if (ImGui::Begin("Configuration ")) {
+    if (ImGui::CollapsingHeader("Camera", ImGuiTreeNodeFlags_DefaultOpen)) {
+      ImGui::Text("Use WASD to move the camera and\n"
+                  "Arrow keys for Panning and Tilting.\n"
+                  "The shift key increases speed and\n"
+                  "the CTRL key decreases.");
+      auto& camera = scene.get_camera();
+      bool dirty = false;
+
+      auto fov = camera.v_fov;
+      ImGui::SliderFloat("Vertical Field of View", &camera.v_fov, 1, 179);
+      dirty |= fov != camera.v_fov;
+
+      auto aspect = camera.screen_aspect;
+      ImGui::InputFloat("Aspect Ratio", &aspect);
+      if (aspect != camera.screen_aspect && aspect > 0 &&
+          aspect < std::numeric_limits<float>::infinity()) {
+        dirty = true;
+        camera.screen_aspect = aspect;
+      }
+
+      vec3 origin = camera.origin;
+      ImGui::InputFloat3("Origin", reinterpret_cast<float*>(&camera.origin));
+      dirty |= origin != camera.origin;
+
+      if (dirty) {
+        camera.calculate_camera();
+      }
+    }
     if (ImGui::CollapsingHeader("Materials")) {
       auto& material_list = scene.get_material_list();
       uint32_t i = 0;
