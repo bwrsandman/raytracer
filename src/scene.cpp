@@ -22,17 +22,6 @@ Scene::load_cornel_box()
   std::vector<std::unique_ptr<Material>> materials;
   std::vector<uint32_t> light_indices;
 
-  std::vector<SceneNode> nodes;
-
-  nodes.emplace_back();
-  SceneNode& root_node = nodes.back();
-
-  nodes.emplace_back();
-  SceneNode& camera_node = nodes.back();
-  camera_node.camera = std::make_unique<Camera>(
-    vec3(0, 0, 0), vec3(0, 0, -1), vec3(0, 1, 0), 90, 1);
-  camera_node.type = SceneNode::Type::Camera;
-
   textures.emplace_back(Texture::load_from_file("earth_albedo.jpg"));     // 0
   textures.emplace_back(Texture::load_from_file("earth_normal_map.tga")); // 1
 
@@ -173,6 +162,25 @@ Scene::load_cornel_box()
   for (auto& light : light_list) {
     light_indices.emplace_back(list.size());
     list.emplace_back(std::move(light));
+  }
+
+  // Construct scene graph
+  std::vector<SceneNode> nodes;
+  // Root node, only parent in graph
+  SceneNode& root_node = nodes.emplace_back();
+  root_node.children_id_offset = nodes.size();
+  // Camera and camera node
+  SceneNode& camera_node = nodes.emplace_back();
+  camera_node.camera = std::make_unique<Camera>(
+    vec3(0, 0, 0), vec3(0, 0, -1), vec3(0, 1, 0), 90, 1);
+  camera_node.type = SceneNode::Type::Camera;
+  root_node.children_id_length++;
+  // Meshes
+  for (uint32_t i = 0; i < list.size(); ++i) {
+    auto& node = nodes.emplace_back();
+    node.type = SceneNode::Type::Mesh;
+    node.mesh_id = i;
+    root_node.children_id_length++;
   }
 
   return std::unique_ptr<Scene>(new Scene(std::move(nodes),
