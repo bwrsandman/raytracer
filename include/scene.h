@@ -3,6 +3,8 @@
 #include <memory>
 #include <vector>
 
+#include "scene_node.h"
+
 class Camera;
 class Object;
 class Material;
@@ -28,13 +30,15 @@ public:
   std::vector<std::unique_ptr<Material>>& get_material_list();
 
 private:
-  Scene(std::unique_ptr<Camera>&& camera,
+  Scene(std::vector<SceneNode>&& nodes,
+        uint32_t camera_index,
         std::vector<std::unique_ptr<Texture>>&& textures,
         std::vector<std::unique_ptr<Material>>&& materials,
         std::unique_ptr<Object>&& world_objects,
         std::vector<uint32_t>&& light_indices);
 
-  std::unique_ptr<Camera> camera;
+  std::vector<SceneNode> nodes;
+  uint32_t camera_index;
   std::vector<std::unique_ptr<Material>> materials;
   std::vector<std::unique_ptr<Texture>> textures;
   std::unique_ptr<Object> world_objects;

@@ -1,4 +1,5 @@
 #include "scene.h"
+#include <cassert>
 
 #include "camera.h"
 #include "hittable/line_segment.h"
@@ -12,6 +13,7 @@
 #include "materials/emissive_quadratic_drop_off.h"
 #include "materials/lambert.h"
 #include "materials/metal.h"
+#include "scene_node.h"
 #include "texture.h"
 
 std::unique_ptr<Scene>
@@ -21,8 +23,16 @@ Scene::load_cornel_box()
   std::vector<std::unique_ptr<Material>> materials;
   std::vector<uint32_t> light_indices;
 
-  auto camera = std::make_unique<Camera>(
+  std::vector<SceneNode> nodes;
+
+  nodes.emplace_back();
+  SceneNode& root_node = nodes.back();
+
+  nodes.emplace_back();
+  SceneNode& camera_node = nodes.back();
+  camera_node.camera = std::make_unique<Camera>(
     vec3(0, 0, 0), vec3(0, 0, -1), vec3(0, 1, 0), 90, 1);
+  camera_node.type = SceneNode::Type::Camera;
 
   textures.emplace_back(Texture::load_from_file("earth_albedo.jpg"));     // 0
   textures.emplace_back(Texture::load_from_file("earth_normal_map.tga")); // 1
@@ -167,19 +177,22 @@ Scene::load_cornel_box()
   }
 
   return std::unique_ptr<Scene>(
-    new Scene(std::move(camera),
+    new Scene(std::move(nodes),
+              1,
               std::move(textures),
               std::move(materials),
               std::make_unique<ObjectList>(std::move(list)),
               std::move(light_indices)));
 }
 
-Scene::Scene(std::unique_ptr<Camera>&& camera,
+Scene::Scene(std::vector<SceneNode>&& nodes,
+             uint32_t camera_index,
              std::vector<std::unique_ptr<Texture>>&& textures,
              std::vector<std::unique_ptr<Material>>&& materials,
              std::unique_ptr<Object>&& world_objects,
              std::vector<uint32_t>&& light_indices)
-  : camera(std::move(camera))
+  : nodes(std::move(nodes))
+  , camera_index(camera_index)
   , textures(std::move(textures))
   , materials(std::move(materials))
   , world_objects(std::move(world_objects))
@@ -191,20 +204,25 @@ Scene::~Scene() = default;
 void
 Scene::run(float width, float height)
 {
-  camera->set_clean();
-  camera->set_aspect(width / height);
+  auto& camera = get_camera();
+  camera.set_clean();
+  camera.set_aspect(width / height);
 }
 
 Camera&
 Scene::get_camera()
 {
-  return *camera;
+  assert(nodes[camera_index].type == SceneNode::Type::Camera);
+  assert(nodes[camera_index].camera);
+  return *nodes[camera_index].camera;
 }
 
 const Camera&
 Scene::get_camera() const
 {
-  return *camera;
+  assert(nodes[camera_index].type == SceneNode::Type::Camera);
+  assert(nodes[camera_index].camera);
+  return *nodes[camera_index].camera;
 }
 
 const Object&
