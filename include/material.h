@@ -1,17 +1,15 @@
-#pragma once 
+#pragma once
 
-class vec3;
-struct Ray;
-class Scene;
-struct hit_record;
+#include "vec2.h"
+#include "vec3.h"
 
-class Material
+struct RayPayload;
+struct Scene;
+
+struct Material
 {
-public:
   virtual ~Material() = default;
-  virtual bool scatter(const Scene& scene,
-                       const Ray& r_in,
-                       const hit_record& rec,
-                       vec3& attenuation,
-                       Ray (&scattered)[2]) const = 0;
+  virtual void fill_type_data(const Scene& scene,
+                              RayPayload& payload,
+                              const vec2& texture_coordinates) const = 0;
 };

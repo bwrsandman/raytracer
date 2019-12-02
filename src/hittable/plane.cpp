@@ -71,9 +71,3 @@ Plane::hit(const Ray& r, float tmin, float tmax, hit_record& rec) const
   //rec.normal = vec3(0, 0, 1);
   return true;
 }
-
-vec3
-Plane::random_point() const
-{
-  return random_in_unit_sphere();
-}

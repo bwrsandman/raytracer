@@ -2,8 +2,6 @@
 
 #include "object.h"
 
-#include <memory>
-
 #include "vec3.h"
 
 struct Sphere : public Object
@@ -14,7 +12,6 @@ struct Sphere : public Object
            float tmin,
            float tmax,
            hit_record& rec) const override;
-  vec3 random_point() const override;
 
   vec3 center;
   float radius;

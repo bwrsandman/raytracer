@@ -42,11 +42,3 @@ LineSegment::hit(const Ray& r, float tmin, float tmax, hit_record& rec) const
 
   return false;
 }
-
-vec3
-LineSegment::random_point() const
-{
-  thread_local std::default_random_engine generator;
-  thread_local std::uniform_real_distribution<float> distribution(0.0f, 1.0f);
-  return lerp(position[0], position[1], distribution(generator));
-}

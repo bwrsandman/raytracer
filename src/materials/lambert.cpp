@@ -1,27 +1,27 @@
-#include "materials/metal.h"
+#include "materials/lambert.h"
 
 #include "mat3.h"
 #include "ray.h"
 #include "scene.h"
 #include "texture.h"
 
-Metal::Metal(const vec3& a,
-             uint16_t albedo_texture_id,
-             uint16_t normal_texture_id)
+Lambert::Lambert(const vec3& a,
+                 uint16_t albedo_texture_id,
+                 uint16_t normal_texture_id)
   : albedo(a)
   , albedo_texture_id(albedo_texture_id)
   , normal_texture_id(normal_texture_id)
 {}
 
 void
-Metal::fill_type_data(const Scene& scene,
-                      RayPayload& payload,
-                      const vec2& texture_coordinates) const
+Lambert::fill_type_data(const Scene& scene,
+                        RayPayload& payload,
+                        const vec2& texture_coordinates) const
 {
-  payload.type = RayPayload::Type::Metal;
+  payload.type = RayPayload::Type::Lambert;
   payload.attenuation = albedo;
   if (albedo_texture_id != std::numeric_limits<uint16_t>::max()) {
-    payload.attenuation *=
+    payload.attenuation =
       scene.get_texture(albedo_texture_id).sample(texture_coordinates);
   }
   if (normal_texture_id != std::numeric_limits<uint16_t>::max()) {

@@ -1,9 +1,9 @@
 #pragma once
 
 #include <algorithm>
+#include <cmath>
+#include <cstdlib>
 #include <iostream>
-#include <math.h>
-#include <stdlib.h>
 
 class vec3
 {
@@ -23,6 +23,10 @@ public:
   inline float b() const { return e[2]; }
 
   inline const vec3& operator+() const { return *this; }
+  inline vec3 operator-(const vec3& rhs) const
+  {
+    return vec3(e[0] - rhs.e[0], e[1] - rhs.e[1], e[2] - rhs.e[2]);
+  }
   inline vec3 operator-() const { return vec3(-e[0], -e[1], -e[2]); }
   inline float operator[](int i) const { return e[i]; }
   inline float& operator[](int i) { return e[i]; }
@@ -76,12 +80,6 @@ operator+(const vec3& v1, const vec3& v2)
   return vec3(v1.e[0] + v2.e[0], v1.e[1] + v2.e[1], v1.e[2] + v2.e[2]);
 }
 
-inline vec3
-operator-(const vec3& v1, const vec3& v2)
-{
-  return vec3(v1.e[0] - v2.e[0], v1.e[1] - v2.e[1], v1.e[2] - v2.e[2]);
-}
-
 inline vec3 operator*(const vec3& v1, const vec3& v2)
 {
   return vec3(v1.e[0] * v2.e[0], v1.e[1] * v2.e[1], v1.e[2] * v2.e[2]);
@@ -107,6 +105,18 @@ inline vec3
 operator/(vec3 v, float t)
 {
   return vec3(v.e[0] / t, v.e[1] / t, v.e[2] / t);
+}
+
+inline bool
+operator==(const vec3& v1, const vec3& v2)
+{
+  return v1.e[0] == v2.e[0] && v1.e[1] == v2.e[1] && v1.e[2] == v2.e[2];
+}
+
+inline bool
+operator!=(const vec3& v1, const vec3& v2)
+{
+  return v1.e[0] != v2.e[0] || v1.e[1] != v2.e[1] || v1.e[2] != v2.e[2];
 }
 
 inline float
@@ -280,7 +290,7 @@ fresnel_rate(const vec3& v, const vec3& n, float ni, float nt)
   float ni_over_nt = (ni / nt);
   vec3 uv = unit_vector(v);
   vec3 un = unit_vector(n);
-  float cosi = std::min(1.0f, std::max(-1.0f, dot(uv, un)));
+  float cosi = std::clamp(dot(uv, un), -1.0f, 1.0f);
 
   //if (cosi >= 0) {
   //  // Inside object
@@ -346,4 +356,12 @@ static vec3
 lerp(const vec3& from, const vec3& to, float t)
 {
   return from * t + to * (1.0f - t);
+}
+
+namespace std {
+inline vec3
+sqrt(const vec3& v)
+{
+  return vec3(std::sqrt(v.e[0]), std::sqrt(v.e[1]), std::sqrt(v.e[2]));
+}
 }
