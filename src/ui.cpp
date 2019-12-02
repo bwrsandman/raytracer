@@ -200,12 +200,11 @@ Ui::run(Scene& scene) const
       }
     }
     if (ImGui::CollapsingHeader("Lights", ImGuiTreeNodeFlags_DefaultOpen)) {
-      auto& light_list = scene.get_light_indices();
+      auto& light_list = scene.get_lights();
       auto& geometry_list = scene.get_world();
       uint32_t i = 0;
       std::vector<std::vector<std::unique_ptr<Object>>::iterator> remove_index;
-      for (auto index : light_list) {
-        auto& light = geometry_list[i];
+      for (auto& light : light_list) {
         if (light) {
           ImGui::PushID(i);
           if (auto point = dynamic_cast<Point*>(light.get())) {
@@ -252,18 +251,15 @@ Ui::run(Scene& scene) const
           vec3{ -1, 0, 0 },
           vec3{ 1, 0, 0 },
         };
-        light_list.emplace_back(geometry_list.size());
-        geometry_list.emplace_back(new LineSegment(position, 0));
+        light_list.emplace_back(new LineSegment(position, 0));
       }
       if (ImGui::Button("New Point##light")) {
         const vec3 position = { 0, 0, 0 };
-        light_list.emplace_back(geometry_list.size());
-        geometry_list.emplace_back(new Point(position, 0));
+        light_list.emplace_back(new Point(position, 0));
       }
       if (ImGui::Button("New Sphere##light")) {
         const vec3 position = { 0, 0, 0 };
-        light_list.emplace_back(geometry_list.size());
-        geometry_list.emplace_back(new Sphere(position, 1, 0));
+        light_list.emplace_back(new Sphere(position, 1, 0));
       }
     }
   }

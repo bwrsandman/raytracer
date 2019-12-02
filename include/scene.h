@@ -23,8 +23,8 @@ public:
   const Camera& get_camera() const;
   const std::vector<std::unique_ptr<Object>>& get_world() const;
   std::vector<std::unique_ptr<Object>>& get_world();
-  const std::vector<uint32_t>& get_light_indices() const;
-  std::vector<uint32_t>& get_light_indices();
+  const std::vector<std::unique_ptr<Object>>& get_lights() const;
+  std::vector<std::unique_ptr<Object>>& get_lights();
   const Material& get_material(uint16_t id) const;
   const Texture& get_texture(uint16_t id) const;
   std::vector<std::unique_ptr<Material>>& get_material_list();
@@ -35,12 +35,12 @@ private:
         std::vector<std::unique_ptr<Texture>>&& textures,
         std::vector<std::unique_ptr<Material>>&& materials,
         std::vector<std::unique_ptr<Object>>&& world_objects,
-        std::vector<uint32_t>&& light_indices);
+        std::vector<std::unique_ptr<Object>>&& lights);
 
   std::vector<SceneNode> nodes;
   uint32_t camera_index;
   std::vector<std::unique_ptr<Material>> materials;
   std::vector<std::unique_ptr<Texture>> textures;
   std::vector<std::unique_ptr<Object>> world_objects;
-  std::vector<uint32_t> light_indices;
+  std::vector<std::unique_ptr<Object>> lights;
 };

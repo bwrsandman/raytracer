@@ -155,10 +155,11 @@ RendererWhitted::~RendererWhitted()
   glDeleteSamplers(1, &linear_sampler);
 }
 
-void
+bool
 RendererWhitted::trace(RayPayload& payload,
                        const Scene& scene,
                        const Ray& r,
+                       bool early_out,
                        float t_min,
                        float t_max) const
 {
@@ -170,10 +171,13 @@ RendererWhitted::trace(RayPayload& payload,
 
   for (auto& object : object_list) {
     if (object->hit(r, t_min, closest_so_far, temp_rec)) {
-      if (!hit_anything || closest_so_far > temp_rec.t) {
+      if (closest_so_far > temp_rec.t) {
         hit_anything = true;
         closest_so_far = temp_rec.t;
         rec = temp_rec;
+        if (early_out) {
+          break;
+        }
       }
     }
   }
@@ -187,26 +191,33 @@ RendererWhitted::trace(RayPayload& payload,
     payload.distance = 0;
     payload.type = RayPayload::Type::NoHit;
   }
+  return hit_anything;
 }
 
 constexpr uint8_t MAX_SECONDARY = 20;
-constexpr uint8_t MIN_ATTENUATION_MAGNITIUDE = 0.01f;
+constexpr float MIN_ATTENUATION_MAGNITIUDE = 0.01f;
 
 vec3
 RendererWhitted::raygen(Ray primary_ray, const Scene& scene) const
 {
-  struct RayPP
+  struct AttenuatedRay
   {
     Ray ray;
     vec3 attenuation;
   };
-  thread_local std::array<RayPP, MAX_SECONDARY> secondary_rays;
-  thread_local std::vector<RayPP> shadow_rays;
+  struct AttenuatedRayMaxed
+  {
+    AttenuatedRay ray;
+    uint16_t mat_id;
+    float t_max;
+  };
+  thread_local std::array<AttenuatedRay, MAX_SECONDARY> secondary_rays;
+  thread_local std::vector<AttenuatedRayMaxed> shadow_rays;
   // TODO: reserve
   shadow_rays.clear();
 
   // Insert primary ray as first in queue
-  secondary_rays[0] = RayPP{ primary_ray, vec3(1, 1, 1) };
+  secondary_rays[0] = AttenuatedRay{ primary_ray, vec3(1, 1, 1) };
   uint8_t next_secondary = 1;
 
   RayPayload payload;
@@ -222,7 +233,7 @@ RendererWhitted::raygen(Ray primary_ray, const Scene& scene) const
       payload.distance = 1.0f;
       payload.type = RayPayload::Type::NoHit;
     } else {
-      trace(payload, scene, secondary_rays[i].ray, t_min, t_max);
+      trace(payload, scene, secondary_rays[i].ray, false, t_min, t_max);
     }
 
     vec3 hit_pos = secondary_rays[i].ray.origin +
@@ -234,9 +245,8 @@ RendererWhitted::raygen(Ray primary_ray, const Scene& scene) const
     } else if (payload.type == RayPayload::Type::Lambert) {
       // Add ray to shadow rays
       auto& geometry_list = scene.get_world();
-      for (auto index : scene.get_light_indices()) {
-        auto point_light =
-          dynamic_cast<const Point*>(geometry_list[index].get());
+      for (auto& light : scene.get_lights()) {
+        auto point_light = dynamic_cast<const Point*>(light.get());
         if (point_light == nullptr) {
           // This is not a point light and is not supported by Whitted
           // TODO: support textured spot lights, directional lights
@@ -245,11 +255,14 @@ RendererWhitted::raygen(Ray primary_ray, const Scene& scene) const
         vec3 target = point_light->position;
 
         auto& ray = shadow_rays.emplace_back();
-        ray.ray.direction = target - hit_pos;
-        ray.ray.direction.make_unit_vector();
-        ray.ray.origin = hit_pos + ray.ray.direction * t_min;
-        ray.attenuation = secondary_rays[i].attenuation * payload.attenuation *
-                          dot(payload.normal, ray.ray.direction);
+        ray.ray.ray.direction = target - hit_pos;
+        ray.t_max = (target - hit_pos).length();
+        ray.ray.ray.direction /= ray.t_max;
+        ray.mat_id = point_light->mat_id;
+        ray.ray.ray.origin = hit_pos + ray.ray.ray.direction * t_min;
+        ray.ray.attenuation = secondary_rays[i].attenuation *
+                              payload.attenuation *
+                              dot(payload.normal, ray.ray.ray.direction);
       }
     } else if (payload.type == RayPayload::Type::Metal) {
       // Add ray in secondary ray queue
@@ -318,10 +331,12 @@ RendererWhitted::raygen(Ray primary_ray, const Scene& scene) const
 
   // Shadow Rays
   for (auto& ray : shadow_rays) {
-    trace(payload, scene, ray.ray, t_min, t_max);
-    if (payload.type == RayPayload::Type::Emissive) {
-      // Accumulate color
-      color += payload.emission * ray.attenuation;
+    if (!trace(payload, scene, ray.ray.ray, true, t_min, ray.t_max)) {
+      auto& mat = scene.get_material(ray.mat_id);
+      vec2 uv;
+      payload.distance = ray.t_max;
+      mat.fill_type_data(scene, payload, uv);
+      color += payload.emission * ray.ray.attenuation;
     }
   }
 
