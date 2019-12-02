@@ -1,5 +1,7 @@
 #include "camera.h"
 #include <SDL_events.h>
+#define _USE_MATH_DEFINES
+#include <math.h>
 
 Camera::Camera(vec3 lookfrom, vec3 lookat, vec3 vup, float vfov, float aspect)
   : look_from(lookfrom)
