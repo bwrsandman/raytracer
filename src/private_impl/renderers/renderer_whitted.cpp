@@ -7,7 +7,6 @@
 #include <SDL_video.h>
 
 #include <glad/glad.h>
-#include <ray.h>
 
 #if __EMSCRIPTEN__
 #include <emscripten/emscripten.h>
@@ -266,7 +265,6 @@ RendererWhitted::raygen(Ray primary_ray, const Scene& scene) const
       }
     } else if (payload.type == RayPayload::Type::Dielectric) {
       float fraction_refracted = 0.0f;
-      auto& ray = secondary_rays[next_secondary];
       thread_local vec3 refracted_direction;
       // Prevent loss of energy
       if (next_secondary + 2 != MAX_SECONDARY &&

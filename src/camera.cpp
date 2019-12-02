@@ -1,5 +1,6 @@
 #include "camera.h"
 #include <SDL_events.h>
+
 #define _USE_MATH_DEFINES
 #include <math.h>
 

@@ -5,8 +5,9 @@
 #include <vector>
 
 #include "ray.h"
-#include "vec3.h"
+//#include "vec3.h"
 
+class vec3;
 class Object;
 class Camera;
 class Pipeline;

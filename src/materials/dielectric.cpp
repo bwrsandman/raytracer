@@ -1,5 +1,5 @@
 #include "materials/dielectric.h"
-#include <ray.h>
+//#include <ray.h>
 
 #include "ray.h"
 
