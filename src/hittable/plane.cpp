@@ -3,71 +3,70 @@
 #include "hit_record.h"
 #include "ray.h"
 
-//Plane::Plane(float _x0, float _x1, float _y0, float _y1, float _k, uint16_t _m)
-//  : x0(_x0)
-//  , x1(_x1)
-//  , y0(_y0)
-//  , y1(_y1)
-//  , k(_k)
-//  , mat_id(_m)
-//{}
+Plane_xy::Plane_xy(float _x0, float _x1, float _y0, float _y1, float _k, uint16_t _m)
+  : x0(_x0)
+  , x1(_x1)
+  , y0(_y0)
+  , y1(_y1)
+  , k(_k)
+  , mat_id(_m)
+{}
 
 
-//bool
-//Plane::hit(const Ray& r, float tmin, float tmax, hit_record& rec) const
-//{
-//  float t = (k - r.origin.z()) / r.direction.z();
-//
-//  if (t < tmin || t > tmax)
-//    return false;
-//
-//  float x = r.origin.x() + t * r.direction.x();
-//  float y = r.origin.y() + t * r.direction.y();
-//
-//  if (x < x0 || x > x1 || y < y0 || y > y1)
-//    return false;
-//
-//  rec.t = t;
-//  rec.p = r.point_at_parameter(rec.t);
-//  rec.mat_id = mat_id;
-//  rec.normal = vec3(0, 0, 1);
-//  return true;
-//
-//}
+bool
+Plane_xy::hit(const Ray& r, float tmin, float tmax, hit_record& rec) const
+{
+  float t = (k - r.origin.z()) / r.direction.z();
 
-Plane::Plane(float _p0, vec3 top_right, vec3 _norm, uint16_t _m)
-  : p0(_p0)
-  , norm(_norm)
+  if (t < tmin || t > tmax)
+    return false;
+
+  float x = r.origin.x() + t * r.direction.x();
+  float y = r.origin.y() + t * r.direction.y();
+
+  if (x < x0 || x > x1 || y < y0 || y > y1)
+    return false;
+
+  rec.t = t;
+  rec.p = r.point_at_parameter(rec.t);
+  rec.mat_id = mat_id;
+  rec.normal = vec3(0, 0, 1);
+  return true;
+
+}
+
+Plane_yz::Plane_yz(float _y0,
+                   float _y1,
+                   float _z0,
+                   float _z1,
+                   float _k,
+                   uint16_t _m)
+  : y0(_y0)
+  , y1(_y1)
+  , z0(_z0)
+  , z1(_z1)
+  , k(_k)
   , mat_id(_m)
 {}
 
 bool
-Plane::hit(const Ray& r, float tmin, float tmax, hit_record& rec) const
+Plane_yz::hit(const Ray& r, float tmin, float tmax, hit_record& rec) const
 {
-  ////vec3 ur = unit_vector(r);
-  //float denom = dot(r.direction, norm);
+  float t = (k - r.origin.z()) / r.direction.z();
 
-  //// not perpendicular to plane
-  //if (denom > 0.000001) {
-  //  vec3 p0l0 = p0 - r.origin;
-  //  t = dot(p0l0, norm);
-  //}
+  if (t < tmin || t > tmax)
+    return false;
 
+  float y = r.origin.y() + t * r.direction.y();
+  float z = r.origin.z() + t * r.direction.z();
 
-  //float t = (k - r.origin.z()) / r.direction.z();
+  if (y < y0 || y > y1 || z < z0 || z > z1)
+    return false;
 
-  //if (t < tmin || t > tmax)
-  //  return false;
-
-  //float x = r.origin.x() + t * r.direction.x();
-  //float y = r.origin.y() + t * r.direction.y();
-
-  //if (x < x0 || x > x1 || y < y0 || y > y1)
-  //  return false;
-
-  //rec.t = t;
-  //rec.p = r.point_at_parameter(rec.t);
-  //rec.mat_id = mat_id;
-  //rec.normal = vec3(0, 0, 1);
+  rec.t = t;
+  rec.p = r.point_at_parameter(rec.t);
+  rec.mat_id = mat_id;
+  rec.normal = vec3(0, 0, 1);
   return true;
 }
+

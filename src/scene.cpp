@@ -151,7 +151,8 @@ Scene::load_cornel_box()
                                    std::move(data2),
                                    std::vector<uint16_t>(indices),
                                    9));
-  // list.emplace_back(std::make_unique<Plane>(0.5, 1.5, -0.5, 0.5, -2, 2));
+  list.emplace_back(std::make_unique<Plane_xy>(0.5, 1.5, -0.5, 0.5, -2, 8));
+  list.emplace_back(std::make_unique<Plane_yz>(0.5, 1.5, -0.5, 0.5, -2, 9));
 
   std::vector<std::unique_ptr<Object>> light_list;
   light_list.emplace_back(std::make_unique<Point>(vec3(1, 1.5, -2), 4));

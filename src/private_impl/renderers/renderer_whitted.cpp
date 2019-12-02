@@ -16,7 +16,7 @@
 #include "camera.h"
 #include "hit_record.h"
 #include "hittable/point.h"
-#include "material.h"
+#include "materials/material.h"
 #include "pipeline.h"
 #include "ray.h"
 #include "scene.h"
@@ -190,6 +190,7 @@ RendererWhitted::trace(RayPayload& payload,
 }
 
 constexpr uint8_t MAX_SECONDARY = 20;
+constexpr uint8_t MIN_ATTENUATION_MAGNITIUDE = 0.01f;
 
 vec3
 RendererWhitted::raygen(Ray primary_ray, const Scene& scene) const
@@ -217,7 +218,7 @@ RendererWhitted::raygen(Ray primary_ray, const Scene& scene) const
   // Primary and Secondary rays
   for (uint8_t i = 0; i < next_secondary && i < MAX_SECONDARY; ++i) {
     if (dot(secondary_rays[i].attenuation, secondary_rays[i].attenuation) <
-        0.01f) {
+        MIN_ATTENUATION_MAGNITIUDE) {
       payload.distance = 1.0f;
       payload.type = RayPayload::Type::NoHit;
     } else {
@@ -243,9 +244,7 @@ RendererWhitted::raygen(Ray primary_ray, const Scene& scene) const
         }
         vec3 target = point_light->position;
 
-        shadow_rays.emplace_back();
-        auto& ray = shadow_rays.back();
-
+        auto& ray = shadow_rays.emplace_back();
         ray.ray.direction = target - hit_pos;
         ray.ray.direction.make_unit_vector();
         ray.ray.origin = hit_pos + ray.ray.direction * t_min;

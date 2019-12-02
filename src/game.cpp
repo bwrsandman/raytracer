@@ -30,7 +30,7 @@ Game::main_loop()
   input->run(*ui, *scene);
   ui->run(*scene);
   renderer->run(*scene);
-  //ui->draw();
+  ui->draw();
   window->swap();
 
   return !input->should_quit();

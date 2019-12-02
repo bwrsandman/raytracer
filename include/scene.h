@@ -4,12 +4,10 @@
 #include <vector>
 
 #include "scene_node.h"
-#include "hittable/object.h"
-#include "material.h"
 
 class Camera;
-//class Object;
-//class Material;
+struct Object;
+struct Material;
 class Texture;
 
 class Scene

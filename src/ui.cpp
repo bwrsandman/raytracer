@@ -9,7 +9,7 @@
 #include "hittable/line_segment.h"
 #include "hittable/point.h"
 #include "hittable/sphere.h"
-#include "material.h"
+#include "materials/material.h"
 #include "materials/dielectric.h"
 #include "materials/emissive.h"
 #include "materials/emissive_linear_drop_off.h"
