@@ -2,54 +2,22 @@
 
 #include "ray.h"
 
+union SDL_Event;
+
 class Camera
 {
 public:
-  Camera(vec3 lookfrom, vec3 lookat, vec3 vup, float vfov, float aspect)
-    : look_from(lookfrom)
-    , look_at(lookat)
-    , v_up(vup)
-    , v_fov(vfov)
-    , screen_aspect(aspect)
-  {
-    calculate_camera();
-  }
-  Ray get_ray(float s, float t)
-  {
-    auto direction = lower_left_corner + s * horizontal + t * vertical - origin;
-    direction.make_unit_vector();
-    return Ray(origin, direction);
-  }
+  Camera(vec3 lookfrom, vec3 lookat, vec3 vup, float vfov, float aspect);
 
-  void change_camera(vec3 c_lookfrom,
-                     vec3 c_lookat,
-                     vec3 c_vup,
-                     float c_vfov,
-                     float c_aspect)
-  {
-    look_from += c_lookfrom;
-    look_at += c_lookat;
-    v_up += c_vup;
-    v_fov += c_vfov;
-    screen_aspect += c_aspect;
-  }
-
-  void calculate_camera()
-  {
-    vec3 u, v, w;
-    float theta = v_fov * (3.14159265359) / 180;
-    float half_height = tan(theta / 2);
-    float half_width = screen_aspect * half_height;
-
-    origin = look_from;
-    w = unit_vector(look_from - look_at);
-    u = unit_vector(cross(v_up, w));
-    v = -cross(w, u);
-
-    lower_left_corner = origin - half_width * u - half_height * v - w;
-    horizontal = 2 * half_width * u;
-    vertical = 2 * half_height * v;
-  }
+  Ray get_ray(float s, float t) const;
+  void set_aspect(float aspect);
+  void calculate_camera();
+  /// Call to know if camera related cached changes need to be refreshed
+  bool is_dirty() const;
+  /// Call once per frame to reset dirty flag
+  void set_clean();
+  /// Update camera state based on SDL events
+  void process_event(const SDL_Event& event);
 
   vec3 look_from;
   vec3 look_at;
@@ -61,4 +29,8 @@ public:
   vec3 lower_left_corner;
   vec3 horizontal;
   vec3 vertical;
+
+  /// Has the camera been changed this frame?
+  /// If not, then we can skip a lot of computation.
+  bool dirty;
 };

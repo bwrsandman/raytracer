@@ -1,6 +1,7 @@
 #include "scene.h"
-#include <hittable/line_segment.h>
 
+#include "camera.h"
+#include "hittable/line_segment.h"
 #include "hittable/object_list.h"
 #include "hittable/plane.h"
 #include "hittable/point.h"
@@ -11,8 +12,15 @@
 #include "materials/lambert_shadow_ray.h"
 #include "materials/metal.h"
 
-Scene::Scene()
+std::unique_ptr<Scene>
+Scene::load_test_scene()
 {
+  std::vector<std::unique_ptr<Material>> materials;
+  std::vector<std::unique_ptr<Object>> lights;
+
+  auto camera = std::make_unique<Camera>(
+    vec3(0, 0, 0), vec3(0, 0, -1), vec3(0, 1, 0), 90, 1);
+
   materials.emplace_back(
     std::make_unique<LambertShadowRay>(vec3(0.8, 0.3, 0.3)));
   materials.emplace_back(
@@ -34,17 +42,50 @@ Scene::Scene()
   list.emplace_back(std::make_unique<Sphere>(vec3(-1, 0, -1.1), 0.5, 7));
   list.emplace_back(std::make_unique<Sphere>(vec3(-1, 0, -1.1), -0.45, 7));
   //list.emplace_back(std::make_unique<Plane>(0.5, 1.5, -0.5, 0.5, -2, 2));
-  world_objects = std::make_unique<ObjectList>(std::move(list));
 
   std::vector<std::unique_ptr<Object>> light_list;
   light_list.emplace_back(std::make_unique<Point>(vec3(100, 100, -1), 6));
   //light_list.emplace_back(std::make_unique<Point>(vec3(-100, 100, -1), 6));
   //vec3 line_segment[2] = { vec3(-10, 100, 0), vec3(10, 100, 0) };
   //light_list.emplace_back(std::make_unique<LineSegment>(line_segment, 6));
-  lights = std::make_unique<ObjectList>(std::move(light_list));
+
+  return std::unique_ptr<Scene>(
+    new Scene(std::move(camera),
+              std::move(materials),
+              std::make_unique<ObjectList>(std::move(list)),
+              std::make_unique<ObjectList>(std::move(light_list))));
 }
 
+Scene::Scene(std::unique_ptr<Camera>&& camera,
+             std::vector<std::unique_ptr<Material>>&& materials,
+             std::unique_ptr<Object>&& world_objects,
+             std::unique_ptr<Object>&& lights)
+  : camera(std::move(camera))
+  , materials(std::move(materials))
+  , world_objects(std::move(world_objects))
+  , lights(std::move(lights))
+{}
+
 Scene::~Scene() = default;
+
+void
+Scene::run(float width, float height)
+{
+  camera->set_clean();
+  camera->set_aspect(width / height);
+}
+
+Camera&
+Scene::get_camera()
+{
+  return *camera;
+}
+
+const Camera&
+Scene::get_camera() const
+{
+  return *camera;
+}
 
 const Object&
 Scene::get_world() const

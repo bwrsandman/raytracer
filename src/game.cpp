@@ -15,7 +15,7 @@ Game::Game() {
   input = std::make_unique<Input>();
   renderer = Renderer::create(Renderer::Type::Whitted, *window);
   ui = std::make_unique<Ui>(window->get_native_handle());
-  scene = std::make_unique<Scene>();
+  scene = Scene::load_test_scene();
 }
 
 Game::~Game() = default;
@@ -26,7 +26,8 @@ Game::main_loop()
   uint16_t width, height;
   window->get_dimensions(width, height);
   renderer->set_backbuffer_size(width, height);
-  input->run(*ui);
+  scene->run(width, height);
+  input->run(*ui, *scene);
   ui->run(*scene);
   renderer->run(*scene);
   //ui->draw();

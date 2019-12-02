@@ -206,42 +206,39 @@ RendererWhitted::color(const Ray& r, const Scene& scene, int depth)
 }
 
 void
+RendererWhitted::ray_gen(const Camera& camera)
+{
+  for (uint32_t y = 0; y < height; ++y) {
+    for (uint32_t x = 0; x < width; ++x) {
+      float u = static_cast<float>(x) / width;
+      float v = static_cast<float>(y) / height;
+      rays[x + y * width] = camera.get_ray(u, v);
+    }
+  }
+}
+
+void
 RendererWhitted::run(const Scene& scene)
 {
   static const float clear_color[4] = { 1.0f, 1.0f, 0.0f, 1.0f };
 
-  Camera cam(
-    vec3(0, 0, 0), vec3(0, 0, -1), vec3(0, 1, 0), 90, (width / height));
+  auto& cam = scene.get_camera();
 
   // raytracing
+  if (cam.is_dirty()) {
+    ray_gen(scene.get_camera());
+  }
+
   std::vector<std::thread> threads;
-  uint32_t num_cores = 1; // std::thread::hardware_concurrency();
+  uint32_t num_cores = std::thread::hardware_concurrency();
+  auto block_height = height / num_cores;
   for (uint32_t i = 0; i < num_cores; ++i) {
-    threads.emplace_back([this, i, num_cores, &cam, &scene]() {
-      for (uint32_t j = 0; j < height / num_cores; ++j) {
-        uint32_t y = j + i * height / num_cores;
-        for (uint32_t x = 0; x < width; ++x) {
+    auto offset = i * block_height * width;
+    auto length = block_height * width;
 
-          float u = static_cast<float>(x) / width;
-          float v = static_cast<float>(y) / height;
-
-          if (x == 0 && y == 150) {
-            printf("tadaa");
-          }
-
-          // Ray r(origin, lower_left_corner + u * horizontal + v * vertical);
-          Ray r = cam.get_ray(u, v);
-
-          // vec3 p = r.point_at_parameter(2.0);
-          vec3 col = saturate(color(r, scene, 0));
-          if (col.r() == 0.f && col.g() == 0.f && col.b() == 0.f) {
-            //             printf("black color at: %i, %i \n", x, y);
-          }
-
-          cpu_buffer[y * width + x] = {
-            sqrt(col.r()), sqrt(col.g()), sqrt(col.b()), 1.0f
-          };
-        }
+    threads.emplace_back([this, offset, length, &scene]() {
+      for (uint32_t i = 0; i < length; ++i) {
+        cpu_buffer[offset + i] = color(rays[offset + i], scene, 0);
       }
     });
   }
@@ -252,15 +249,8 @@ RendererWhitted::run(const Scene& scene)
 
   // binding texture
   glBindTexture(GL_TEXTURE_2D, gpu_buffer);
-  glTexSubImage2D(GL_TEXTURE_2D,
-                  0,
-                  0,
-                  0,
-                  width,
-                  height,
-                  GL_RGBA,
-                  GL_FLOAT,
-                  cpu_buffer.data());
+  glTexSubImage2D(
+    GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGB, GL_FLOAT, cpu_buffer.data());
 
   // clearing screen
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -299,23 +289,22 @@ RendererWhitted::rebuild_backbuffers()
 
   for (uint32_t y = 0; y < height; ++y) {
     for (uint32_t x = 0; x < width; ++x) {
-      cpu_buffer[y * width + x].r =
+      cpu_buffer[y * width + x][0] =
         ((y / 4) % 2) * static_cast<float>(x) / width;
-      cpu_buffer[y * width + x].g =
+      cpu_buffer[y * width + x][1] =
         ((y / 4) % 2) * static_cast<float>(y) / height;
-      cpu_buffer[y * width + x].b = 0;
-      cpu_buffer[y * width + x].a = 1.0f;
+      cpu_buffer[y * width + x][2] = 0;
     }
   }
 
   glBindTexture(GL_TEXTURE_2D, gpu_buffer);
   glTexImage2D(GL_TEXTURE_2D,
                0,
-               GL_RGBA32F,
+               GL_RGB32F,
                width,
                height,
                0,
-               GL_RGBA,
+               GL_RGB,
                GL_FLOAT,
                cpu_buffer.data());
 #if !__EMSCRIPTEN__
@@ -323,6 +312,8 @@ RendererWhitted::rebuild_backbuffers()
 #endif
 
   glViewport(0, 0, width, height);
+
+  rays.resize(width * height);
 }
 
 void
