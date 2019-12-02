@@ -28,7 +28,8 @@ Dielectric::scatter(const Scene& scene,
 
   // refracted using Snells and Fresnels law
   if (refract(r_in.direction, outward_normal, 1.0f, ref_idx, refracted)) {
-    attenuation = fresnel_rate(r_in.direction, outward_normal, 1.0f, ref_idx);
+    auto rate = fresnel_rate(r_in.direction, outward_normal, 1.0f, ref_idx);
+    attenuation = vec3(rate, rate, rate);
   }
 
   if (std::isnan(refracted.x())) {
@@ -69,7 +70,7 @@ Dielectric::scatter(const Scene& scene,
   //}
 
 
-  
+
 
   return true;
 }

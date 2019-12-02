@@ -11,11 +11,9 @@ public:
   vec3()
     : e{ 0.0f, 0.0f, 0.0f }
   {}
-  vec3(float e0, float e1, float e2)
+  constexpr vec3(float e0, float e1, float e2) noexcept
+    : e{ e0, e1, e2 }
   {
-    e[0] = e0;
-    e[1] = e1;
-    e[2] = e2;
   }
   inline float x() const { return e[0]; }
   inline float y() const { return e[1]; }
@@ -268,8 +266,8 @@ refract(const vec3& v, vec3& n, float ni, float nt, vec3& refracted)
 }
 
 // Fresnels law
-inline vec3
-fresnel_rate(const vec3& v, vec3& n, float ni, float nt)
+inline float
+fresnel_rate(const vec3& v, const vec3& n, float ni, float nt)
 {
   //	  1 // ni cosi - nt cost \2   / ni cost - nt cosi \2\
   // Fr = - || ----------------- |  + | ----------------- | |
@@ -293,7 +291,7 @@ fresnel_rate(const vec3& v, vec3& n, float ni, float nt)
   float cost2 = 1.f - (ni_over_nt * ni_over_nt * (1 - cosi * cosi));
   // Total internal reflection
   //if (cost2 < 0) {
-  //  return vec3(1.0, 1.0, 1.0);
+  //  return 1.0f;
  // }
 
   // from sint to cost
@@ -303,13 +301,7 @@ fresnel_rate(const vec3& v, vec3& n, float ni, float nt)
   float rs = (ni * cosi - nt * cost) / (ni * cost + nt * cosi);
   float rp = (ni * cosi - nt * cost) / (ni * cost + nt * cosi);
 
-  float fr = (rs * rs + rp * rp) * 0.5f;
-  if (fr > 1.0f) {
-    //printf("whoops: %f \n", fr);
-    fr = 1.0f;
-  }
-
-  return vec3(fr, fr, fr);
+  return std::min((rs * rs + rp * rp) * 0.5f, 1.0f);
   // As a consequence of the conservation of energy, transmittance is given by:
   // ft = 1 - fr;
 }
