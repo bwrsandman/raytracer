@@ -159,29 +159,50 @@ RendererWhitted::~RendererWhitted()
 vec3
 RendererWhitted::color(const Ray& r, const Scene& scene, int depth)
 {
+  vec3 col = vec3(0.0f, 0.0f, 0.0f);
+
   hit_record rec;
   if (scene.get_world().hit(r, 0.001, std::numeric_limits<float>::max(), rec)) {
     // Ray scattered{};
     vec3 attenuation = vec3(0.0f, 0.0f, 0.0f);
     Ray scattered[2];
-    if (depth < 50 && scene.get_material(rec.mat_id)
-                        .scatter(scene, r, rec, attenuation, scattered)) {
-      if (rec.mat_id == 7) { // hot fix for glass
-        return attenuation * color(scattered[0], scene, depth + 1) +
-               (vec3(1.f, 1.f, 1.f) - attenuation) *
-                 color(scattered[1], scene, depth + 1);
+    //
+    // if (depth > 10)
+    //  printf("Depth: %i \n", depth);
+
+    if (depth < 10) {
+      if (scene.get_material(rec.mat_id)
+            .scatter(scene, r, rec, attenuation, scattered)) {
+        if (rec.mat_id == 7) { // hot fix for glass
+          vec3 min_att = vec3(1.f, 1.f, 1.f) - attenuation;
+
+          if ((attenuation.r() + min_att.r()) != 1.0f) {
+            printf("whut %f \n", (attenuation.r() + min_att.r()));
+          }
+          if (attenuation.r() < 0.f || min_att.r() < 0.f) {
+            printf("whut %f, %f \n", attenuation.r(), min_att.r());
+          }
+
+          vec3 col_reflect =
+            attenuation * color(scattered[0], scene, depth + 1);
+          vec3 col_refract = min_att * color(scattered[1], scene, depth + 1);
+          col = col_reflect + col_refract;
+        } else {
+          col = attenuation * color(scattered[0], scene, depth + 1);
+        }
       } else {
-        return attenuation * color(scattered[0], scene, depth + 1);
+        col = attenuation;
       }
     } else {
-      return attenuation;
+      col = attenuation;
     }
-
   } else {
     vec3 unit_direction = unit_vector(r.direction);
-    float t = 0.5 * (unit_direction.y() + 1.0);
-    return (1.0 - t) * vec3(1.0, 1.0, 1.0) + t * vec3(0.5, 0.7, 1.0);
+    float t = 0.5f * (unit_direction.y() + 1.0f);
+    col = (1.0f - t) * vec3(1.0f, 1.0f, 1.0f) + t * vec3(0.5f, 0.7f, 1.0f);
   }
+
+  return col;
 }
 
 void
@@ -194,7 +215,7 @@ RendererWhitted::run(const Scene& scene)
 
   // raytracing
   std::vector<std::thread> threads;
-  uint32_t num_cores = std::thread::hardware_concurrency();
+  uint32_t num_cores = 1; // std::thread::hardware_concurrency();
   for (uint32_t i = 0; i < num_cores; ++i) {
     threads.emplace_back([this, i, num_cores, &cam, &scene]() {
       for (uint32_t j = 0; j < height / num_cores; ++j) {
@@ -204,11 +225,18 @@ RendererWhitted::run(const Scene& scene)
           float u = static_cast<float>(x) / width;
           float v = static_cast<float>(y) / height;
 
+          if (x == 0 && y == 150) {
+            printf("tadaa");
+          }
+
           // Ray r(origin, lower_left_corner + u * horizontal + v * vertical);
           Ray r = cam.get_ray(u, v);
 
           // vec3 p = r.point_at_parameter(2.0);
           vec3 col = saturate(color(r, scene, 0));
+          if (col.r() == 0.f && col.g() == 0.f && col.b() == 0.f) {
+            //             printf("black color at: %i, %i \n", x, y);
+          }
 
           cpu_buffer[y * width + x] = {
             sqrt(col.r()), sqrt(col.g()), sqrt(col.b()), 1.0f

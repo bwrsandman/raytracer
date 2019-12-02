@@ -32,15 +32,15 @@ Scene::Scene()
   list.emplace_back(std::make_unique<Sphere>(vec3(0, -100.5, -1), 100, 1));
   list.emplace_back(std::make_unique<Sphere>(vec3(1, 0, -1.1), 0.5, 2));
   list.emplace_back(std::make_unique<Sphere>(vec3(-1, 0, -1.1), 0.5, 7));
-  //list.emplace_back(std::make_unique<Sphere>(vec3(-1, 0, -1.1), -0.4, 7));
+  list.emplace_back(std::make_unique<Sphere>(vec3(-1, 0, -1.1), -0.45, 7));
   //list.emplace_back(std::make_unique<Plane>(0.5, 1.5, -0.5, 0.5, -2, 2));
   world_objects = std::make_unique<ObjectList>(std::move(list));
 
   std::vector<std::unique_ptr<Object>> light_list;
   light_list.emplace_back(std::make_unique<Point>(vec3(100, 100, -1), 6));
-  light_list.emplace_back(std::make_unique<Point>(vec3(-100, 100, -1), 6));
-  vec3 line_segment[2] = { vec3(-10, 100, 0), vec3(10, 100, 0) };
-  light_list.emplace_back(std::make_unique<LineSegment>(line_segment, 6));
+  //light_list.emplace_back(std::make_unique<Point>(vec3(-100, 100, -1), 6));
+  //vec3 line_segment[2] = { vec3(-10, 100, 0), vec3(10, 100, 0) };
+  //light_list.emplace_back(std::make_unique<LineSegment>(line_segment, 6));
   lights = std::make_unique<ObjectList>(std::move(light_list));
 }
 

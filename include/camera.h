@@ -41,7 +41,7 @@ public:
     float half_height = tan(theta / 2);
     float half_width = screen_aspect * half_height;
 
-    origin - look_from;
+    origin = look_from;
     w = unit_vector(look_from - look_at);
     u = unit_vector(cross(v_up, w));
     v = -cross(w, u);
