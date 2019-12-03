@@ -81,7 +81,7 @@ Camera::process_event(const SDL_Event& event)
       }
       switch (event.key.keysym.sym) {
 #if __EMSCRIPTEN__
-        case SDL_SCANCODE_w: // weird sdl2 emscripten bug
+        case SDL_SCANCODE_W: // weird sdl2 emscripten bug
 #else
         case SDLK_w:
 #endif
@@ -92,7 +92,7 @@ Camera::process_event(const SDL_Event& event)
           calculate_camera();
         } break;
 #if __EMSCRIPTEN__
-        case SDL_SCANCODE_s: // weird sdl2 emscripten bug
+        case SDL_SCANCODE_S: // weird sdl2 emscripten bug
 #else
         case SDLK_s:
 #endif
@@ -103,7 +103,7 @@ Camera::process_event(const SDL_Event& event)
           calculate_camera();
         } break;
 #if __EMSCRIPTEN__
-        case SDL_SCANCODE_e: // weird sdl2 emscripten bug
+        case SDL_SCANCODE_E: // weird sdl2 emscripten bug
 #else
         case SDLK_e:
 #endif
@@ -111,7 +111,7 @@ Camera::process_event(const SDL_Event& event)
           calculate_camera();
           break;
 #if __EMSCRIPTEN__
-        case SDL_SCANCODE_q: // weird sdl2 emscripten bug
+        case SDL_SCANCODE_Q: // weird sdl2 emscripten bug
 #else
         case SDLK_q:
 #endif
@@ -119,7 +119,7 @@ Camera::process_event(const SDL_Event& event)
           calculate_camera();
           break;
 #if __EMSCRIPTEN__
-        case SDL_SCANCODE_a: // weird sdl2 emscripten bug
+        case SDL_SCANCODE_A: // weird sdl2 emscripten bug
 #else
         case SDLK_a:
 #endif
@@ -130,7 +130,7 @@ Camera::process_event(const SDL_Event& event)
           calculate_camera();
         } break;
 #if __EMSCRIPTEN__
-        case SDL_SCANCODE_d: // weird sdl2 emscripten bug
+        case SDL_SCANCODE_D: // weird sdl2 emscripten bug
 #else
         case SDLK_d:
 #endif
