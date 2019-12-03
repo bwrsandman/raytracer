@@ -11,5 +11,5 @@ struct Material
   virtual ~Material() = default;
   virtual void fill_type_data(const Scene& scene,
                               RayPayload& payload,
-                              const vec2& texture_coordinates) const = 0;
+                              const vec3& texture_coordinates) const = 0;
 };

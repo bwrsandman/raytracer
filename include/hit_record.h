@@ -11,6 +11,6 @@ struct hit_record
   vec3 p;
   vec3 normal;
   vec3 tangent;
-  vec2 uv;
+  vec3 uv;
   uint16_t mat_id;
 };

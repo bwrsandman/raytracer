@@ -66,7 +66,8 @@ TriangleMesh::hit(const Ray& r, float tmin, float tmax, hit_record& rec) const
         1.0f / (uv0uv1.e[0] * uv0uv2.e[1] - uv0uv1.e[1] * uv0uv2.e[0]);
       rec.tangent = (v0v1 * uv0uv2.e[1] - v0v2 * uv0uv1.e[1]) * denom_inv;
       rec.tangent.make_unit_vector();
-      rec.uv = uv0 * w + uv1 * u + uv2 * v;
+      vec2 uv = uv0 * w + uv1 * u + uv2 * v;
+      rec.uv = vec3(uv.e[0], uv.e[1], 0.0f);
       rec.mat_id = mat_id;
       return true;
     }

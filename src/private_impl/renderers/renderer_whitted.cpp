@@ -333,7 +333,7 @@ RendererWhitted::raygen(Ray primary_ray, const Scene& scene) const
   for (auto& ray : shadow_rays) {
     if (!trace(payload, scene, ray.ray.ray, true, t_min, ray.t_max)) {
       auto& mat = scene.get_material(ray.mat_id);
-      vec2 uv;
+      vec3 uv;
       payload.distance = ray.t_max;
       mat.fill_type_data(scene, payload, uv);
       color += payload.emission * ray.ray.attenuation;

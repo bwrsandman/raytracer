@@ -35,7 +35,7 @@ Texture::~Texture()
 }
 
 vec3
-Texture::sample(const vec2& texture_coordinates) const
+Texture::sample(const vec3& texture_coordinates) const
 {
   uint32_t x = std::clamp(texture_coordinates.e[0], 0.0f, 1.0f) * width;
   uint32_t y =
