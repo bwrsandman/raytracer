@@ -7,7 +7,11 @@ union SDL_Event;
 class Camera
 {
 public:
-  Camera(vec3 lookfrom, vec3 lookat, vec3 vup, float vfov, float aspect);
+  Camera(const vec3& origin,
+         const vec3& forward,
+         const vec3& up,
+         float vfov,
+         float aspect);
 
   Ray get_ray(float s, float t) const;
   void set_aspect(float aspect);

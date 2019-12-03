@@ -9,6 +9,9 @@ Texture::load_from_file(const std::string& filename)
   int width, height, channels;
   float* data = stbi_loadf(filename.c_str(), &width, &height, &channels, 0);
   if (data == nullptr) {
+    std::printf(
+      "Unable to load \"%s\" texture, make sure it is in the current path\n",
+      filename.c_str());
     return nullptr;
   }
   return std::unique_ptr<Texture>(new Texture(width, height, channels, data));

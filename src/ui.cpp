@@ -1,5 +1,6 @@
 #include "ui.h"
 
+#include <SDL_video.h>
 #include <imgui.h>
 
 #include <examples/imgui_impl_opengl3.h>
@@ -30,19 +31,28 @@ Ui::Ui(SDL_Window* window)
 }
 
 void
-Ui::run(Scene& scene) const
+Ui::run(std::unique_ptr<Scene>& scene) const
 {
   ImGui_ImplOpenGL3_NewFrame();
   ImGui_ImplSDL2_NewFrame(window);
   ImGui::NewFrame();
 
   if (ImGui::Begin("Configuration ")) {
+    ImGui::Text("Load Scene");
+    if (ImGui::Button("Whitted")) {
+      SDL_SetWindowSize(window, 512, 512);
+      scene = Scene::load_whitted_scene();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Cornel Box")) {
+      scene = Scene::load_cornel_box();
+    }
     if (ImGui::CollapsingHeader("Camera", ImGuiTreeNodeFlags_DefaultOpen)) {
       ImGui::Text("Use WASD to move the camera and\n"
                   "Arrow keys for Panning and Tilting.\n"
                   "The shift key increases speed and\n"
                   "the CTRL key decreases.");
-      auto& camera = scene.get_camera();
+      auto& camera = scene->get_camera();
       bool dirty = false;
 
       auto fov = camera.v_fov;
@@ -66,7 +76,7 @@ Ui::run(Scene& scene) const
       }
     }
     if (ImGui::CollapsingHeader("Materials")) {
-      auto& material_list = scene.get_material_list();
+      auto& material_list = scene->get_material_list();
       uint32_t i = 0;
       std::vector<std::vector<std::unique_ptr<Material>>::iterator>
         remove_index;
@@ -141,7 +151,7 @@ Ui::run(Scene& scene) const
       }
     }
     if (ImGui::CollapsingHeader("Geometry", ImGuiTreeNodeFlags_DefaultOpen)) {
-      auto& geometry_list = scene.get_world();
+      auto& geometry_list = scene->get_world();
       uint32_t i = 0;
       std::vector<std::vector<std::unique_ptr<Object>>::iterator> remove_index;
       for (auto itr = geometry_list.begin(); itr < geometry_list.end(); ++itr) {
@@ -200,8 +210,8 @@ Ui::run(Scene& scene) const
       }
     }
     if (ImGui::CollapsingHeader("Lights", ImGuiTreeNodeFlags_DefaultOpen)) {
-      auto& light_list = scene.get_lights();
-      auto& geometry_list = scene.get_world();
+      auto& light_list = scene->get_lights();
+      auto& geometry_list = scene->get_world();
       uint32_t i = 0;
       std::vector<std::vector<std::unique_ptr<Object>>::iterator> remove_index;
       for (auto& light : light_list) {

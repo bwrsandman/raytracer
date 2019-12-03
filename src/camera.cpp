@@ -4,12 +4,17 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
-Camera::Camera(vec3 lookfrom, vec3 lookat, vec3 vup, float vfov, float aspect)
-  : look_from(lookfrom)
-  , look_at(lookat)
-  , v_up(vup)
+Camera::Camera(const vec3& origin,
+               const vec3& forward,
+               const vec3& up,
+               float vfov,
+               float aspect)
+  : look_from(origin)
+  , look_at(origin + forward)
+  , v_up(up)
   , v_fov(vfov)
   , screen_aspect(aspect)
+  , origin(origin)
   , dirty(true)
 {
   calculate_camera();
