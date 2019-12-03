@@ -2,6 +2,7 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
+#include <tiny_gltf.h>
 
 std::unique_ptr<Texture>
 Texture::load_from_file(const std::string& filename)
@@ -31,6 +32,35 @@ Texture::load_from_file(const std::string& filename)
   }
   stbi_image_free(data);
   return std::unique_ptr<Texture>(new Texture(width, height, std::move(color)));
+}
+
+std::unique_ptr<Texture>
+Texture::load_from_gltf_image(const tinygltf::Image& image)
+{
+  // FIXME: Assuming 8 bit pixels data
+  assert(image.bits == 8);
+  std::vector<vec3> color;
+  color.resize(image.width * image.height);
+  for (uint32_t y = 0; y < image.height; ++y) {
+    for (uint32_t x = 0; x < image.width; ++x) {
+      color[x + y * image.width].e[0] =
+        image.image[(x + y * image.width) * image.component] / 255.0f;
+      if (image.component > 2) {
+        color[x + y * image.width].e[1] =
+          image.image[(x + y * image.width) * image.component + 1] / 255.0f;
+        color[x + y * image.width].e[2] =
+          image.image[(x + y * image.width) * image.component + 2] / 255.0f;
+      } else {
+
+        color[x + y * image.width].e[1] =
+          image.image[(x + y * image.width) * image.component] / 255.0f;
+        color[x + y * image.width].e[2] =
+          image.image[(x + y * image.width) * image.component] / 255.0f;
+      }
+    }
+  }
+  return std::unique_ptr<Texture>(
+    new Texture(image.width, image.height, std::move(color)));
 }
 
 Texture::Texture(uint32_t width, uint32_t height, std::vector<vec3>&& data)

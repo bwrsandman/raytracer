@@ -1,6 +1,14 @@
 #include "scene.h"
 #include <cassert>
 
+#define TINYGLTF_IMPLEMENTATION
+#define TINYGLTF_USE_CPP14
+#define TINYGLTF_NO_STB_IMAGE_WRITE
+#include <materials/emissive.h>
+#include <queue>
+#include <tiny_gltf.h>
+#include <vec4.h>
+
 #include "camera.h"
 #include "hittable/line_segment.h"
 #include "hittable/plane.h"
@@ -14,6 +22,438 @@
 #include "materials/metal.h"
 #include "scene_node.h"
 #include "texture.h"
+
+namespace details {
+template<typename dstT,
+         typename srcT,
+         typename = std::enable_if<std::is_same<dstT, srcT>::type>>
+void
+copy_buffer_view(dstT* dst, const uint8_t* src, size_t count)
+{
+  for (size_t j = 0; j < count; ++j) {
+    dst[j] = static_cast<dstT>(reinterpret_cast<const srcT*>(src)[j]);
+  }
+}
+
+template<typename dstT, typename srcT>
+void
+copy_buffer_view(dstT* dst, const uint8_t* src, size_t count)
+{
+  memcpy(dst, src, count * sizeof(dstT));
+}
+} // details
+
+template<typename desT>
+void
+copy_buffer_view(desT* dst,
+                 const uint8_t* src,
+                 size_t count,
+                 uint32_t componentType)
+{
+  switch (componentType) {
+    case TINYGLTF_COMPONENT_TYPE_BYTE:
+      details::copy_buffer_view<desT, int8_t>(dst, src, count);
+      break;
+    case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE:
+      details::copy_buffer_view<desT, uint8_t>(dst, src, count);
+      break;
+    case TINYGLTF_COMPONENT_TYPE_SHORT:
+      details::copy_buffer_view<desT, int16_t>(dst, src, count);
+      break;
+    case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT:
+      details::copy_buffer_view<desT, uint16_t>(dst, src, count);
+      break;
+    case TINYGLTF_COMPONENT_TYPE_INT:
+      details::copy_buffer_view<desT, int32_t>(dst, src, count);
+      break;
+    case TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT:
+      details::copy_buffer_view<desT, uint32_t>(dst, src, count);
+      break;
+    case TINYGLTF_COMPONENT_TYPE_FLOAT:
+      details::copy_buffer_view<desT, float>(dst, src, count);
+      break;
+    case TINYGLTF_COMPONENT_TYPE_DOUBLE:
+      details::copy_buffer_view<desT, double>(dst, src, count);
+      break;
+    default:
+      // "Unsupported component type"
+      assert(false);
+  }
+}
+
+std::unique_ptr<Scene>
+Scene::load_from_gltf(const std::string& file_name)
+{
+  tinygltf::TinyGLTF loader;
+  tinygltf::Model gltf;
+  std::string err;
+  std::string warn;
+  bool ret = loader.LoadASCIIFromFile(
+    &gltf,
+    &err,
+    &warn,
+    file_name,
+    tinygltf::REQUIRE_VERSION | tinygltf::REQUIRE_ACCESSORS |
+      tinygltf::REQUIRE_BUFFERS | tinygltf::REQUIRE_BUFFER_VIEWS);
+
+  if (!warn.empty()) {
+    std::cerr << "Warn: " << warn << std::endl;
+  }
+
+  if (!err.empty()) {
+    std::cerr << "Err: " << err << std::endl;
+    return nullptr;
+  }
+
+  if (!ret) {
+    std::cerr << "Err: Failed to parse glTF." << std::endl;
+    return nullptr;
+  }
+
+  if (gltf.meshes.empty()) {
+    std::cerr << "Err: There are no meshes in glTF." << std::endl;
+    return nullptr;
+  }
+
+  if (gltf.defaultScene < 0) {
+    std::cerr << "Err: No default scene specified in glTF." << std::endl;
+    return nullptr;
+  }
+
+  std::vector<std::unique_ptr<Texture>> textures;
+  std::vector<std::unique_ptr<Material>> materials;
+  std::vector<std::unique_ptr<Object>> meshes;
+  bool found_camera = false;
+  bool use_default_material = false;
+
+  if (gltf.materials.empty()) {
+    std::cerr
+      << "Warn: No textures or materials from glTF, using default lambert."
+      << std::endl;
+    textures.emplace_back(Texture::load_from_file("whitted_floor.png")); // 0
+    materials.emplace_back(
+      std::make_unique<Lambert>(vec3(1.0, 1.0, 1.0), 0)); // 0
+    use_default_material = true;
+  } else {
+    for (auto& t : gltf.textures) {
+      if (!t.name.empty()) {
+        std::printf("glTF loader: Loading texture %s\n", t.name.c_str());
+      }
+      auto& image = gltf.images[t.source];
+      if (!image.name.empty()) {
+        std::printf("glTF loader: Loading image %s\n", t.name.c_str());
+      }
+      textures.emplace_back(Texture::load_from_gltf_image(image));
+    }
+    for (auto& m : gltf.materials) {
+      if (!m.name.empty()) {
+        std::printf("glTF loader: Loading material %s\n", m.name.c_str());
+      }
+      auto color_texture = std::numeric_limits<uint32_t>::max();
+      auto normal_texture = std::numeric_limits<uint32_t>::max();
+      if (m.emissiveTexture.index >= 0) {
+        color_texture = m.emissiveTexture.index;
+      } else if (m.pbrMetallicRoughness.baseColorTexture.index >= 0) {
+        color_texture = m.pbrMetallicRoughness.baseColorTexture.index;
+      }
+      if (m.normalTexture.index >= 0) {
+        normal_texture = m.normalTexture.index;
+      }
+      materials.emplace_back(std::make_unique<Lambert>(
+        vec3(1.0, 1.0, 1.0), color_texture, normal_texture));
+    }
+  }
+
+  // Lights
+  std::cerr << "Warn: No lights from glTF, using default point light."
+            << std::endl;
+  materials.emplace_back(std::make_unique<Emissive>(vec3(1.0, 1.0, 1.0))); // 1
+  std::vector<std::unique_ptr<Object>> light_list;
+  light_list.emplace_back(std::make_unique<Point>(vec3(5000.0f, 0, 0), 1));
+
+  // Construct scene graph
+  std::vector<SceneNode> nodes;
+  uint32_t camera_index = 0;
+
+  // BFS on children to have children contiguous
+  std::queue<std::pair<int, int>> bfs_gltf_nodes_queue;
+  std::vector<std::pair<int, int>> bfs_gltf_nodes;
+  for (auto gltf_node_index : gltf.scenes[gltf.defaultScene].nodes) {
+    bfs_gltf_nodes_queue.push(std::make_pair(gltf_node_index, -1));
+  }
+  while (!bfs_gltf_nodes_queue.empty()) {
+    auto [v, p] = bfs_gltf_nodes_queue.front();
+    bfs_gltf_nodes_queue.pop();
+    for (auto c : gltf.nodes[v].children) {
+      bfs_gltf_nodes_queue.emplace(c, v);
+    }
+    bfs_gltf_nodes.emplace_back(v, p);
+  }
+
+  for (auto [i, p] : bfs_gltf_nodes) {
+    auto& gltf_node = gltf.nodes[i];
+    auto& node = nodes.emplace_back();
+    if (gltf_node.translation.size() == 3) {
+      node.local_trs.translation.e[0] = gltf_node.translation[0];
+      node.local_trs.translation.e[1] = gltf_node.translation[1];
+      node.local_trs.translation.e[2] = gltf_node.translation[2];
+    } else {
+      node.local_trs.translation = vec3();
+    }
+
+    if (gltf_node.rotation.size() == 4) {
+      node.local_trs.rotation.x = gltf_node.rotation[0];
+      node.local_trs.rotation.y = gltf_node.rotation[1];
+      node.local_trs.rotation.z = gltf_node.rotation[2];
+      node.local_trs.rotation.w = gltf_node.rotation[3];
+    } else {
+      node.local_trs.rotation = quat();
+    }
+    if (gltf_node.scale.size() == 3) {
+      node.local_trs.scale =
+        (gltf_node.scale[0] + gltf_node.scale[1] + gltf_node.scale[2]) / 3.0f;
+    } else {
+      node.local_trs.scale = 1;
+    }
+    if (gltf_node.children.size()) {
+      auto children_id_offset = 0;
+      for (auto j : bfs_gltf_nodes) // TODO: Find a linear time way to do this
+      {
+        if (j.first == gltf_node.children[j.first]) {
+          node.children_id_offset = children_id_offset;
+          break;
+        }
+        children_id_offset++;
+      }
+      assert(node.children_id_offset > 0);
+    }
+    node.children_id_length = gltf_node.children.size();
+    if (gltf_node.camera >= 0 &&
+        gltf.cameras[gltf_node.camera].type == "perspective" && !found_camera) {
+      node.type = SceneNode::Type::Camera;
+
+      mat4 matrix;
+      // FIXME this is just a quick patch to get duck to work.
+      // Full scene graph is necessary to do this properly
+      if (p >= 0) {
+        auto& parent_node = gltf.nodes[p];
+        if (!parent_node.matrix.empty()) {
+          matrix = mat4(parent_node.matrix[0],
+                        parent_node.matrix[1],
+                        parent_node.matrix[2],
+                        parent_node.matrix[3],
+                        parent_node.matrix[4],
+                        parent_node.matrix[5],
+                        parent_node.matrix[6],
+                        parent_node.matrix[7],
+                        parent_node.matrix[8],
+                        parent_node.matrix[9],
+                        parent_node.matrix[10],
+                        parent_node.matrix[11],
+                        parent_node.matrix[12],
+                        parent_node.matrix[13],
+                        parent_node.matrix[14],
+                        parent_node.matrix[15]);
+        }
+      }
+      if (!gltf_node.matrix.empty()) {
+        matrix = dot(matrix,
+                     mat4(gltf_node.matrix[0],
+                          gltf_node.matrix[1],
+                          gltf_node.matrix[2],
+                          gltf_node.matrix[3],
+                          gltf_node.matrix[4],
+                          gltf_node.matrix[5],
+                          gltf_node.matrix[6],
+                          gltf_node.matrix[7],
+                          gltf_node.matrix[8],
+                          gltf_node.matrix[9],
+                          gltf_node.matrix[10],
+                          gltf_node.matrix[11],
+                          gltf_node.matrix[12],
+                          gltf_node.matrix[13],
+                          gltf_node.matrix[14],
+                          gltf_node.matrix[15]));
+      }
+
+      auto origin4 = dot(matrix, vec4(0, 0, 0, 1));
+      auto direction4 = dot(matrix, vec4(0, 0, -1, 0));
+      auto origin = vec3(origin4.e[0], origin4.e[1], origin4.e[2]);
+      auto direction = vec3(direction4.e[0], direction4.e[1], direction4.e[2]);
+      direction.make_unit_vector();
+      auto up = vec3(0, 1, 0);
+      auto& gltf_camera = gltf.cameras[gltf_node.camera].perspective;
+      node.camera = std::make_unique<Camera>(
+        origin, direction, up, gltf_camera.yfov, gltf_camera.aspectRatio);
+      camera_index = nodes.size() - 1;
+      found_camera = true;
+    } else if (gltf_node.mesh >= 0) {
+      auto& gltf_mesh = gltf.meshes[gltf_node.mesh];
+      // TODO Support multiple primitives
+      if (!gltf_mesh.primitives.empty()) {
+        node.type = SceneNode::Type::Mesh;
+        node.mesh_id = meshes.size();
+        auto& gltf_primitive = gltf_mesh.primitives[0];
+
+        // Indices
+        std::vector<uint16_t> indices;
+        {
+          auto& accessor = gltf.accessors[gltf_primitive.indices];
+          auto& buffer_view = gltf.bufferViews[accessor.bufferView];
+          auto& buffer = gltf.buffers[buffer_view.buffer];
+          indices.resize(accessor.count);
+          auto offset = buffer_view.byteOffset + accessor.byteOffset;
+          copy_buffer_view(indices.data(),
+                           buffer.data.data() + offset,
+                           indices.size(),
+                           accessor.componentType);
+        }
+
+        // Positions
+        std::vector<vec3> positions;
+        {
+          auto& accessor =
+            gltf.accessors[gltf_primitive.attributes["POSITION"]];
+          assert(accessor.type == TINYGLTF_TYPE_VEC3);
+          auto& buffer_view = gltf.bufferViews[accessor.bufferView];
+          auto& buffer = gltf.buffers[buffer_view.buffer];
+          positions.resize(accessor.count);
+          auto offset = buffer_view.byteOffset + accessor.byteOffset;
+          copy_buffer_view(positions.data(),
+                           buffer.data.data() + offset,
+                           positions.size(),
+                           accessor.componentType);
+        }
+
+        // UV
+        std::vector<vec2> uv;
+        {
+          auto& accessor =
+            gltf.accessors[gltf_primitive.attributes["TEXCOORD_0"]];
+          assert(accessor.type == TINYGLTF_TYPE_VEC2);
+          auto& buffer_view = gltf.bufferViews[accessor.bufferView];
+          auto& buffer = gltf.buffers[buffer_view.buffer];
+          uv.resize(accessor.count);
+          auto offset = buffer_view.byteOffset + accessor.byteOffset;
+          copy_buffer_view(uv.data(),
+                           buffer.data.data() + offset,
+                           uv.size(),
+                           accessor.componentType);
+        }
+        // Normals
+        std::vector<vec3> normals;
+        {
+          auto& accessor = gltf.accessors[gltf_primitive.attributes["NORMAL"]];
+          assert(accessor.type == TINYGLTF_TYPE_VEC3);
+          auto& buffer_view = gltf.bufferViews[accessor.bufferView];
+          auto& buffer = gltf.buffers[buffer_view.buffer];
+          normals.resize(accessor.count);
+          auto offset = buffer_view.byteOffset + accessor.byteOffset;
+          copy_buffer_view(normals.data(),
+                           buffer.data.data() + offset,
+                           normals.size(),
+                           accessor.componentType);
+        }
+
+        assert(uv.size() == normals.size());
+        std::vector<MeshVertexData> data;
+        data.resize(uv.size());
+        for (uint32_t j = 0; j < uv.size(); ++j) {
+          data[j].uv = uv[j];
+          data[j].normal = normals[j];
+          data[j].tangent =
+            cross(data[j].normal,
+                  vec3(0, 1, 0)); // FIXME: This is not a good approximation
+        }
+        mat4 matrix;
+        // FIXME this is just a quick patch to get duck to work.
+        // Full scene graph is necessary to do this properly
+        if (p >= 0) {
+          auto& parent_node = gltf.nodes[p];
+          if (!parent_node.matrix.empty()) {
+            matrix = mat4(parent_node.matrix[0],
+                          parent_node.matrix[1],
+                          parent_node.matrix[2],
+                          parent_node.matrix[3],
+                          parent_node.matrix[4],
+                          parent_node.matrix[5],
+                          parent_node.matrix[6],
+                          parent_node.matrix[7],
+                          parent_node.matrix[8],
+                          parent_node.matrix[9],
+                          parent_node.matrix[10],
+                          parent_node.matrix[11],
+                          parent_node.matrix[12],
+                          parent_node.matrix[13],
+                          parent_node.matrix[14],
+                          parent_node.matrix[15]);
+          }
+        }
+        if (!gltf_node.matrix.empty()) {
+          matrix = dot(matrix,
+                       mat4(gltf_node.matrix[0],
+                            gltf_node.matrix[1],
+                            gltf_node.matrix[2],
+                            gltf_node.matrix[3],
+                            gltf_node.matrix[4],
+                            gltf_node.matrix[5],
+                            gltf_node.matrix[6],
+                            gltf_node.matrix[7],
+                            gltf_node.matrix[8],
+                            gltf_node.matrix[9],
+                            gltf_node.matrix[10],
+                            gltf_node.matrix[11],
+                            gltf_node.matrix[12],
+                            gltf_node.matrix[13],
+                            gltf_node.matrix[14],
+                            gltf_node.matrix[15]));
+        }
+
+        for (auto& p : positions) {
+          auto moved = dot(matrix, vec4(p.e[0], p.e[1], p.e[2], 1.0f));
+          p.e[0] = moved.e[0];
+          p.e[1] = moved.e[1];
+          p.e[2] = moved.e[2];
+        }
+
+        uint32_t material = 0;
+        if (gltf_primitive.material >= 0) {
+          material = static_cast<uint32_t>(gltf_primitive.material);
+        }
+        meshes.emplace_back(new TriangleMesh(
+          std::move(positions), std::move(data), std::move(indices), material));
+      }
+    }
+  }
+
+  // Default camera
+  if (!found_camera) {
+    std::cerr
+      << "Warn: There are no perspective cameras in glTF, using a default one."
+      << std::endl;
+    camera_index = nodes.size();
+    SceneNode& camera_node = nodes.emplace_back();
+    camera_node.camera = std::make_unique<Camera>(
+      vec3(0, 0.0f, 2.5f), vec3(0, 0, -1), vec3(0, 1, 0), 90, 1);
+    camera_node.type = SceneNode::Type::Camera;
+  }
+
+  std::printf("glTF loader: Loaded %zu nodes, %zu textures, %zu materials, %zu "
+              "meshes, %zu lights\n",
+              nodes.size(),
+              textures.size(),
+              materials.size(),
+              meshes.size(),
+              light_list.size());
+
+  // TODO: remember to apply scene graph transforms on objects and camera
+  return std::unique_ptr<Scene>(new Scene(std::move(nodes),
+                                          camera_index,
+                                          std::move(textures),
+                                          std::move(materials),
+                                          std::move(meshes),
+                                          std::move(light_list)));
+}
 
 std::unique_ptr<Scene>
 Scene::load_whitted_scene()
