@@ -1,7 +1,9 @@
 #include "scene.h"
 #include <cassert>
+#include <sdf.h>
 
 #include "camera.h"
+#include "hittable/functional_geometry.h"
 #include "hittable/line_segment.h"
 #include "hittable/plane.h"
 #include "hittable/point.h"
@@ -44,7 +46,25 @@ Scene::load_cornel_box()
   std::vector<std::unique_ptr<Object>> list;
   list.emplace_back(std::make_unique<Sphere>(vec3(0, -0.5, -2), 0.5, 0));
   list.emplace_back(std::make_unique<Sphere>(vec3(0, -101.0, -2), 100, 1));
-  list.emplace_back(std::make_unique<Sphere>(vec3(1.5, -0.5, -2.1), 0.5, 2));
+  auto complex_shape = [](const vec3& position) -> float {
+    auto sphere = sdf::sphere(position, 0.6f);
+    auto sphere2 = sdf::sphere(position - vec3(-0.5, 0.4, 0.4f), 0.3f);
+    auto box = sdf::box(position, vec3(0.4f, 0.4f, 0.4f));
+    auto sphere_box = sdf::intersect(sphere, box);
+    float cylinder_length = 1.0f;
+    float radius = 0.35f;
+    auto cylinder_y = sdf::cylinder(position, radius, cylinder_length);
+    auto cylinder_x = sdf::cylinder(
+      vec3(position.z(), position.x(), position.y()), radius, cylinder_length);
+    auto cylinder_z = sdf::cylinder(
+      vec3(position.x(), position.z(), position.y()), radius, cylinder_length);
+    auto cylinder_cross =
+      sdf::combine(cylinder_x, sdf::combine(cylinder_y, cylinder_z));
+    return sdf::difference(sphere_box, cylinder_cross);
+  };
+  list.emplace_back(std::make_unique<FunctionalGeometry>(
+    vec3(1.5, -0.5, -2.1), 40, complex_shape, 3));
+
   list.emplace_back(std::make_unique<Sphere>(vec3(-1.5, -0.5, -2.1), 0.5, 7));
   list.emplace_back(std::make_unique<Sphere>(vec3(-1.5, -0.5, -2.1), -0.45, 7));
 
