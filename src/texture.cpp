@@ -37,9 +37,9 @@ Texture::~Texture()
 vec3
 Texture::sample(const vec3& texture_coordinates) const
 {
-  uint32_t x = std::clamp(texture_coordinates.e[0], 0.0f, 1.0f) * width;
+  uint32_t x = static_cast<uint32_t>(texture_coordinates.e[0] * (width - 0.0001)) % width;
   uint32_t y =
-    (1.0f - std::clamp(texture_coordinates.e[1], 0.0f, 1.0f)) * height;
+      static_cast<uint32_t>((1.0f - std::fmod(texture_coordinates.e[1], 1.0f)) * (height - 0.0001)) % height;
   auto base = &data[(x + y * width) * num_channels];
   return vec3(base[0], base[1], base[2]);
 }
