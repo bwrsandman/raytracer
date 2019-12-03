@@ -15,7 +15,11 @@ Sphere::Sphere(vec3 cen, float r, uint16_t m)
 Sphere::~Sphere() = default;
 
 bool
-Sphere::hit(const Ray& r, float t_min, float t_max, hit_record& rec) const
+Sphere::hit(const Ray& r,
+            bool early_out,
+            float t_min,
+            float t_max,
+            hit_record& rec) const
 {
   static constexpr float f32_1_2PI = 0.5f / M_PI;
   static constexpr float f32_1_PI = 1.0f / M_PI;

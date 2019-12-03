@@ -11,7 +11,11 @@ Plane::Plane(vec3 _min, vec3 _max, vec3 _n, uint16_t _m)
 {}
 
 bool
-Plane::hit(const Ray& r, float tmin, float tmax, hit_record& rec) const
+Plane::hit(const Ray& r,
+           bool early_out,
+           float t_min,
+           float t_max,
+           hit_record& rec) const
 {
   float t;
   int index_one = 0, index_two = 0;
@@ -35,7 +39,7 @@ Plane::hit(const Ray& r, float tmin, float tmax, hit_record& rec) const
   float one = r.origin.e[index_one] + t * r.direction.e[index_one];
   float two = r.origin.e[index_two] + t * r.direction.e[index_two];
 
-  if (t < tmin || t > tmax)
+  if (t < t_min || t > t_max)
     return false;
   if (one < min.e[index_one] || one > max.e[index_one] ||
       two < min.e[index_two] || two > max.e[index_two])

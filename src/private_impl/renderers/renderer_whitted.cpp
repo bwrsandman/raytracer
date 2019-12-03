@@ -170,7 +170,7 @@ RendererWhitted::trace(RayPayload& payload,
   double closest_so_far = t_max;
 
   for (auto& object : object_list) {
-    if (object->hit(r, t_min, closest_so_far, temp_rec)) {
+    if (object->hit(r, early_out, t_min, closest_so_far, temp_rec)) {
       if (closest_so_far > temp_rec.t) {
         hit_anything = true;
         closest_so_far = temp_rec.t;
