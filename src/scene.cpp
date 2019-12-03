@@ -48,7 +48,7 @@ Scene::load_cornel_box()
   list.emplace_back(std::make_unique<Sphere>(vec3(-1.5, -0.5, -2.1), 0.5, 7));
   list.emplace_back(std::make_unique<Sphere>(vec3(-1.5, -0.5, -2.1), -0.45, 7));
 
-  std::vector<uint16_t> indices = {
+  /*std::vector<uint16_t> indices = {
     0, 1, 2, 2, 3, 0,
   };
   std::vector<MeshVertexData> data0 = {
@@ -150,9 +150,42 @@ Scene::load_cornel_box()
     std::make_unique<TriangleMesh>(std::move(positions2),
                                    std::move(data2),
                                    std::vector<uint16_t>(indices),
-                                   9));
-  list.emplace_back(std::make_unique<Plane_xy>(0.5, 1.5, -0.5, 0.5, -2, 8));
-  list.emplace_back(std::make_unique<Plane_yz>(0.5, 1.5, -0.5, 0.5, -2, 9));
+                                   9));*/
+  /*
+        vec3{ 2.6f, -1.5f, -4.0f },
+    vec3{ -2.6f, -1.5f, -4.0f },
+    vec3{ -2.6f, 4.0f, -4.0f },
+    vec3{ 2.6f, 4.0f, -4.0f },
+
+        vec3{ -2.5f, -1.5f, -4.0f },
+    vec3{ -2.5f, -1.5f, 0.0f },
+    vec3{ -2.5f, 4.0f, 0.0f },
+    vec3{ -2.5f, 4.0f, -4.0f },
+
+        vec3{ 2.5f, -1.5f, 0.0f },
+    vec3{ 2.5f, -1.5f, -4.0f },
+    vec3{ 2.5f, 4.0f, -4.0f },
+    vec3{ 2.5f, 4.0f, 0.0f },
+  */
+  // list.emplace_back(std::make_unique<Plane_xy>(0, 555, 0, 555, 555, 8));
+  // list.emplace_back(std::make_unique<Plane_yz>(-1.5, 4, -4, 0, 2.5, 8));
+  // list.emplace_back(std::make_unique<Plane_yz>(-1.5, 4, -4, 0, -2.5, 8));
+  // list.emplace_back(std::make_unique<Plane_xz>(213, 343, 227, 332, 554, 9));
+  // list.emplace_back(std::make_unique<Plane_xz>(0, 555, 0, 555, 0, 8));
+
+  list.emplace_back(std::make_unique<Plane>(vec3(-2.6f, -1.5f, -4.0f),
+                                               vec3(2.6f, 4.0f, -4.0f),
+                                               vec3(0.f, 0.f, 1.f),
+                                               1));
+
+  list.emplace_back(std::make_unique<Plane>(
+    vec3(2.5f, -1.5f, -4.0f), vec3(2.5f, 4.0f, 0.0f), vec3(-1.f, 0.f, 0.f), 8));
+
+  list.emplace_back(std::make_unique<Plane>(vec3(-2.5f, -1.5f, -4.0f),
+                                               vec3(-2.5f, 4.0f, 0.0f),
+                                               vec3(1.f, 0.f, 0.f),
+                                               9));
+
 
   std::vector<std::unique_ptr<Object>> light_list;
   light_list.emplace_back(std::make_unique<Point>(vec3(1, 1.5, -2), 4));

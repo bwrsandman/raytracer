@@ -4,7 +4,7 @@
 #include "vec3.h"
 
 struct RayPayload;
-struct Scene;
+class Scene;
 
 struct Material
 {
