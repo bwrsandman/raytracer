@@ -370,13 +370,17 @@ RendererWhitted::run(const Scene& scene)
   std::vector<std::thread> threads;
   uint32_t num_cores = std::thread::hardware_concurrency();
   auto block_height = height / num_cores;
+  if (height % num_cores) {
+    block_height++;
+  }
   for (uint32_t i = 0; i < num_cores; ++i) {
     auto offset = i * block_height * width;
     auto length = block_height * width;
 
     threads.emplace_back([this, offset, length, &scene]() {
-      for (uint32_t i = 0; i < length; ++i) {
-        cpu_buffer[offset + i] = std::sqrt(raygen(rays[offset + i], scene));
+      for (uint32_t i = offset; i < offset + length && i < width * height;
+           ++i) {
+        cpu_buffer[i] = std::sqrt(raygen(rays[i], scene));
       }
     });
   }
