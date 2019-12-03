@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #include <memory>
 
 struct SDL_Window;
@@ -11,7 +12,7 @@ class Ui
 public:
   explicit Ui(SDL_Window* window);
 
-  void run(std::unique_ptr<Scene>& scene) const;
+  void run(std::unique_ptr<Scene>& scene, std::chrono::microseconds& dt) const;
   void draw() const;
   void process_event(const SDL_Event& event);
 

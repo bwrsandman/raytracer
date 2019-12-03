@@ -31,13 +31,14 @@ Ui::Ui(SDL_Window* window)
 }
 
 void
-Ui::run(std::unique_ptr<Scene>& scene) const
+Ui::run(std::unique_ptr<Scene>& scene, std::chrono::microseconds& dt) const
 {
   ImGui_ImplOpenGL3_NewFrame();
   ImGui_ImplSDL2_NewFrame(window);
   ImGui::NewFrame();
 
   if (ImGui::Begin("Configuration ")) {
+    ImGui::Text("%.2f fps %.2f ms", 1e6f / dt.count(), dt.count() / 1000.0f);
     ImGui::Text("Load Scene");
     if (ImGui::Button("Whitted")) {
       SDL_SetWindowSize(window, 512, 512);

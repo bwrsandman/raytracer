@@ -23,11 +23,13 @@ Game::~Game() = default;
 bool
 Game::main_loop()
 {
+  take_timestamp();
+  auto delta_time = get_delta_time();
   uint16_t width, height;
   window->get_dimensions(width, height);
   renderer->set_backbuffer_size(width, height);
   input->run(*ui, *scene);
-  ui->run(scene);
+  ui->run(scene, delta_time);
   renderer->run(*scene);
   ui->draw();
   scene->run(width, height);
@@ -51,10 +53,25 @@ em_main_loop_callback(void* arg)
 void
 Game::run()
 {
+  frame_end = std::chrono::high_resolution_clock::now();
 #if __EMSCRIPTEN__
   emscripten_set_main_loop_arg(em_main_loop_callback, this, 0, true);
 #else
   while (main_loop()) {
   }
 #endif
+}
+
+void
+Game::take_timestamp()
+{
+  frame_begin = frame_end;
+  frame_end = std::chrono::high_resolution_clock::now();
+}
+std::chrono::microseconds
+Game::get_delta_time() const
+{
+  auto dt = frame_end - frame_begin;
+  return std::chrono::duration_cast<std::chrono::microseconds>(frame_end -
+                                                               frame_begin);
 }
