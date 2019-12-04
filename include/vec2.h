@@ -1,5 +1,7 @@
 #pragma once
 
+#include <algorithm>
+
 struct vec2
 {
   constexpr vec2() noexcept
@@ -20,6 +22,15 @@ struct vec2
   {
     return vec2(e[0] * rhs, e[1] * rhs);
   }
+  inline void make_unit_vector();
 
   float e[2];
 };
+
+inline void
+vec2::make_unit_vector()
+{
+  float k = 1.0 / sqrt(e[0] * e[0] + e[1] * e[1]);
+  e[0] *= k;
+  e[1] *= k;
+}

@@ -1,12 +1,13 @@
 #pragma once
 
 #include <memory>
+#include <vector>
 
 #include "vec2.h"
 #include "vec3.h"
 
 namespace tinygltf {
-class Image;
+struct Image;
 }
 
 class Texture

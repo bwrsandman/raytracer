@@ -1,5 +1,8 @@
 #include "hittable/functional_geometry.h"
 
+#define _USE_MATH_DEFINES
+#include <math.h>
+
 #include "hit_record.h"
 #include "ray.h"
 #include "sdf.h"
