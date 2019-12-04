@@ -194,9 +194,6 @@ RendererWhitted::trace(RayPayload& payload,
   return hit_anything;
 }
 
-constexpr uint8_t MAX_SECONDARY = 20;
-constexpr float MIN_ATTENUATION_MAGNITIUDE = 0.01f;
-
 vec3
 RendererWhitted::raygen(Ray primary_ray, const Scene& scene) const
 {
@@ -211,7 +208,8 @@ RendererWhitted::raygen(Ray primary_ray, const Scene& scene) const
     uint16_t mat_id;
     float t_max;
   };
-  thread_local std::array<AttenuatedRay, MAX_SECONDARY> secondary_rays;
+  thread_local std::vector<AttenuatedRay> secondary_rays;
+  secondary_rays.resize(scene.max_secondary_rays);
   thread_local std::vector<AttenuatedRayMaxed> shadow_rays;
   // TODO: reserve
   shadow_rays.clear();
@@ -227,9 +225,9 @@ RendererWhitted::raygen(Ray primary_ray, const Scene& scene) const
   vec3 color = { 0, 0, 0 };
 
   // Primary and Secondary rays
-  for (uint8_t i = 0; i < next_secondary && i < MAX_SECONDARY; ++i) {
+  for (uint8_t i = 0; i < next_secondary && i < scene.max_secondary_rays; ++i) {
     if (dot(secondary_rays[i].attenuation, secondary_rays[i].attenuation) <
-        MIN_ATTENUATION_MAGNITIUDE) {
+        scene.min_attenuation_magnitude) {
       payload.distance = 1.0f;
       payload.type = RayPayload::Type::NoHit;
     } else {
@@ -266,7 +264,7 @@ RendererWhitted::raygen(Ray primary_ray, const Scene& scene) const
       }
     } else if (payload.type == RayPayload::Type::Metal) {
       // Add ray in secondary ray queue
-      if (next_secondary < MAX_SECONDARY) {
+      if (next_secondary < scene.max_secondary_rays) {
         // fully reflective per light)
         auto& ray = secondary_rays[next_secondary];
         ray.ray.origin = hit_pos + payload.normal * 0.001f;
@@ -279,7 +277,7 @@ RendererWhitted::raygen(Ray primary_ray, const Scene& scene) const
       float fraction_refracted = 0.0f;
       thread_local vec3 refracted_direction;
       // Prevent loss of energy
-      if (next_secondary + 2 != MAX_SECONDARY &&
+      if (next_secondary + 2 != scene.max_secondary_rays &&
           refract(secondary_rays[i].ray.direction,
                   payload.normal,
                   payload.dielectric.ni,
@@ -293,7 +291,8 @@ RendererWhitted::raygen(Ray primary_ray, const Scene& scene) const
       }
 
       // Add refraction in secondary ray queue
-      if (fraction_refracted > 0.001f && next_secondary < MAX_SECONDARY) {
+      if (fraction_refracted > 0.001f &&
+          next_secondary < scene.max_secondary_rays) {
         auto& new_ray = secondary_rays[next_secondary];
         new_ray.ray.origin = hit_pos - payload.normal * 0.001f;
         new_ray.ray.direction = refracted_direction;
@@ -302,7 +301,8 @@ RendererWhitted::raygen(Ray primary_ray, const Scene& scene) const
         next_secondary++;
       }
       // Add reflection in secondary ray queue
-      if (fraction_refracted < 0.999f && next_secondary < MAX_SECONDARY) {
+      if (fraction_refracted < 0.999f &&
+          next_secondary < scene.max_secondary_rays) {
         auto& new_ray = secondary_rays[next_secondary];
         new_ray.ray.origin = hit_pos + payload.normal * 0.001f;
         new_ray.ray.direction =
