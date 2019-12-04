@@ -4,7 +4,7 @@
 
 struct Dielectric : public Material
 {
-  explicit Dielectric(vec3& a, float ri, float ni);
+  explicit Dielectric(const vec3& a, float ri, float ni);
   void fill_type_data(const Scene& scene,
                       RayPayload& payload,
                       const vec3& texture_coordinates) const override;

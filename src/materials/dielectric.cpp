@@ -3,7 +3,7 @@
 
 #include "ray.h"
 
-Dielectric::Dielectric(vec3& a, float ri, float ni)
+Dielectric::Dielectric(const vec3& a, float ri, float ni)
   : albedo(a)
   , ref_idx(ri)
   , ni(ni)
