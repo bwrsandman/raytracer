@@ -35,12 +35,12 @@ public:
   inline vec3& operator-=(const vec3& v2);
   inline vec3& operator*=(const vec3& v2);
   inline vec3& operator/=(const vec3& v2);
-  inline vec3& operator*=(const float t);
-  inline vec3& operator/=(const float t);
+  inline vec3& operator*=(float t);
+  inline vec3& operator/=(float t);
 
   inline float length() const
   {
-    return sqrt(e[0] * e[0] + e[1] * e[1] + e[2] * e[2]);
+    return std::sqrt(e[0] * e[0] + e[1] * e[1] + e[2] * e[2]);
   }
   inline float squared_length() const
   {
@@ -325,34 +325,6 @@ reciprocal(const vec3& v)
 }
 
 static vec3
-min(const vec3& lhs, const vec3& rhs)
-{
-  return vec3(std::min(lhs.e[0], rhs.e[0]),
-              std::min(lhs.e[1], rhs.e[1]),
-              std::min(lhs.e[2], rhs.e[2]));
-}
-
-static vec3
-max(const vec3& lhs, const vec3& rhs)
-{
-  return vec3(std::max(lhs.e[0], rhs.e[0]),
-              std::max(lhs.e[1], rhs.e[1]),
-              std::max(lhs.e[2], rhs.e[2]));
-}
-
-static vec3
-clamp(const vec3& val, const vec3& minimum, const vec3& maximum)
-{
-  return min(maximum, max(minimum, val));
-}
-
-static vec3
-saturate(const vec3& val)
-{
-  return clamp(val, vec3(0.0f, 0.0f, 0.0f), vec3(1.0f, 1.0f, 1.0f));
-}
-
-static vec3
 lerp(const vec3& from, const vec3& to, float t)
 {
   return from * t + to * (1.0f - t);
@@ -364,4 +336,39 @@ sqrt(const vec3& v)
 {
   return vec3(std::sqrt(v.e[0]), std::sqrt(v.e[1]), std::sqrt(v.e[2]));
 }
+inline vec3
+abs(const vec3& v)
+{
+  return vec3(std::abs(v.e[0]), std::abs(v.e[1]), std::abs(v.e[2]));
+}
+inline vec3
+min(const vec3& lhs, const vec3& rhs)
+{
+  return vec3(std::min(lhs.e[0], rhs.e[0]),
+              std::min(lhs.e[1], rhs.e[1]),
+              std::min(lhs.e[2], rhs.e[2]));
+}
+inline vec3
+max(const vec3& lhs, const vec3& rhs)
+{
+  return vec3(std::max(lhs.e[0], rhs.e[0]),
+              std::max(lhs.e[1], rhs.e[1]),
+              std::max(lhs.e[2], rhs.e[2]));
+}
+inline vec3
+clamp(const vec3& val, const vec3& minimum, const vec3& maximum)
+{
+  return min(maximum, max(minimum, val));
+}
+inline vec3
+max(const vec3& v, float f)
+{
+  return vec3(std::max(v.e[0], f), std::max(v.e[1], f), std::max(v.e[2], f));
+}
+}
+
+static vec3
+saturate(const vec3& val)
+{
+  return std::clamp(val, vec3(0.0f, 0.0f, 0.0f), vec3(1.0f, 1.0f, 1.0f));
 }

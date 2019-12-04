@@ -14,7 +14,10 @@ struct Ray
     , direction(b)
   {
   }
-  vec3 point_at_parameter(float t) const { return origin + t * direction; }
+  inline vec3 point_at_parameter(float t) const
+  {
+    return origin + t * direction;
+  }
 
   vec3 origin;
   vec3 direction;
