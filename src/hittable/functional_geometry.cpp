@@ -16,8 +16,9 @@ FunctionalGeometry::FunctionalGeometry(const vec3& center,
 
 bool
 FunctionalGeometry::hit(const Ray& r,
-                        float tmin,
-                        float tmax,
+                        bool early_out,
+                        float t_min,
+                        float t_max,
                         hit_record& rec) const
 {
   static constexpr float f32_1_2PI = 0.5f / M_PI;
@@ -25,7 +26,7 @@ FunctionalGeometry::hit(const Ray& r,
   static constexpr float grad_step = 0.05f;
 
   Ray ray{ r.origin - center, r.direction };
-  float t = tmin;
+  float t = t_min;
   float distance = 10000.0f;
   float dt = 0.0f;
   // Ray march
@@ -37,7 +38,7 @@ FunctionalGeometry::hit(const Ray& r,
     }
     dt = std::min(std::abs(distance), 0.1f);
     t += dt;
-    if (t > tmax) {
+    if (t > t_max) {
       break;
     }
   }

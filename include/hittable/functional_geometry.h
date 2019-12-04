@@ -18,8 +18,9 @@ struct FunctionalGeometry : public Object
                      uint16_t m);
 
   bool hit(const Ray& r,
-           float tmin,
-           float tmax,
+           bool early_out,
+           float t_min,
+           float t_max,
            hit_record& rec) const override;
   const signed_distance_function_t sdf;
   const uint8_t max_steps;
