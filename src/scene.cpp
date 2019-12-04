@@ -476,7 +476,7 @@ Scene::load_whitted_scene()
     std::make_unique<Lambert>(vec3(1.0, 1.0, 1.0), 0));                 // 0
   materials.emplace_back(std::make_unique<Metal>(vec3(0.8, 0.8, 0.8))); // 1
   materials.emplace_back(
-    std::make_unique<Dielectric>(vec3(1.f, 1.f, 1.f) ,1.5f, 1.0f)); // 2
+    std::make_unique<Dielectric>(vec3(0.f, 0.f, 0.f) ,1.5f, 1.0f)); // 2
   materials.emplace_back(std::make_unique<EmissiveQuadraticDropOff>(
     vec3(2000.0, 2000.0, 2000.0), 1.0f)); // 3
 
@@ -680,7 +680,7 @@ Scene::load_mandrelbulb()
     return sdf::difference(sphere_box, cylinder_cross);
   };
   list.emplace_back(std::make_unique<FunctionalGeometry>(
-    vec3(-1.5, 1.5, -2.5), 100, complex_shape, 2));
+    vec3(-2.f, 1.5, -2.5), 100, complex_shape, 2));
 
   // Construct scene graph
   std::vector<SceneNode> nodes;

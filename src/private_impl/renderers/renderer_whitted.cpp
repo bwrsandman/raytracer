@@ -293,15 +293,16 @@ RendererWhitted::raygen(Ray primary_ray, const Scene& scene) const
                               payload.dielectric.nt);
       }
 
-	  vec3 absorb(1.f, 1.f, 1.f);
+      vec3 absorb(1.f, 1.f, 1.f);
 
-	  // Beer's law
-          if (inside_dielectric) {
-            absorb =
-              vec3(expf(-payload.attenuation.r() * payload.distance * 15.f),
-                   expf(-payload.attenuation.g() * payload.distance * 15.f),
-                   expf(-payload.attenuation.b() * payload.distance * 15.f));
-          }
+      // Beer's law
+      if (inside_dielectric) {
+        float dist = payload.distance * 15.f;
+
+        absorb = vec3(expf(-payload.attenuation.r() * dist),
+                      expf(-payload.attenuation.g() * dist),
+                      expf(-payload.attenuation.b() * dist));
+      }
 
       // Add refraction in secondary ray queue
       if (fraction_refracted > 0.001f &&
@@ -323,8 +324,7 @@ RendererWhitted::raygen(Ray primary_ray, const Scene& scene) const
           reflect(secondary_rays[i].ray.direction, payload.normal);
 
         new_ray.attenuation =
-          secondary_rays[i].attenuation * absorb*
-                              /*payload.attenuation **/ (1.0f - fraction_refracted);
+          secondary_rays[i].attenuation * absorb * (1.0f - fraction_refracted);
         next_secondary++;
       }
     } else {
