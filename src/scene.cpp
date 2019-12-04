@@ -490,7 +490,7 @@ Scene::load_whitted_scene()
   // Camera and camera node
   SceneNode& camera_node = nodes.emplace_back();
   camera_node.camera = std::make_unique<Camera>(
-    vec3(0, 0, 1.2f), vec3(0, 0, -1), vec3(0, 1, 0), 90, 1);
+    vec3(1, 0, 2.0f), vec3(0, 0, -1), vec3(0, 1, 0), 90, 1);
   camera_node.type = SceneNode::Type::Camera;
   root_node.children_id_length++;
 
@@ -505,7 +505,7 @@ Scene::load_whitted_scene()
                                           std::move(list),
                                           std::move(light_list),
                                           0.001f,
-                                          10));
+                                          16));
 }
 
 std::unique_ptr<Scene>
@@ -535,10 +535,7 @@ Scene::load_cornel_box()
 
   std::vector<std::unique_ptr<Object>> list;
   list.emplace_back(std::make_unique<Sphere>(vec3(0, -0.5, -2), 0.5, 0));
-  //list.emplace_back(std::make_unique<Sphere>(vec3(0, -101.0, -2), 100, 1));
-  list.emplace_back(std::make_unique<Sphere>(vec3(-1.5, -0.5, -2.1), 0.5, 7));
-  list.emplace_back(std::make_unique<Sphere>(vec3(-1.5, -0.5, -2.1), -0.45, 7));
-
+  list.emplace_back(std::make_unique<Sphere>(vec3(0, -101.0, -2), 100, 1));
   auto complex_shape = [](const vec3& position) -> float {
     auto sphere = sdf::sphere(position, 0.6f);
     auto sphere2 = sdf::sphere(position - vec3(-0.5, 0.4, 0.4f), 0.3f);
@@ -558,7 +555,8 @@ Scene::load_cornel_box()
   list.emplace_back(std::make_unique<FunctionalGeometry>(
     vec3(1.5, -0.5, -2.1), 40, complex_shape, 3));
 
-  
+  list.emplace_back(std::make_unique<Sphere>(vec3(-1.5, -0.5, -2.1), 0.5, 7));
+  list.emplace_back(std::make_unique<Sphere>(vec3(-1.5, -0.5, -2.1), -0.45, 7));
 
   /*std::vector<uint16_t> indices = {
     0, 1, 2, 2, 3, 0,
@@ -686,20 +684,18 @@ Scene::load_cornel_box()
   // list.emplace_back(std::make_unique<Plane_xz>(0, 555, 0, 555, 0, 8));
 
   list.emplace_back(std::make_unique<Plane>(vec3(-2.6f, -1.5f, -4.0f),
-                                                vec3(2.6f, 4.0f, -4.0f),
-                                                vec3(0.f, 0.f, 1.f),
-                                                1));
+                                               vec3(2.6f, 4.0f, -4.0f),
+                                               vec3(0.f, 0.f, 1.f),
+                                               1));
 
-   list.emplace_back(std::make_unique<Plane>(
-     vec3(2.5f, -1.5f, -4.0f), vec3(2.5f, 4.0f, 0.0f), vec3(-1.f, 0.f, 0.f),
-   8));
-
-   list.emplace_back(std::make_unique<Plane>(vec3(-2.5f, -1.5f, -4.0f),
-                                                vec3(-2.5f, 4.0f, 0.0f),
-                                                vec3(1.f, 0.f, 0.f),
-                                                9));
   list.emplace_back(std::make_unique<Plane>(
-    vec3(-2.6, -1.f, -4.f), vec3(2.6, -1.f, 0.0), vec3(0.f, 1.f, 0.f), 0));
+    vec3(2.5f, -1.5f, -4.0f), vec3(2.5f, 4.0f, 0.0f), vec3(-1.f, 0.f, 0.f), 8));
+
+  list.emplace_back(std::make_unique<Plane>(vec3(-2.5f, -1.5f, -4.0f),
+                                               vec3(-2.5f, 4.0f, 0.0f),
+                                               vec3(1.f, 0.f, 0.f),
+                                               9));
+
 
   std::vector<std::unique_ptr<Object>> light_list;
   light_list.emplace_back(std::make_unique<Point>(vec3(1, 1.5, -2), 4));
@@ -742,7 +738,7 @@ Scene::Scene(std::vector<SceneNode>&& nodes,
              std::vector<std::unique_ptr<Object>>&& world_objects,
              std::vector<std::unique_ptr<Object>>&& lights,
              float min_attenuation_magnitude,
-             uint8_t min_secondary_rays)
+             uint8_t max_secondary_rays)
   : nodes(std::move(nodes))
   , camera_index(camera_index)
   , textures(std::move(textures))
@@ -750,7 +746,7 @@ Scene::Scene(std::vector<SceneNode>&& nodes,
   , world_objects(std::move(world_objects))
   , lights(std::move(lights))
   , min_attenuation_magnitude(min_attenuation_magnitude)
-  , max_secondary_rays(min_secondary_rays)
+  , max_secondary_rays(max_secondary_rays)
 {}
 
 Scene::~Scene() = default;

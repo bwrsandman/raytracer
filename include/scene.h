@@ -42,7 +42,7 @@ private:
         std::vector<std::unique_ptr<Object>>&& world_objects,
         std::vector<std::unique_ptr<Object>>&& lights,
         float min_attenuation_magnitude,
-        uint8_t min_secondary_rays);
+        uint8_t max_secondary_rays);
 
   std::vector<SceneNode> nodes;
   uint32_t camera_index;
