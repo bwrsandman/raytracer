@@ -16,7 +16,7 @@ Lambert::Lambert(const vec3& a,
 void
 Lambert::fill_type_data(const Scene& scene,
                         RayPayload& payload,
-                        const vec2& texture_coordinates) const
+                        const vec3& texture_coordinates) const
 {
   payload.type = RayPayload::Type::Lambert;
   payload.attenuation = albedo;

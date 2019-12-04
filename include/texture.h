@@ -5,19 +5,24 @@
 #include "vec2.h"
 #include "vec3.h"
 
+namespace tinygltf {
+class Image;
+}
+
 class Texture
 {
 public:
   static std::unique_ptr<Texture> load_from_file(const std::string& filename);
+  static std::unique_ptr<Texture> load_from_gltf_image(
+    const tinygltf::Image& image);
   virtual ~Texture();
 
-  vec3 sample(const vec2& texture_coordinates) const;
+  const vec3& sample(const vec3& texture_coordinates) const;
 
 private:
-  Texture(uint32_t width, uint32_t height, uint8_t num_channels, float* data);
+  Texture(uint32_t width, uint32_t height, std::vector<vec3>&& data);
 
   const uint32_t width;
   const uint32_t height;
-  const uint8_t num_channels;
-  float* const data;
+  const std::vector<vec3> data;
 };

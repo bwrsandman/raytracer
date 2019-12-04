@@ -10,7 +10,11 @@ LineSegment::LineSegment(const vec3 pos[2], uint16_t m)
 {}
 
 bool
-LineSegment::hit(const Ray& r, float tmin, float tmax, hit_record& rec) const
+LineSegment::hit(const Ray& r,
+                 bool early_out,
+                 float t_min,
+                 float t_max,
+                 hit_record& rec) const
 {
   vec3 db = position[1] - position[0];
   vec3 dc = position[0] - r.origin;

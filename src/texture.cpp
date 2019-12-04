@@ -2,6 +2,7 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
+#include <tiny_gltf.h>
 
 std::unique_ptr<Texture>
 Texture::load_from_file(const std::string& filename)
@@ -14,32 +15,67 @@ Texture::load_from_file(const std::string& filename)
       filename.c_str());
     return nullptr;
   }
-  return std::unique_ptr<Texture>(new Texture(width, height, channels, data));
+  std::vector<vec3> color;
+  color.resize(width * height);
+  for (uint32_t y = 0; y < height; ++y) {
+    for (uint32_t x = 0; x < width; ++x) {
+      color[x + y * width].e[0] = data[(x + y * width) * channels];
+      if (channels > 2) {
+        color[x + y * width].e[1] = data[(x + y * width) * channels + 1];
+        color[x + y * width].e[2] = data[(x + y * width) * channels + 2];
+      } else {
+
+        color[x + y * width].e[1] = data[(x + y * width) * channels];
+        color[x + y * width].e[2] = data[(x + y * width) * channels];
+      }
+    }
+  }
+  stbi_image_free(data);
+  return std::unique_ptr<Texture>(new Texture(width, height, std::move(color)));
 }
 
-Texture::Texture(uint32_t width,
-                 uint32_t height,
-                 uint8_t num_channels,
-                 float* data)
+std::unique_ptr<Texture>
+Texture::load_from_gltf_image(const tinygltf::Image& image)
+{
+  // FIXME: Assuming 8 bit pixels data
+  assert(image.bits == 8);
+  std::vector<vec3> color;
+  color.resize(image.width * image.height);
+  for (uint32_t y = 0; y < image.height; ++y) {
+    for (uint32_t x = 0; x < image.width; ++x) {
+      color[x + y * image.width].e[0] =
+        image.image[(x + y * image.width) * image.component] / 255.0f;
+      if (image.component > 2) {
+        color[x + y * image.width].e[1] =
+          image.image[(x + y * image.width) * image.component + 1] / 255.0f;
+        color[x + y * image.width].e[2] =
+          image.image[(x + y * image.width) * image.component + 2] / 255.0f;
+      } else {
+
+        color[x + y * image.width].e[1] =
+          image.image[(x + y * image.width) * image.component] / 255.0f;
+        color[x + y * image.width].e[2] =
+          image.image[(x + y * image.width) * image.component] / 255.0f;
+      }
+    }
+  }
+  return std::unique_ptr<Texture>(
+    new Texture(image.width, image.height, std::move(color)));
+}
+
+Texture::Texture(uint32_t width, uint32_t height, std::vector<vec3>&& data)
   : width(width)
   , height(height)
-  , num_channels(num_channels)
   , data(data)
 {}
 
-Texture::~Texture()
-{
-  if (data) {
-    stbi_image_free(data);
-  }
-}
+Texture::~Texture() = default;
 
-vec3
-Texture::sample(const vec2& texture_coordinates) const
+const vec3&
+Texture::sample(const vec3& texture_coordinates) const
 {
-  uint32_t x = std::clamp(texture_coordinates.e[0], 0.0f, 1.0f) * width;
+  uint32_t x = static_cast<uint32_t>(texture_coordinates.e[0] * (width - 0.0001)) % width;
   uint32_t y =
-    (1.0f - std::clamp(texture_coordinates.e[1], 0.0f, 1.0f)) * height;
-  auto base = &data[(x + y * width) * num_channels];
-  return vec3(base[0], base[1], base[2]);
+      static_cast<uint32_t>((1.0f - std::fmod(texture_coordinates.e[1], 1.0f)) * (height - 0.0001)) % height;
+  return data[(x + y * width)];
 }

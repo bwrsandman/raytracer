@@ -1,7 +1,13 @@
 #pragma once
 
+#include "vec4.h"
+
 struct mat4
 {
+  constexpr mat4() noexcept
+    : m{ 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+         0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f }
+  {}
   constexpr mat4(float e00,
                  float e10,
                  float e20,
@@ -24,6 +30,16 @@ struct mat4
 
   float m[16];
 };
+
+inline vec4
+dot(const mat4& m, const vec4& v)
+{
+  return vec4(
+    m.m[0] * v.e[0] + m.m[4] * v.e[1] + m.m[8] * v.e[2] + m.m[12] * v.e[3],
+    m.m[1] * v.e[0] + m.m[5] * v.e[1] + m.m[9] * v.e[2] + m.m[13] * v.e[3],
+    m.m[2] * v.e[0] + m.m[6] * v.e[1] + m.m[10] * v.e[2] + m.m[14] * v.e[3],
+    m.m[3] * v.e[0] + m.m[7] * v.e[1] + m.m[11] * v.e[2] + m.m[15] * v.e[3]);
+}
 
 inline mat4
 dot(const mat4& lhs, const mat4& rhs)

@@ -48,6 +48,17 @@ Ui::run(std::unique_ptr<Scene>& scene, std::chrono::microseconds& dt) const
     if (ImGui::Button("Cornel Box")) {
       scene = Scene::load_cornel_box();
     }
+    ImGui::Text("Load glTF Scene");
+    if (ImGui::Button("BoxTextured.gltf")) {
+      scene = Scene::load_from_gltf("BoxTextured.gltf");
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Duck.gltf")) {
+      scene = Scene::load_from_gltf("Duck.gltf");
+    }
+    if (ImGui::Button("DamagedHelmet.gltf (slow)")) {
+      scene = Scene::load_from_gltf("DamagedHelmet.gltf");
+    }
     if (ImGui::CollapsingHeader("Camera", ImGuiTreeNodeFlags_DefaultOpen)) {
       ImGui::Text("Use WASD to move the camera and\n"
                   "Arrow keys for Panning and Tilting.\n"

@@ -9,7 +9,7 @@ file(GLOB_RECURSE private_impl_sources CONFIGURE_DEPENDS src/private_impl/*)
 
 file(GLOB shaders CONFIGURE_DEPENDS src/shaders/*.glsl)
 
-file(GLOB_RECURSE textures CONFIGURE_DEPENDS assets/*.jpg assets/*.png assets/*.tga)
+file(GLOB_RECURSE textures CONFIGURE_DEPENDS assets/*.jpg assets/*.png assets/*.tga assets/*.gltf)
 
 # Tell CMake how to compile shaders into SPIV, then into headers
 foreach(shader ${shaders})
@@ -84,6 +84,8 @@ target_include_directories(Whitted_Raytracing
   PRIVATE
     include/
     3rd_party/stb
+    3rd_party/nlohmann-json
+    3rd_party/tinygltf
     # Compiled shaders
     ${CMAKE_CURRENT_BINARY_DIR}/src)
 target_link_libraries(Whitted_Raytracing PRIVATE ${LIBRARIES})
