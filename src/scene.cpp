@@ -475,7 +475,8 @@ Scene::load_whitted_scene()
   materials.emplace_back(
     std::make_unique<Lambert>(vec3(1.0, 1.0, 1.0), 0));                 // 0
   materials.emplace_back(std::make_unique<Metal>(vec3(0.8, 0.8, 0.8))); // 1
-  materials.emplace_back(std::make_unique<Dielectric>(1.5f, 1.0f));     // 2
+  materials.emplace_back(
+    std::make_unique<Dielectric>(vec3(1.f, 1.f, 1.f) ,1.5f, 1.0f)); // 2
   materials.emplace_back(std::make_unique<EmissiveQuadraticDropOff>(
     vec3(2000.0, 2000.0, 2000.0), 1.0f)); // 3
 
@@ -537,14 +538,13 @@ Scene::load_cornel_box()
     std::make_unique<EmissiveQuadraticDropOff>(vec3(0, 0, 0.8), 1.0f)); // 5
   materials.emplace_back(
     std::make_unique<EmissiveQuadraticDropOff>(vec3(2.0, 2.0, 2.0), 1.0f)); // 6
-  materials.emplace_back(std::make_unique<Dielectric>(1.5f, 1.0f));         // 7
-  materials.emplace_back(std::make_unique<Lambert>(vec3(1.0, 0.0, 0.0)));   // 8
-  materials.emplace_back(std::make_unique<Lambert>(vec3(0.0, 0.5, 1.0)));   // 9
+  materials.emplace_back(
+    std::make_unique<Dielectric>(vec3(0.0, 2.0, 2.0), 1.5f, 1.0f));       // 7
+  materials.emplace_back(std::make_unique<Lambert>(vec3(1.0, 0.0, 0.0))); // 8
+  materials.emplace_back(std::make_unique<Lambert>(vec3(0.0, 0.5, 1.0))); // 9
 
   std::vector<std::unique_ptr<Object>> list;
   list.emplace_back(std::make_unique<Sphere>(vec3(0, -0.5, -2), 0.5, 0));
-  //list.emplace_back(std::make_unique<Sphere>(vec3(1.5, -0.5, -2.1), 0.5f, 3));
-
   list.emplace_back(std::make_unique<Sphere>(vec3(-1.5, -0.5, -2.1), 0.5, 7));
   list.emplace_back(std::make_unique<Sphere>(vec3(-1.5, -0.5, -2.1), -0.45, 7));
 

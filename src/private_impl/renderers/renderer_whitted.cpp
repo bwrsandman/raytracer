@@ -185,6 +185,7 @@ RendererWhitted::trace(RayPayload& payload,
     payload.distance = rec.t;
     payload.normal = rec.normal;
     payload.tangent = rec.tangent;
+    payload.attenuation = vec3(1.f, 1.f, 1.f);
     auto& mat = scene.get_material(rec.mat_id);
     mat.fill_type_data(scene, payload, rec.uv);
   } else {
@@ -276,13 +277,15 @@ RendererWhitted::raygen(Ray primary_ray, const Scene& scene) const
     } else if (payload.type == RayPayload::Type::Dielectric) {
       float fraction_refracted = 0.0f;
       thread_local vec3 refracted_direction;
+      bool inside_dielectric = false;
       // Prevent loss of energy
       if (next_secondary + 2 != scene.max_secondary_rays &&
           refract(secondary_rays[i].ray.direction,
                   payload.normal,
                   payload.dielectric.ni,
                   payload.dielectric.nt,
-                  refracted_direction)) {
+                  refracted_direction,
+                  inside_dielectric)) {
         fraction_refracted =
           1.0f - fresnel_rate(secondary_rays[i].ray.direction,
                               payload.normal,
@@ -290,14 +293,25 @@ RendererWhitted::raygen(Ray primary_ray, const Scene& scene) const
                               payload.dielectric.nt);
       }
 
+	  vec3 absorb(1.f, 1.f, 1.f);
+
+	  // Beer's law
+          if (inside_dielectric) {
+            absorb =
+              vec3(expf(-payload.attenuation.r() * payload.distance * 15.f),
+                   expf(-payload.attenuation.g() * payload.distance * 15.f),
+                   expf(-payload.attenuation.b() * payload.distance * 15.f));
+          }
+
       // Add refraction in secondary ray queue
       if (fraction_refracted > 0.001f &&
           next_secondary < scene.max_secondary_rays) {
         auto& new_ray = secondary_rays[next_secondary];
         new_ray.ray.origin = hit_pos - payload.normal * 0.001f;
         new_ray.ray.direction = refracted_direction;
+
         new_ray.attenuation =
-          secondary_rays[i].attenuation * fraction_refracted;
+          secondary_rays[i].attenuation * absorb * fraction_refracted;
         next_secondary++;
       }
       // Add reflection in secondary ray queue
@@ -307,8 +321,10 @@ RendererWhitted::raygen(Ray primary_ray, const Scene& scene) const
         new_ray.ray.origin = hit_pos + payload.normal * 0.001f;
         new_ray.ray.direction =
           reflect(secondary_rays[i].ray.direction, payload.normal);
+
         new_ray.attenuation =
-          secondary_rays[i].attenuation * (1.0f - fraction_refracted);
+          secondary_rays[i].attenuation * absorb*
+                              /*payload.attenuation **/ (1.0f - fraction_refracted);
         next_secondary++;
       }
     } else {

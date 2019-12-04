@@ -10,12 +10,12 @@
 #include "hittable/line_segment.h"
 #include "hittable/point.h"
 #include "hittable/sphere.h"
-#include "materials/material.h"
 #include "materials/dielectric.h"
 #include "materials/emissive.h"
 #include "materials/emissive_linear_drop_off.h"
 #include "materials/emissive_quadratic_drop_off.h"
 #include "materials/lambert.h"
+#include "materials/material.h"
 #include "materials/metal.h"
 #include "scene.h"
 
@@ -142,7 +142,8 @@ Ui::run(std::unique_ptr<Scene>& scene, std::chrono::microseconds& dt) const
       }
 
       if (ImGui::Button("New Dielectric")) {
-        material_list.emplace_back(new Dielectric(1.0f, 1.0f));
+        material_list.emplace_back(
+          new Dielectric(vec3(1.f, 1.f, 1.f), 1.0f, 1.0f));
       }
       if (ImGui::Button("Emissive (No Drop Off)")) {
         const vec3 albedo(1.0f, 1.0f, 1.0f);

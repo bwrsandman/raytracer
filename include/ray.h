@@ -41,13 +41,13 @@ struct RayPayload
   {
     vec3 attenuation;
     vec3 emission;
-    struct
-    {
-      float ni;
-      float nt;
-    } dielectric;
   };
 
+  struct
+  {
+    float ni;
+    float nt;
+  } dielectric;
   float distance;
   vec3 normal;
   vec3 tangent;

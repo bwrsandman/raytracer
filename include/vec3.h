@@ -218,35 +218,9 @@ reflect(const vec3& v, const vec3& n)
   return v - 2 * dot(v, n) * n;
 }
 
-inline bool
-refract_old(const vec3& v, const vec3& n, float ni_over_nt, vec3& refracted)
-{
-  vec3 uv = unit_vector(v);
-  float dt = dot(uv, n);
-  float discriminant = 1.0 - ni_over_nt * ni_over_nt * (1 - dt * dt);
-  if (discriminant > 0) {
-    refracted = ni_over_nt * (uv - n * dt) - n * sqrt(discriminant);
-    return true;
-  } else {
-    //refracted = vec3(1.f, 1.f, 1.f);
-    return false;
-  }
-    
-}
-
-inline float
-schlick(float cosine, float ref_idx)
-{
-  float r0 = (1 - ref_idx) / (1 + ref_idx);
-  r0 = r0 * r0;
-
-  return r0 + (1 - r0) * pow((1 - cosine), 5);
-  //return vec3(r, r, r);
-}
-
 // Snells law
 inline bool
-refract(const vec3& v, vec3& n, float ni, float nt, vec3& refracted)
+refract(const vec3& v, vec3& n, float ni, float nt, vec3& refracted, bool& inside)
 {
   vec3 uv = unit_vector(v);
   float cosi = dot(uv, n); // cosi()
@@ -256,6 +230,7 @@ refract(const vec3& v, vec3& n, float ni, float nt, vec3& refracted)
     cosi = -cosi;
   } else {
     // inside out
+    inside = true;
     std::swap(ni, nt);
     n = vec3(-n);
   }
@@ -268,9 +243,6 @@ refract(const vec3& v, vec3& n, float ni, float nt, vec3& refracted)
     return false;
   }
     
-
-  // refracted = ni_over_nt * (uv - n * cosi) - n * sqrt(cost2);
-
   refracted = ni_over_nt * uv + (ni_over_nt * cosi - sqrt(cost2)) * n;
   return true;
 }
@@ -292,17 +264,17 @@ fresnel_rate(const vec3& v, const vec3& n, float ni, float nt)
   vec3 un = unit_vector(n);
   float cosi = std::clamp(dot(uv, un), -1.0f, 1.0f);
 
-  //if (cosi >= 0) {
-  //  // Inside object
-  //  std::swap(ni, nt);
-  //}
+  if (cosi >= 0) {
+    // Inside object
+    std::swap(ni, nt);
+  }
 
   // using Snells law (from cosi to sini to sint)
   float cost2 = 1.f - (ni_over_nt * ni_over_nt * (1 - cosi * cosi));
   // Total internal reflection
-  //if (cost2 < 0) {
-  //  return 1.0f;
- // }
+  if (cost2 < 0) {
+    return 1.0f;
+  }
 
   // from sint to cost
   float cost = sqrtf(cost2);
