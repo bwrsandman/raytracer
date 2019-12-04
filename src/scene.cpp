@@ -527,7 +527,7 @@ Scene::load_cornel_box()
   textures.emplace_back(Texture::load_from_file("earth_normal_map.tga")); // 1
 
   materials.emplace_back(
-    std::make_unique<Lambert>(vec3(1.0, 1.0, 1.0), 0));                   // 0
+    std::make_unique<Lambert>(vec3(1.0, 1.0, 1.0), 0, 1));                 // 0
   materials.emplace_back(std::make_unique<Lambert>(vec3(0.6, 0.6, 0.6))); // 1
   materials.emplace_back(std::make_unique<Metal>(
     vec3(0.8, 0.6, 0.2), std::numeric_limits<uint16_t>::max(), 1));     // 2
