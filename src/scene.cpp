@@ -2,6 +2,9 @@
 #include <cassert>
 #include <sdf.h>
 
+#define _USE_MATH_DEFINES
+#include <math.h>
+
 #define TINYGLTF_IMPLEMENTATION
 #define TINYGLTF_USE_CPP14
 #define TINYGLTF_NO_STB_IMAGE_WRITE
@@ -12,6 +15,7 @@
 
 #include "camera.h"
 #include "hittable/functional_geometry.h"
+#include "hittable/instance.h"
 #include "hittable/line_segment.h"
 #include "hittable/plane.h"
 #include "hittable/point.h"
@@ -238,25 +242,25 @@ Scene::load_from_gltf(const std::string& file_name)
       // FIXME this is just a quick patch to get duck to work.
       // Full scene graph is necessary to do this properly
       if (p >= 0) {
-//        auto& parent_node = gltf.nodes[p];
-//        if (!parent_node.matrix.empty()) {
-//          matrix = mat4(parent_node.matrix[0],
-//                        parent_node.matrix[1],
-//                        parent_node.matrix[2],
-//                        parent_node.matrix[3],
-//                        parent_node.matrix[4],
-//                        parent_node.matrix[5],
-//                        parent_node.matrix[6],
-//                        parent_node.matrix[7],
-//                        parent_node.matrix[8],
-//                        parent_node.matrix[9],
-//                        parent_node.matrix[10],
-//                        parent_node.matrix[11],
-//                        parent_node.matrix[12],
-//                        parent_node.matrix[13],
-//                        parent_node.matrix[14],
-//                        parent_node.matrix[15]);
-//        }
+        //        auto& parent_node = gltf.nodes[p];
+        //        if (!parent_node.matrix.empty()) {
+        //          matrix = mat4(parent_node.matrix[0],
+        //                        parent_node.matrix[1],
+        //                        parent_node.matrix[2],
+        //                        parent_node.matrix[3],
+        //                        parent_node.matrix[4],
+        //                        parent_node.matrix[5],
+        //                        parent_node.matrix[6],
+        //                        parent_node.matrix[7],
+        //                        parent_node.matrix[8],
+        //                        parent_node.matrix[9],
+        //                        parent_node.matrix[10],
+        //                        parent_node.matrix[11],
+        //                        parent_node.matrix[12],
+        //                        parent_node.matrix[13],
+        //                        parent_node.matrix[14],
+        //                        parent_node.matrix[15]);
+        //        }
       }
       if (!gltf_node.matrix.empty()) {
         matrix = dot(matrix,
@@ -285,8 +289,11 @@ Scene::load_from_gltf(const std::string& file_name)
       direction.make_unit_vector();
       auto up = vec3(0, 1, 0);
       auto& gltf_camera = gltf.cameras[gltf_node.camera].perspective;
-      node.camera = std::make_unique<Camera>(
-        origin, direction, up, 180.0f * gltf_camera.yfov / M_PI, gltf_camera.aspectRatio);
+      node.camera = std::make_unique<Camera>(origin,
+                                             direction,
+                                             up,
+                                             180.0f * gltf_camera.yfov / M_PI,
+                                             gltf_camera.aspectRatio);
       camera_index = nodes.size() - 1;
       found_camera = true;
     } else if (gltf_node.mesh >= 0) {
@@ -371,25 +378,25 @@ Scene::load_from_gltf(const std::string& file_name)
         // FIXME this is just a quick patch to get duck to work.
         // Full scene graph is necessary to do this properly
         if (p >= 0) {
-//          auto& parent_node = gltf.nodes[p];
-//          if (!parent_node.matrix.empty()) {
-//            matrix = mat4(parent_node.matrix[0],
-//                          parent_node.matrix[1],
-//                          parent_node.matrix[2],
-//                          parent_node.matrix[3],
-//                          parent_node.matrix[4],
-//                          parent_node.matrix[5],
-//                          parent_node.matrix[6],
-//                          parent_node.matrix[7],
-//                          parent_node.matrix[8],
-//                          parent_node.matrix[9],
-//                          parent_node.matrix[10],
-//                          parent_node.matrix[11],
-//                          parent_node.matrix[12],
-//                          parent_node.matrix[13],
-//                          parent_node.matrix[14],
-//                          parent_node.matrix[15]);
-//          }
+          //          auto& parent_node = gltf.nodes[p];
+          //          if (!parent_node.matrix.empty()) {
+          //            matrix = mat4(parent_node.matrix[0],
+          //                          parent_node.matrix[1],
+          //                          parent_node.matrix[2],
+          //                          parent_node.matrix[3],
+          //                          parent_node.matrix[4],
+          //                          parent_node.matrix[5],
+          //                          parent_node.matrix[6],
+          //                          parent_node.matrix[7],
+          //                          parent_node.matrix[8],
+          //                          parent_node.matrix[9],
+          //                          parent_node.matrix[10],
+          //                          parent_node.matrix[11],
+          //                          parent_node.matrix[12],
+          //                          parent_node.matrix[13],
+          //                          parent_node.matrix[14],
+          //                          parent_node.matrix[15]);
+          //          }
         }
         if (!gltf_node.matrix.empty()) {
           matrix = dot(matrix,
@@ -477,6 +484,7 @@ Scene::load_whitted_scene()
                                             vec3(5.0f, -2.0f, 5.0f),
                                             vec3(0.f, 1.f, 0.f),
                                             0));
+
   list.emplace_back(std::make_unique<Sphere>(vec3(0, -0.8f, -2.5f), 1.0, 1));
   vec3 bubble_center(-0.75f, 0.5f, -1.0f);
   list.emplace_back(std::make_unique<Sphere>(bubble_center, 1.0f, 2));
@@ -535,25 +543,77 @@ Scene::load_cornel_box()
 
   std::vector<std::unique_ptr<Object>> list;
   list.emplace_back(std::make_unique<Sphere>(vec3(0, -0.5, -2), 0.5, 0));
-  list.emplace_back(std::make_unique<Sphere>(vec3(0, -101.0, -2), 100, 1));
-  list.emplace_back(std::make_unique<Sphere>(vec3(1.5, -0.5, -2.1), 0.5f, 3));
+  //list.emplace_back(std::make_unique<Sphere>(vec3(1.5, -0.5, -2.1), 0.5f, 3));
 
   list.emplace_back(std::make_unique<Sphere>(vec3(-1.5, -0.5, -2.1), 0.5, 7));
   list.emplace_back(std::make_unique<Sphere>(vec3(-1.5, -0.5, -2.1), -0.45, 7));
 
+  // Outside box
   list.emplace_back(std::make_unique<Plane>(vec3(-2.6f, -1.5f, -4.0f),
-                                               vec3(2.6f, 4.0f, -4.0f),
-                                               vec3(0.f, 0.f, 1.f),
-                                               1));
+                                            vec3(2.6f, 4.0f, -4.0f),
+                                            vec3(0.f, 0.f, 1.f),
+                                            1));
 
   list.emplace_back(std::make_unique<Plane>(
     vec3(2.5f, -1.5f, -4.0f), vec3(2.5f, 4.0f, 0.0f), vec3(-1.f, 0.f, 0.f), 8));
 
   list.emplace_back(std::make_unique<Plane>(vec3(-2.5f, -1.5f, -4.0f),
-                                               vec3(-2.5f, 4.0f, 0.0f),
-                                               vec3(1.f, 0.f, 0.f),
-                                               9));
+                                            vec3(-2.5f, 4.0f, 0.0f),
+                                            vec3(1.f, 0.f, 0.f),
+                                            9));
 
+  list.emplace_back(std::make_unique<Plane>(
+    vec3(-2.6, -1.5f, -4.f), vec3(2.6, -1.5f, 0.0), vec3(0.f, 1.f, 0.f), 1));
+
+  // small box rotated
+  vec3 translation(1.5f, -0.5f, -1.1f);
+  list.emplace_back(
+    std::make_unique<Translate>(new Rotate_y(new Plane(vec3(0.f, -0.5f, -1.25f),
+                                                       vec3(0.f, 0.5f, -.75f),
+                                                       vec3(-1.f, 0.f, 0.f),
+                                                       3),
+                                             20),
+                                translation));
+
+  list.emplace_back(
+    std::make_unique<Translate>(new Rotate_y(new Plane(vec3(1.f, -0.5f, -1.25f),
+                                                       vec3(1.f, 0.5f, -.75f),
+                                                       vec3(1.f, 0.f, 0.f),
+                                                       3),
+                                             20),
+                                translation));
+
+  list.emplace_back(
+    std::make_unique<Translate>(new Rotate_y(new Plane(vec3(0.f, -0.5f, -1.25f),
+                                                       vec3(1.f, -0.5f, -.75f),
+                                                       vec3(0.f, -1.f, 0.f),
+                                                       3),
+                                             20),
+                                translation));
+
+  list.emplace_back(
+    std::make_unique<Translate>(new Rotate_y(new Plane(vec3(0.f, 0.5f, -1.25f),
+                                                       vec3(1.f, 0.5f, -.75f),
+                                                       vec3(0.f, 1.f, 0.f),
+                                                       3),
+                                             20),
+                                translation));
+
+  list.emplace_back(
+    std::make_unique<Translate>(new Rotate_y(new Plane(vec3(0.f, -0.5f, -1.25f),
+                                                       vec3(1.f, 0.5f, -1.25f),
+                                                       vec3(0.f, 0.f, -1.f),
+                                                       3),
+                                             20),
+                                translation));
+
+  list.emplace_back(
+    std::make_unique<Translate>(new Rotate_y(new Plane(vec3(0.f, -0.5f, -.75f),
+                                                       vec3(1.f, 0.5f, -.75f),
+                                                       vec3(0.f, 0.f, 1.f),
+                                                       3),
+                                             20),
+                                translation));
 
   std::vector<std::unique_ptr<Object>> light_list;
   light_list.emplace_back(std::make_unique<Point>(vec3(1, 1.5, -2), 4));
