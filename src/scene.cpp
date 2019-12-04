@@ -536,152 +536,10 @@ Scene::load_cornel_box()
   std::vector<std::unique_ptr<Object>> list;
   list.emplace_back(std::make_unique<Sphere>(vec3(0, -0.5, -2), 0.5, 0));
   list.emplace_back(std::make_unique<Sphere>(vec3(0, -101.0, -2), 100, 1));
-  auto complex_shape = [](const vec3& position) -> float {
-    auto sphere = sdf::sphere(position, 0.6f);
-    auto sphere2 = sdf::sphere(position - vec3(-0.5, 0.4, 0.4f), 0.3f);
-    auto box = sdf::box(position, vec3(0.4f, 0.4f, 0.4f));
-    auto sphere_box = sdf::intersect(sphere, box);
-    float cylinder_length = 1.0f;
-    float radius = 0.35f;
-    auto cylinder_y = sdf::cylinder(position, radius, cylinder_length);
-    auto cylinder_x = sdf::cylinder(
-      vec3(position.z(), position.x(), position.y()), radius, cylinder_length);
-    auto cylinder_z = sdf::cylinder(
-      vec3(position.x(), position.z(), position.y()), radius, cylinder_length);
-    auto cylinder_cross =
-      sdf::combine(cylinder_x, sdf::combine(cylinder_y, cylinder_z));
-    return sdf::difference(sphere_box, cylinder_cross);
-  };
-  list.emplace_back(std::make_unique<FunctionalGeometry>(
-    vec3(1.5, -0.5, -2.1), 40, complex_shape, 3));
+  list.emplace_back(std::make_unique<Sphere>(vec3(1.5, -0.5, -2.1), 0.5f, 3));
 
   list.emplace_back(std::make_unique<Sphere>(vec3(-1.5, -0.5, -2.1), 0.5, 7));
   list.emplace_back(std::make_unique<Sphere>(vec3(-1.5, -0.5, -2.1), -0.45, 7));
-
-  /*std::vector<uint16_t> indices = {
-    0, 1, 2, 2, 3, 0,
-  };
-  std::vector<MeshVertexData> data0 = {
-    MeshVertexData{
-      vec2{ 1, 0 },
-      vec3{ 0, 1, 0 },
-      vec3{ 1, 0, 0 },
-    },
-    MeshVertexData{
-      vec2{ 0, 0 },
-      vec3{ 0, 1, 0 },
-      vec3{ 1, 0, 0 },
-    },
-    MeshVertexData{
-      vec2{ 0, 1 },
-      vec3{ 0, 1, 0 },
-      vec3{ 1, 0, 0 },
-    },
-    MeshVertexData{
-      vec2{ 1, 1 },
-      vec3{ 0, 1, 0 },
-      vec3{ 1, 0, 0 },
-    },
-  };
-  std::vector<vec3> positions0 = {
-    vec3{ 2.6f, -1.5f, -4.0f },
-    vec3{ -2.6f, -1.5f, -4.0f },
-    vec3{ -2.6f, 4.0f, -4.0f },
-    vec3{ 2.6f, 4.0f, -4.0f },
-  };
-  std::vector<MeshVertexData> data1 = {
-    MeshVertexData{
-      vec2{ 1, 0 },
-      vec3{ 1, 0, 0 },
-      vec3{ 0, 0, -1 },
-    },
-    MeshVertexData{
-      vec2{ 0, 0 },
-      vec3{ 1, 0, 0 },
-      vec3{ 0, 0, -1 },
-    },
-    MeshVertexData{
-      vec2{ 0, 1 },
-      vec3{ 1, 0, 0 },
-      vec3{ 0, 0, -1 },
-    },
-    MeshVertexData{
-      vec2{ 1, 1 },
-      vec3{ 1, 0, 0 },
-      vec3{ 0, 0, -1 },
-    },
-  };
-  std::vector<vec3> positions1 = {
-    vec3{ -2.5f, -1.5f, -4.0f },
-    vec3{ -2.5f, -1.5f, 0.0f },
-    vec3{ -2.5f, 4.0f, 0.0f },
-    vec3{ -2.5f, 4.0f, -4.0f },
-  };
-  std::vector<MeshVertexData> data2 = {
-    MeshVertexData{
-      vec2{ 1, 0 },
-      vec3{ -1, 0, 0 },
-      vec3{ 0, 0, 1 },
-    },
-    MeshVertexData{
-      vec2{ 0, 0 },
-      vec3{ -1, 0, 0 },
-      vec3{ 0, 0, 1 },
-    },
-    MeshVertexData{
-      vec2{ 0, 1 },
-      vec3{ -1, 0, 0 },
-      vec3{ 0, 0, 1 },
-    },
-    MeshVertexData{
-      vec2{ 1, 1 },
-      vec3{ -1, 0, 0 },
-      vec3{ 0, 0, 1 },
-    },
-  };
-  std::vector<vec3> positions2 = {
-    vec3{ 2.5f, -1.5f, 0.0f },
-    vec3{ 2.5f, -1.5f, -4.0f },
-    vec3{ 2.5f, 4.0f, -4.0f },
-    vec3{ 2.5f, 4.0f, 0.0f },
-  };
-
-  list.emplace_back(
-    std::make_unique<TriangleMesh>(std::move(positions0),
-                                   std::move(data0),
-                                   std::vector<uint16_t>(indices),
-                                   1));
-  list.emplace_back(
-    std::make_unique<TriangleMesh>(std::move(positions1),
-                                   std::move(data1),
-                                   std::vector<uint16_t>(indices),
-                                   8));
-  list.emplace_back(
-    std::make_unique<TriangleMesh>(std::move(positions2),
-                                   std::move(data2),
-                                   std::vector<uint16_t>(indices),
-                                   9));*/
-  /*
-        vec3{ 2.6f, -1.5f, -4.0f },
-    vec3{ -2.6f, -1.5f, -4.0f },
-    vec3{ -2.6f, 4.0f, -4.0f },
-    vec3{ 2.6f, 4.0f, -4.0f },
-
-        vec3{ -2.5f, -1.5f, -4.0f },
-    vec3{ -2.5f, -1.5f, 0.0f },
-    vec3{ -2.5f, 4.0f, 0.0f },
-    vec3{ -2.5f, 4.0f, -4.0f },
-
-        vec3{ 2.5f, -1.5f, 0.0f },
-    vec3{ 2.5f, -1.5f, -4.0f },
-    vec3{ 2.5f, 4.0f, -4.0f },
-    vec3{ 2.5f, 4.0f, 0.0f },
-  */
-  // list.emplace_back(std::make_unique<Plane_xy>(0, 555, 0, 555, 555, 8));
-  // list.emplace_back(std::make_unique<Plane_yz>(-1.5, 4, -4, 0, 2.5, 8));
-  // list.emplace_back(std::make_unique<Plane_yz>(-1.5, 4, -4, 0, -2.5, 8));
-  // list.emplace_back(std::make_unique<Plane_xz>(213, 343, 227, 332, 554, 9));
-  // list.emplace_back(std::make_unique<Plane_xz>(0, 555, 0, 555, 0, 8));
 
   list.emplace_back(std::make_unique<Plane>(vec3(-2.6f, -1.5f, -4.0f),
                                                vec3(2.6f, 4.0f, -4.0f),
@@ -729,6 +587,71 @@ Scene::load_cornel_box()
                                           std::move(light_list),
                                           0.001f,
                                           20));
+}
+
+std::unique_ptr<Scene>
+Scene::load_mandrelbulb()
+{
+  std::vector<std::unique_ptr<Texture>> textures;
+  std::vector<std::unique_ptr<Material>> materials;
+  materials.emplace_back(std::make_unique<Lambert>(
+    vec3(0.235294118, 0.701960784, 0.443137255))); // 0
+  materials.emplace_back(std::make_unique<EmissiveQuadraticDropOff>(
+    vec3(1000.0f, 1000.0f, 1000.0f), 1.0f));                            // 1
+  materials.emplace_back(std::make_unique<Metal>(vec3(0.8, 0.6, 0.2))); // 2
+
+  std::vector<std::unique_ptr<Object>> list;
+  list.emplace_back(
+    FunctionalGeometry::mandrelbulb(vec3(0.0f, 0.0f, -1), 10, 5.0f, 8.0f, 0));
+
+  auto complex_shape = [](const vec3& position) -> float {
+    auto sphere = sdf::sphere(position, 0.6f);
+    auto box = sdf::box(position, vec3(0.4f, 0.4f, 0.4f));
+    auto sphere_box = sdf::intersect(sphere, box);
+    float cylinder_length = 1.0f;
+    float radius = 0.35f;
+    auto cylinder_y = sdf::cylinder(position, radius, cylinder_length);
+    auto cylinder_x = sdf::cylinder(
+      vec3(position.z(), position.x(), position.y()), radius, cylinder_length);
+    auto cylinder_z = sdf::cylinder(
+      vec3(position.x(), position.z(), position.y()), radius, cylinder_length);
+    auto cylinder_cross =
+      sdf::combine(cylinder_x, sdf::combine(cylinder_y, cylinder_z));
+    return sdf::difference(sphere_box, cylinder_cross);
+  };
+  list.emplace_back(std::make_unique<FunctionalGeometry>(
+    vec3(-1.5, 1.5, -2.5), 100, complex_shape, 2));
+
+  // Construct scene graph
+  std::vector<SceneNode> nodes;
+  // Root node, only parent in graph
+  SceneNode& root_node = nodes.emplace_back();
+  root_node.children_id_offset = nodes.size();
+  // Camera and camera node
+  SceneNode& camera_node = nodes.emplace_back();
+  camera_node.camera = std::make_unique<Camera>(
+    vec3(0, 0, 0.0f), vec3(0, 0, -1), vec3(0, 1, 0), 90, 1);
+  camera_node.type = SceneNode::Type::Camera;
+  root_node.children_id_length++;
+
+  // Lights
+  std::vector<std::unique_ptr<Object>> light_list;
+  float distance = 100.0f;
+  light_list.emplace_back(std::make_unique<Point>(vec3(distance, 0, 0), 1));
+  light_list.emplace_back(std::make_unique<Point>(vec3(-distance, 0, 0), 1));
+  light_list.emplace_back(std::make_unique<Point>(vec3(0, distance, 0), 1));
+  light_list.emplace_back(std::make_unique<Point>(vec3(0, -distance, 0), 1));
+  light_list.emplace_back(std::make_unique<Point>(vec3(0, 0, distance), 1));
+  light_list.emplace_back(std::make_unique<Point>(vec3(0, 0, -distance), 1));
+
+  return std::unique_ptr<Scene>(new Scene(std::move(nodes),
+                                          1,
+                                          std::move(textures),
+                                          std::move(materials),
+                                          std::move(list),
+                                          std::move(light_list),
+                                          0.001f,
+                                          16));
 }
 
 Scene::Scene(std::vector<SceneNode>&& nodes,
