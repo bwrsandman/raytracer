@@ -4,12 +4,17 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
-Camera::Camera(vec3 lookfrom, vec3 lookat, vec3 vup, float vfov, float aspect)
-  : look_from(lookfrom)
-  , look_at(lookat)
-  , v_up(vup)
+Camera::Camera(const vec3& origin,
+               const vec3& forward,
+               const vec3& up,
+               float vfov,
+               float aspect)
+  : look_from(origin)
+  , look_at(origin + forward)
+  , v_up(up)
   , v_fov(vfov)
   , screen_aspect(aspect)
+  , origin(origin)
   , dirty(true)
 {
   calculate_camera();
@@ -76,7 +81,7 @@ Camera::process_event(const SDL_Event& event)
       }
       switch (event.key.keysym.sym) {
 #if __EMSCRIPTEN__
-        case SDL_SCANCODE_w: // weird sdl2 emscripten bug
+        case SDL_SCANCODE_W: // weird sdl2 emscripten bug
 #else
         case SDLK_w:
 #endif
@@ -87,7 +92,7 @@ Camera::process_event(const SDL_Event& event)
           calculate_camera();
         } break;
 #if __EMSCRIPTEN__
-        case SDL_SCANCODE_s: // weird sdl2 emscripten bug
+        case SDL_SCANCODE_S: // weird sdl2 emscripten bug
 #else
         case SDLK_s:
 #endif
@@ -98,7 +103,7 @@ Camera::process_event(const SDL_Event& event)
           calculate_camera();
         } break;
 #if __EMSCRIPTEN__
-        case SDL_SCANCODE_e: // weird sdl2 emscripten bug
+        case SDL_SCANCODE_E: // weird sdl2 emscripten bug
 #else
         case SDLK_e:
 #endif
@@ -106,7 +111,7 @@ Camera::process_event(const SDL_Event& event)
           calculate_camera();
           break;
 #if __EMSCRIPTEN__
-        case SDL_SCANCODE_q: // weird sdl2 emscripten bug
+        case SDL_SCANCODE_Q: // weird sdl2 emscripten bug
 #else
         case SDLK_q:
 #endif
@@ -114,7 +119,7 @@ Camera::process_event(const SDL_Event& event)
           calculate_camera();
           break;
 #if __EMSCRIPTEN__
-        case SDL_SCANCODE_a: // weird sdl2 emscripten bug
+        case SDL_SCANCODE_A: // weird sdl2 emscripten bug
 #else
         case SDLK_a:
 #endif
@@ -125,7 +130,7 @@ Camera::process_event(const SDL_Event& event)
           calculate_camera();
         } break;
 #if __EMSCRIPTEN__
-        case SDL_SCANCODE_d: // weird sdl2 emscripten bug
+        case SDL_SCANCODE_D: // weird sdl2 emscripten bug
 #else
         case SDLK_d:
 #endif

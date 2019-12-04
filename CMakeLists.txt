@@ -9,7 +9,7 @@ file(GLOB_RECURSE private_impl_sources CONFIGURE_DEPENDS src/private_impl/*)
 
 file(GLOB shaders CONFIGURE_DEPENDS src/shaders/*.glsl)
 
-file(GLOB_RECURSE textures CONFIGURE_DEPENDS assets/*.jpg assets/*.tga)
+file(GLOB_RECURSE textures CONFIGURE_DEPENDS assets/*.jpg assets/*.png assets/*.tga)
 
 # Tell CMake how to compile shaders into SPIV, then into headers
 foreach(shader ${shaders})

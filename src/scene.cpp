@@ -18,6 +18,53 @@
 #include "texture.h"
 
 std::unique_ptr<Scene>
+Scene::load_whitted_scene()
+{
+  std::vector<std::unique_ptr<Texture>> textures;
+  textures.emplace_back(Texture::load_from_file("whitted_floor.png")); // 0
+  std::vector<std::unique_ptr<Material>> materials;
+  materials.emplace_back(
+    std::make_unique<Lambert>(vec3(1.0, 1.0, 1.0), 0));                 // 0
+  materials.emplace_back(std::make_unique<Metal>(vec3(0.8, 0.8, 0.8))); // 1
+  materials.emplace_back(std::make_unique<Dielectric>(1.5f, 1.0f));     // 2
+  materials.emplace_back(std::make_unique<EmissiveQuadraticDropOff>(
+    vec3(2000.0, 2000.0, 2000.0), 1.0f)); // 3
+
+  std::vector<std::unique_ptr<Object>> list;
+  list.emplace_back(std::make_unique<Plane>(vec3(-5.0f, -2.0f, -5.0f),
+                                            vec3(5.0f, -2.0f, 5.0f),
+                                            vec3(0.f, 1.f, 0.f),
+                                            0));
+  list.emplace_back(std::make_unique<Sphere>(vec3(0, -0.8f, -2.5f), 1.0, 1));
+  vec3 bubble_center(-0.75f, 0.5f, -1.0f);
+  list.emplace_back(std::make_unique<Sphere>(bubble_center, 1.0f, 2));
+  list.emplace_back(std::make_unique<Sphere>(bubble_center, -0.95f, 2));
+
+  // Construct scene graph
+  std::vector<SceneNode> nodes;
+  // Root node, only parent in graph
+  SceneNode& root_node = nodes.emplace_back();
+  root_node.children_id_offset = nodes.size();
+  // Camera and camera node
+  SceneNode& camera_node = nodes.emplace_back();
+  camera_node.camera = std::make_unique<Camera>(
+    vec3(0, 0, 1.2f), vec3(0, 0, -1), vec3(0, 1, 0), 90, 1);
+  camera_node.type = SceneNode::Type::Camera;
+  root_node.children_id_length++;
+
+  // Lights
+  std::vector<std::unique_ptr<Object>> light_list;
+  light_list.emplace_back(std::make_unique<Point>(vec3(0, 50.0f, 0), 3));
+
+  return std::unique_ptr<Scene>(new Scene(std::move(nodes),
+                                          1,
+                                          std::move(textures),
+                                          std::move(materials),
+                                          std::move(list),
+                                          std::move(light_list)));
+}
+
+std::unique_ptr<Scene>
 Scene::load_cornel_box()
 {
   std::vector<std::unique_ptr<Texture>> textures;

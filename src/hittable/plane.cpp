@@ -42,6 +42,10 @@ Plane::hit(const Ray& r, float tmin, float tmax, hit_record& rec) const
     return false;
 
   rec.t = t;
+  rec.uv.e[0] =
+    (one - min.e[index_one]) / (max.e[index_one] - min.e[index_one]);
+  rec.uv.e[1] =
+    (two - min.e[index_two]) / (max.e[index_two] - min.e[index_two]);
   rec.mat_id = mat_id;
   rec.p = r.point_at_parameter(t);
   rec.normal = n;
