@@ -17,6 +17,12 @@ struct FunctionalGeometry : public Object
                      signed_distance_function_t sdf,
                      uint16_t m);
 
+  static std::unique_ptr<FunctionalGeometry> mandrelbulb(const vec3& center,
+                                                         uint8_t max_iterations,
+                                                         float max_radius,
+                                                         float power,
+                                                         uint16_t m);
+
   bool hit(const Ray& r,
            bool early_out,
            float t_min,

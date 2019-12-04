@@ -19,6 +19,7 @@ public:
   static std::unique_ptr<Scene> load_whitted_scene();
   static std::unique_ptr<Scene> load_cornel_box();
   static std::unique_ptr<Scene> load_from_gltf(const std::string& file_name);
+  static std::unique_ptr<Scene> load_mandrelbulb();
 
   void run(float width, float height);
 

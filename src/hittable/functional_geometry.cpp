@@ -17,6 +17,47 @@ FunctionalGeometry::FunctionalGeometry(const vec3& center,
   , mat_id(m)
 {}
 
+// From
+// http://blog.hvidtfeldts.net/index.php/2011/09/distance-estimated-3d-fractals-v-the-mandelbulb-different-de-approximations/
+std::unique_ptr<FunctionalGeometry>
+FunctionalGeometry::mandrelbulb(const vec3& center,
+                                uint8_t max_iterations,
+                                float max_radius,
+                                float power,
+                                uint16_t m)
+{
+  auto signed_distance_function =
+    [center, max_iterations, max_radius, power](const vec3& position) {
+      vec3 z = position - center;
+      float dr = 1.0;
+      float radius = 0.0;
+      for (uint8_t i = 0; i < max_iterations; i++) {
+        radius = z.length();
+        if (radius > max_radius)
+          break;
+
+        // convert to polar coordinates
+        float theta = std::acos(z.y() / radius);
+        float phi = std::atan2(z.z(), z.x());
+        dr = std::pow(radius, power - 1.0f) * power * dr + 1.0f;
+
+        // scale and rotate the point
+        float zr = pow(radius, power);
+        theta = theta * power;
+        phi = phi * power;
+
+        // convert back to cartesian coordinates
+        z = zr * vec3(std::sin(theta) * std::cos(phi),
+                      std::sin(phi) * std::sin(theta),
+                      std::cos(theta));
+        z += position;
+      }
+      return 0.5f * std::log(radius) * radius / dr;
+    };
+  return std::make_unique<FunctionalGeometry>(
+    center, 100, signed_distance_function, m);
+}
+
 bool
 FunctionalGeometry::hit(const Ray& r,
                         bool early_out,

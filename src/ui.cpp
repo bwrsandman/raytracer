@@ -48,6 +48,9 @@ Ui::run(std::unique_ptr<Scene>& scene, std::chrono::microseconds& dt) const
     if (ImGui::Button("Cornel Box")) {
       scene = Scene::load_cornel_box();
     }
+    if (ImGui::Button("Mandrelbulb")) {
+      scene = Scene::load_mandrelbulb();
+    }
     ImGui::Text("Load glTF Scene");
     if (ImGui::Button("BoxTextured.gltf")) {
       scene = Scene::load_from_gltf("BoxTextured.gltf");
