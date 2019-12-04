@@ -490,7 +490,7 @@ Scene::load_whitted_scene()
   // Camera and camera node
   SceneNode& camera_node = nodes.emplace_back();
   camera_node.camera = std::make_unique<Camera>(
-    vec3(0, 0, 1.2f), vec3(0, 0, -1), vec3(0, 1, 0), 90, 1);
+    vec3(1, 0, 2.0f), vec3(0, 0, -1), vec3(0, 1, 0), 90, 1);
   camera_node.type = SceneNode::Type::Camera;
   root_node.children_id_length++;
 
@@ -504,8 +504,8 @@ Scene::load_whitted_scene()
                                           std::move(materials),
                                           std::move(list),
                                           std::move(light_list),
-                                          0.02f,
-                                          10));
+                                          0.001f,
+                                          16));
 }
 
 std::unique_ptr<Scene>
@@ -738,7 +738,7 @@ Scene::Scene(std::vector<SceneNode>&& nodes,
              std::vector<std::unique_ptr<Object>>&& world_objects,
              std::vector<std::unique_ptr<Object>>&& lights,
              float min_attenuation_magnitude,
-             uint8_t min_secondary_rays)
+             uint8_t max_secondary_rays)
   : nodes(std::move(nodes))
   , camera_index(camera_index)
   , textures(std::move(textures))
@@ -746,7 +746,7 @@ Scene::Scene(std::vector<SceneNode>&& nodes,
   , world_objects(std::move(world_objects))
   , lights(std::move(lights))
   , min_attenuation_magnitude(min_attenuation_magnitude)
-  , max_secondary_rays(min_secondary_rays)
+  , max_secondary_rays(max_secondary_rays)
 {}
 
 Scene::~Scene() = default;
