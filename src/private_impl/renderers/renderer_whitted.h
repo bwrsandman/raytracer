@@ -48,9 +48,10 @@ private:
   void rebuild_backbuffers();
   void create_geometry();
   void create_pipeline();
-  void trace(RayPayload& payload,
+  bool trace(RayPayload& payload,
              const Scene& scene,
              const Ray& r,
+             bool early_out,
              float t_min,
              float t_max) const;
   vec3 raygen(Ray ray, const Scene& scene) const;

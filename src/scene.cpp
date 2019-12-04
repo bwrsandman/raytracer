@@ -20,7 +20,6 @@ Scene::load_cornel_box()
 {
   std::vector<std::unique_ptr<Texture>> textures;
   std::vector<std::unique_ptr<Material>> materials;
-  std::vector<uint32_t> light_indices;
 
   textures.emplace_back(Texture::load_from_file("earth_albedo.jpg"));     // 0
   textures.emplace_back(Texture::load_from_file("earth_normal_map.tga")); // 1
@@ -192,12 +191,6 @@ Scene::load_cornel_box()
   light_list.emplace_back(std::make_unique<Point>(vec3(-1, 1.5, -2), 5));
   light_list.emplace_back(std::make_unique<Point>(vec3(0, 2, -1.5), 6));
 
-  // Move lights to world object list and keep their indices
-  for (auto& light : light_list) {
-    light_indices.emplace_back(list.size());
-    list.emplace_back(std::move(light));
-  }
-
   // Construct scene graph
   std::vector<SceneNode> nodes;
   // Root node, only parent in graph
@@ -222,7 +215,7 @@ Scene::load_cornel_box()
                                           std::move(textures),
                                           std::move(materials),
                                           std::move(list),
-                                          std::move(light_indices)));
+                                          std::move(light_list)));
 }
 
 Scene::Scene(std::vector<SceneNode>&& nodes,
@@ -230,13 +223,13 @@ Scene::Scene(std::vector<SceneNode>&& nodes,
              std::vector<std::unique_ptr<Texture>>&& textures,
              std::vector<std::unique_ptr<Material>>&& materials,
              std::vector<std::unique_ptr<Object>>&& world_objects,
-             std::vector<uint32_t>&& light_indices)
+             std::vector<std::unique_ptr<Object>>&& lights)
   : nodes(std::move(nodes))
   , camera_index(camera_index)
   , textures(std::move(textures))
   , materials(std::move(materials))
   , world_objects(std::move(world_objects))
-  , light_indices(std::move(light_indices))
+  , lights(std::move(lights))
 {}
 
 Scene::~Scene() = default;
@@ -289,16 +282,16 @@ Scene::get_material_list()
   return materials;
 }
 
-const std::vector<uint32_t>&
-Scene::get_light_indices() const
+const std::vector<std::unique_ptr<Object>>&
+Scene::get_lights() const
 {
-  return light_indices;
+  return lights;
 }
 
-std::vector<uint32_t>&
-Scene::get_light_indices()
+std::vector<std::unique_ptr<Object>>&
+Scene::get_lights()
 {
-  return light_indices;
+  return lights;
 }
 
 const Texture&
