@@ -454,7 +454,9 @@ Scene::load_from_gltf(const std::string& file_name)
                                           std::move(textures),
                                           std::move(materials),
                                           std::move(meshes),
-                                          std::move(light_list)));
+                                          std::move(light_list),
+                                          0.01f,
+                                          10));
 }
 
 std::unique_ptr<Scene>
@@ -501,7 +503,9 @@ Scene::load_whitted_scene()
                                           std::move(textures),
                                           std::move(materials),
                                           std::move(list),
-                                          std::move(light_list)));
+                                          std::move(light_list),
+                                          0.02f,
+                                          10));
 }
 
 std::unique_ptr<Scene>
@@ -722,7 +726,9 @@ Scene::load_cornel_box()
                                           std::move(textures),
                                           std::move(materials),
                                           std::move(list),
-                                          std::move(light_list)));
+                                          std::move(light_list),
+                                          0.001f,
+                                          20));
 }
 
 Scene::Scene(std::vector<SceneNode>&& nodes,
@@ -730,13 +736,17 @@ Scene::Scene(std::vector<SceneNode>&& nodes,
              std::vector<std::unique_ptr<Texture>>&& textures,
              std::vector<std::unique_ptr<Material>>&& materials,
              std::vector<std::unique_ptr<Object>>&& world_objects,
-             std::vector<std::unique_ptr<Object>>&& lights)
+             std::vector<std::unique_ptr<Object>>&& lights,
+             float min_attenuation_magnitude,
+             uint8_t min_secondary_rays)
   : nodes(std::move(nodes))
   , camera_index(camera_index)
   , textures(std::move(textures))
   , materials(std::move(materials))
   , world_objects(std::move(world_objects))
   , lights(std::move(lights))
+  , min_attenuation_magnitude(min_attenuation_magnitude)
+  , max_secondary_rays(min_secondary_rays)
 {}
 
 Scene::~Scene() = default;
