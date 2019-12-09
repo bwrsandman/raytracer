@@ -2,6 +2,8 @@
 
 #include "ray.h"
 
+using Raytracer::Materials::Emissive;
+
 Emissive::Emissive(const vec3& a)
   : albedo(a)
 {}

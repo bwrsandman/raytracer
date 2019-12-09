@@ -4,8 +4,12 @@
 #include <memory>
 
 struct SDL_Window;
-class Scene;
 
+namespace Raytracer {
+class Scene;
+}
+
+namespace Raytracer::Graphics {
 /// Abstract Base Class of renderer
 ///
 /// This class should only provide interface as a pure virtual functions.
@@ -30,3 +34,4 @@ public:
 protected:
   Renderer() = default;
 };
+} // namespace Raytracer::Graphics

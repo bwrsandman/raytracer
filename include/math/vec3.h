@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <iostream>
 
+namespace Raytracer::Math {
 class vec3
 {
 public:
@@ -13,8 +14,7 @@ public:
   {}
   constexpr vec3(float e0, float e1, float e2) noexcept
     : e{ e0, e1, e2 }
-  {
-  }
+  {}
   inline float x() const { return e[0]; }
   inline float y() const { return e[1]; }
   inline float z() const { return e[2]; }
@@ -229,8 +229,10 @@ lerp(const vec3& from, const vec3& to, float t)
 {
   return from * t + to * (1.0f - t);
 }
+} // namespace Raytracer::Math
 
 namespace std {
+using Raytracer::Math::vec3;
 inline vec3
 sqrt(const vec3& v)
 {
@@ -265,8 +267,9 @@ max(const vec3& v, float f)
 {
   return vec3(std::max(v.e[0], f), std::max(v.e[1], f), std::max(v.e[2], f));
 }
-}
+} // namespace std
 
+namespace Raytracer::Math {
 static vec3
 saturate(const vec3& val)
 {
@@ -347,3 +350,4 @@ fresnel_rate(const vec3& v, const vec3& n, float ni, float nt)
   // As a consequence of the conservation of energy, transmittance is given by:
   // ft = 1 - fr;
 }
+} // namespace Raytracer::Math

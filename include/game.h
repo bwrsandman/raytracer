@@ -3,11 +3,17 @@
 #include <chrono>
 #include <memory>
 
+namespace Raytracer {
 class Window;
 class Input;
-class Renderer;
 class Scene;
 class Ui;
+
+namespace Graphics {
+class Renderer;
+}
+
+using Graphics::Renderer;
 
 class Game
 {
@@ -29,3 +35,4 @@ private:
   std::chrono::high_resolution_clock::time_point frame_begin;
   std::chrono::high_resolution_clock::time_point frame_end;
 };
+} // namespace Raytracer

@@ -2,6 +2,9 @@
 
 #include "materials/material.h"
 
+#include "math/vec3.h"
+
+namespace Raytracer::Materials {
 struct Dielectric : public Material
 {
   explicit Dielectric(const vec3& a, float ri, float ni);
@@ -13,3 +16,4 @@ struct Dielectric : public Material
   float ni;
   vec3 albedo;
 };
+} // namespace Raytracer::Materials

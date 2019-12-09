@@ -88,8 +88,8 @@ endif()
 # 3d connexion 3d mouse
 find_library(SPNAV_LIBRARY spnav)
 if (SPNAV_LIBRARY)
-    target_compile_definitions(Whitted_Raytracing PRIVATE USE_SPNAV=1)
-    target_link_libraries(Whitted_Raytracing PRIVATE ${SPNAV_LIBRARY})
+    target_compile_definitions(RaytracerLib PRIVATE USE_SPNAV=1)
+    target_link_libraries(RaytracerLib PRIVATE ${SPNAV_LIBRARY})
 endif()
 
 add_subdirectory(3rd_party/glad)

@@ -4,6 +4,7 @@
 
 #include "math.h"
 
+namespace Raytracer::Math {
 struct vec2
 {
   constexpr vec2() noexcept
@@ -36,3 +37,4 @@ vec2::make_unit_vector()
   e[0] *= k;
   e[1] *= k;
 }
+} // namespace Raytracer::Math

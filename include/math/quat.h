@@ -2,6 +2,7 @@
 
 #include "mat4.h"
 
+namespace Raytracer::Math {
 struct quat
 {
   float x, y, z, w;
@@ -36,3 +37,4 @@ struct quat
              1.0f };
   }
 };
+} // namespace Raytracer::Math

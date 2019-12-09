@@ -2,8 +2,9 @@
 
 #include "materials/material.h"
 
-#include "vec3.h"
+#include "math/vec3.h"
 
+namespace Raytracer::Materials {
 struct Emissive : public Material
 {
   explicit Emissive(const vec3& a);
@@ -13,3 +14,4 @@ struct Emissive : public Material
 
   vec3 albedo;
 };
+} // namespace Raytracer::Materials

@@ -1,7 +1,8 @@
 #include "materials/dielectric.h"
-//#include <ray.h>
 
 #include "ray.h"
+
+using Raytracer::Materials::Dielectric;
 
 Dielectric::Dielectric(const vec3& a, float ri, float ni)
   : albedo(a)

@@ -1,18 +1,18 @@
 #pragma once
 
 #include "renderer.h"
+
 #include <memory>
 #include <vector>
 
 #include "ray.h"
-//#include "vec3.h"
-
-class vec3;
-class Object;
-class Camera;
-class Pipeline;
 
 typedef void* SDL_GLContext;
+
+namespace Raytracer {
+class Camera;
+namespace Graphics {
+class Pipeline;
 
 struct IndexedMesh
 {
@@ -67,3 +67,5 @@ private:
   std::unique_ptr<Pipeline> screen_space_pipeline;
   std::unique_ptr<IndexedMesh> fullscreen_quad;
 };
+} // namespace Graphics
+} // namespace Raytracer

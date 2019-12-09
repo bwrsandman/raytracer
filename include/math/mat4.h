@@ -2,6 +2,7 @@
 
 #include "vec4.h"
 
+namespace Raytracer::Math {
 struct mat4
 {
   constexpr mat4() noexcept
@@ -82,3 +83,4 @@ dot(const mat4& lhs, const mat4& rhs)
       lhs.m[15] * rhs.m[15], // 2,3
   };
 }
+} // namespace Raytracer::Math

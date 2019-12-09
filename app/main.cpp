@@ -6,7 +6,7 @@ int
 main(int argc, char* argv[])
 {
 
-  Game game;
+  Raytracer::Game game;
   game.run();
 
   return EXIT_SUCCESS;

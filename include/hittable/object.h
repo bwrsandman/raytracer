@@ -1,9 +1,12 @@
 #pragma once
 
+namespace Raytracer {
 struct Ray;
 class Scene;
 struct hit_record;
+} // namespace Raytracer
 
+namespace Raytracer::Hittable {
 struct Object
 {
   virtual ~Object() = default;
@@ -13,3 +16,4 @@ struct Object
                    float t_max,
                    hit_record& rec) const = 0;
 };
+}; // namespace Raytracer::Hittable

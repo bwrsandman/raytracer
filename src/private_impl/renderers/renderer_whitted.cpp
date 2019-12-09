@@ -27,6 +27,11 @@
 
 #include "../../shaders/bridging_header.h"
 
+using Raytracer::Graphics::IndexedMesh;
+using Raytracer::Graphics::RendererWhitted;
+using Raytracer::Hittable::Point;
+using namespace Raytracer::Math;
+
 namespace {
 void GLAPIENTRY
 MessageCallback(GLenum source,

@@ -4,6 +4,9 @@
 #include <stb_image.h>
 #include <tiny_gltf.h>
 
+using Raytracer::Texture;
+using Raytracer::Math::vec3;
+
 std::unique_ptr<Texture>
 Texture::load_from_file(const std::string& filename)
 {

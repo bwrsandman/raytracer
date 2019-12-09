@@ -3,6 +3,8 @@
 
 #include "ray.h"
 
+using Raytracer::Materials::EmissiveQuadraticDropOff;
+
 EmissiveQuadraticDropOff::EmissiveQuadraticDropOff(const vec3& a, float factor)
   : albedo(a)
   , drop_off_factor(factor)

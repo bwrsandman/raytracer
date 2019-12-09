@@ -1,9 +1,9 @@
 #include "scene.h"
-#include <cassert>
-#include <sdf.h>
 
 #define _USE_MATH_DEFINES
+#include <cassert>
 #include <math.h>
+#include <sdf.h>
 
 #define TINYGLTF_IMPLEMENTATION
 #define TINYGLTF_USE_CPP14
@@ -11,7 +11,6 @@
 #include <materials/emissive.h>
 #include <queue>
 #include <tiny_gltf.h>
-#include <vec4.h>
 
 #include "camera.h"
 #include "hittable/functional_geometry.h"
@@ -26,10 +25,17 @@
 #include "materials/emissive_quadratic_drop_off.h"
 #include "materials/lambert.h"
 #include "materials/metal.h"
+#include "math/vec4.h"
 #include "scene_node.h"
 #include "texture.h"
 
-namespace details {
+using Raytracer::Camera;
+using Raytracer::Scene;
+using Raytracer::Texture;
+using namespace Raytracer::Hittable;
+using namespace Raytracer::Materials;
+
+namespace __details {
 template<typename dstT,
          typename srcT,
          typename = std::enable_if<std::is_same<dstT, srcT>::type>>
@@ -47,7 +53,7 @@ copy_buffer_view(dstT* dst, const uint8_t* src, size_t count)
 {
   memcpy(dst, src, count * sizeof(dstT));
 }
-} // details
+} // namespace __details
 
 template<typename desT>
 void
@@ -58,28 +64,28 @@ copy_buffer_view(desT* dst,
 {
   switch (componentType) {
     case TINYGLTF_COMPONENT_TYPE_BYTE:
-      details::copy_buffer_view<desT, int8_t>(dst, src, count);
+      __details::copy_buffer_view<desT, int8_t>(dst, src, count);
       break;
     case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE:
-      details::copy_buffer_view<desT, uint8_t>(dst, src, count);
+      __details::copy_buffer_view<desT, uint8_t>(dst, src, count);
       break;
     case TINYGLTF_COMPONENT_TYPE_SHORT:
-      details::copy_buffer_view<desT, int16_t>(dst, src, count);
+      __details::copy_buffer_view<desT, int16_t>(dst, src, count);
       break;
     case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT:
-      details::copy_buffer_view<desT, uint16_t>(dst, src, count);
+      __details::copy_buffer_view<desT, uint16_t>(dst, src, count);
       break;
     case TINYGLTF_COMPONENT_TYPE_INT:
-      details::copy_buffer_view<desT, int32_t>(dst, src, count);
+      __details::copy_buffer_view<desT, int32_t>(dst, src, count);
       break;
     case TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT:
-      details::copy_buffer_view<desT, uint32_t>(dst, src, count);
+      __details::copy_buffer_view<desT, uint32_t>(dst, src, count);
       break;
     case TINYGLTF_COMPONENT_TYPE_FLOAT:
-      details::copy_buffer_view<desT, float>(dst, src, count);
+      __details::copy_buffer_view<desT, float>(dst, src, count);
       break;
     case TINYGLTF_COMPONENT_TYPE_DOUBLE:
-      details::copy_buffer_view<desT, double>(dst, src, count);
+      __details::copy_buffer_view<desT, double>(dst, src, count);
       break;
     default:
       // "Unsupported component type"

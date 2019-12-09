@@ -5,6 +5,8 @@
 
 struct SDL_Window;
 union SDL_Event;
+
+namespace Raytracer {
 class Scene;
 
 class Ui
@@ -19,3 +21,4 @@ public:
 private:
   SDL_Window* window;
 };
+} // namespace Raytracer

@@ -2,7 +2,10 @@
 
 #include "object.h"
 
-#include "vec3.h"
+#include "math/vec3.h"
+
+namespace Raytracer::Hittable {
+using Raytracer::Math::vec3;
 
 struct Sphere : public Object
 {
@@ -18,3 +21,4 @@ struct Sphere : public Object
   float radius;
   uint16_t mat_id;
 };
+} // namespace Raytracer::Hittable

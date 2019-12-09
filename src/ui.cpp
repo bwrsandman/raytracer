@@ -19,6 +19,11 @@
 #include "materials/metal.h"
 #include "scene.h"
 
+using namespace Raytracer;
+using namespace Raytracer::Math;
+using namespace Raytracer::Hittable;
+using namespace Raytracer::Materials;
+
 Ui::Ui(SDL_Window* window)
   : window(window)
 {

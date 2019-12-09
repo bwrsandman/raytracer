@@ -6,7 +6,10 @@
 #include <functional>
 #include <memory>
 
-#include "vec3.h"
+#include "math/vec3.h"
+
+namespace Raytracer::Hittable {
+using Raytracer::Math::vec3;
 
 struct FunctionalGeometry : public Object
 {
@@ -33,3 +36,4 @@ struct FunctionalGeometry : public Object
   vec3 center;
   uint16_t mat_id;
 };
+} // namespace Raytracer::Hittable

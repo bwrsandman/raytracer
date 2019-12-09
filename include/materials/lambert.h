@@ -2,8 +2,9 @@
 
 #include "materials/material.h"
 
-#include "vec3.h"
+#include "math/vec3.h"
 
+namespace Raytracer::Materials {
 struct Lambert : public Material
 {
   explicit Lambert(
@@ -18,3 +19,4 @@ struct Lambert : public Material
   uint16_t albedo_texture_id;
   uint16_t normal_texture_id;
 };
+} // namespace Raytracer::Materials

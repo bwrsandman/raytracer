@@ -1,9 +1,12 @@
 #include "materials/metal.h"
 
-#include "mat3.h"
+#include "math/mat3.h"
 #include "ray.h"
 #include "scene.h"
 #include "texture.h"
+
+using Raytracer::Materials::Metal;
+using namespace Raytracer::Math;
 
 Metal::Metal(const vec3& a,
              uint16_t albedo_texture_id,

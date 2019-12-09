@@ -2,8 +2,9 @@
 
 #include "materials/material.h"
 
-#include "vec3.h"
+#include "math/vec3.h"
 
+namespace Raytracer::Materials {
 struct EmissiveQuadraticDropOff : public Material
 {
   EmissiveQuadraticDropOff(const vec3& a, float factor);
@@ -14,3 +15,4 @@ struct EmissiveQuadraticDropOff : public Material
   vec3 albedo;
   float drop_off_factor;
 };
+} // namespace Raytracer::Materials

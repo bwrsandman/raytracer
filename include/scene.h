@@ -6,10 +6,19 @@
 
 #include "scene_node.h"
 
+namespace Raytracer {
+
 class Camera;
-struct Object;
-struct Material;
 class Texture;
+namespace Materials {
+struct Material;
+}
+namespace Hittable {
+struct Object;
+}
+
+using namespace Materials;
+using namespace Hittable;
 
 class Scene
 {
@@ -52,3 +61,4 @@ private:
   std::vector<std::unique_ptr<Object>> world_objects;
   std::vector<std::unique_ptr<Object>> lights;
 };
+} // namespace Raytracer

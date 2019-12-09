@@ -10,6 +10,9 @@
 #include <emscripten/emscripten.h>
 #endif
 
+using namespace Raytracer;
+using namespace Raytracer::Graphics;
+
 Game::Game() {
   window = std::make_unique<Window>("Raytracer", 800, 600);
   input = std::make_unique<Input>();

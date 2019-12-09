@@ -1,5 +1,6 @@
 #pragma once
 
+namespace Raytracer::Math {
 struct vec4
 {
   constexpr vec4() noexcept
@@ -11,3 +12,4 @@ struct vec4
 
   float e[4];
 };
+} // namespace Raytracer::Math

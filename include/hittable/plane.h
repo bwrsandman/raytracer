@@ -4,7 +4,10 @@
 
 #include <cstdint>
 
-#include "vec3.h"
+#include "math/vec3.h"
+
+namespace Raytracer::Hittable {
+using Raytracer::Math::vec3;
 
 class Plane : public Object
 {
@@ -20,6 +23,4 @@ private:
   const vec3 min, max, n;
   const uint16_t mat_id;
 };
-
-
-
+} // namespace Raytracer::Hittable

@@ -1,7 +1,9 @@
-#pragma once 
+#pragma once
 
+#include "math/vec3.h"
 
-#include "vec3.h"
+namespace Raytracer {
+using Raytracer::Math::vec3;
 
 struct Ray
 {
@@ -12,8 +14,7 @@ struct Ray
   Ray(const vec3& a, const vec3& b)
     : origin(a)
     , direction(b)
-  {
-  }
+  {}
   inline vec3 point_at_parameter(float t) const
   {
     return origin + t * direction;
@@ -53,3 +54,4 @@ struct RayPayload
   vec3 tangent;
   Type type;
 };
+} // namespace Raytracer

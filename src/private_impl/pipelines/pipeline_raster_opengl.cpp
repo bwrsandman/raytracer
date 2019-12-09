@@ -4,6 +4,8 @@
 
 #include <spirv_glsl.hpp>
 
+using namespace Raytracer::Graphics;
+
 PipelineRasterOpenGL::PipelineRasterOpenGL(uint32_t program)
   : program(program)
 {}

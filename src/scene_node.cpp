@@ -2,6 +2,10 @@
 
 #include "camera.h"
 
+using Raytracer::SceneNode;
+using Raytracer::Transform;
+using Raytracer::Math::mat4;
+
 Transform::Transform()
   : translation()
   , rotation{ 0.0f, 0.0f, 0.0f, 1.0f }
