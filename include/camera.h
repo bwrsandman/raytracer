@@ -1,5 +1,7 @@
 #pragma once
 
+#include <chrono>
+
 #include "ray.h"
 
 union SDL_Event;
@@ -21,7 +23,7 @@ public:
   /// Call once per frame to reset dirty flag
   void set_clean();
   /// Update camera state based on SDL events
-  void process_event(const SDL_Event& event);
+  void process_event(const SDL_Event& event, std::chrono::microseconds& dt);
 
   vec3 look_from;
   vec3 look_at;

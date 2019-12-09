@@ -13,13 +13,13 @@ Input::Input()
 Input::~Input() = default;
 
 void
-Input::run(Ui& ui, Scene& scene)
+Input::run(Ui& ui, Scene& scene, std::chrono::microseconds& dt)
 {
   SDL_Event event;
 
   while (SDL_PollEvent(&event)) {
     ui.process_event(event);
-    scene.get_camera().process_event(event);
+    scene.get_camera().process_event(event, dt);
     switch (event.type) {
       case SDL_QUIT:
         quit = true;

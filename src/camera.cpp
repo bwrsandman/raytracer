@@ -69,10 +69,50 @@ Camera::set_clean()
 }
 
 void
-Camera::process_event(const SDL_Event& event)
+Camera::process_event(const SDL_Event& event, std::chrono::microseconds& dt)
 {
-  float speed = 0.01f;
+  float speed = 0.000001f * dt.count();
   switch (event.type) {
+    case SDL_JOYAXISMOTION: {
+      speed *= 0.0025f;
+      switch (event.jaxis.axis) {
+        // Translate x
+        case 0: {
+          auto direction = cross(v_up, (look_at - look_from));
+          direction.make_unit_vector();
+          origin -= event.jaxis.value * direction * speed;
+          calculate_camera();
+        } break;
+        // Translate y
+        case 1: {
+          auto forward = look_at - look_from;
+          auto side = cross(v_up, forward);
+          auto direction = cross(side, forward);
+          direction.make_unit_vector();
+          origin -= event.jaxis.value * direction * speed;
+          calculate_camera();
+        } break;
+        // Translate z
+        case 2: {
+          auto direction = look_at - look_from;
+          direction.make_unit_vector();
+          origin += event.jaxis.value * direction * speed;
+          calculate_camera();
+        } break;
+        // Rotate x
+        case 3: {
+          look_at += event.jaxis.value * v_up * speed;
+          calculate_camera();
+        } break;
+        // Rotate y
+        case 4: {
+          auto direction = cross(v_up, (look_at - look_from));
+          direction.make_unit_vector();
+          look_at += event.jaxis.value * direction * speed;
+          calculate_camera();
+        } break;
+      }
+    } break;
     case SDL_KEYDOWN: {
       if (event.key.keysym.mod & KMOD_SHIFT) {
         speed *= 5.0f;
