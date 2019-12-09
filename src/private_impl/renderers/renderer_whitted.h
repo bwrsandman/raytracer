@@ -54,7 +54,9 @@ private:
              bool early_out,
              float t_min,
              float t_max) const;
-  vec3 raygen(Ray ray, const Scene& scene) const;
+  uint32_t raygen(const Ray& ray,
+                  const Scene& scene,
+                  vec3& color) const override;
 
   SDL_GLContext context;
   uint16_t width;

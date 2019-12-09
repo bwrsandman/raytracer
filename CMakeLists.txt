@@ -109,3 +109,5 @@ target_compile_definitions(RaytracerLib PRIVATE SDL_MAIN_HANDLED)
 set_property(TARGET RaytracerLib PROPERTY CXX_STANDARD 17)
 
 target_link_libraries(Raytracer PRIVATE RaytracerLib)
+
+add_subdirectory(benchmarks)

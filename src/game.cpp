@@ -19,7 +19,7 @@ Game::Game() {
   renderer =
     Renderer::create(Renderer::Type::Whitted, window->get_native_handle());
   ui = std::make_unique<Ui>(window->get_native_handle());
-  scene = Scene::load_cornel_box();
+  scene = Scene::load_cornell_box();
 }
 
 Game::~Game() = default;

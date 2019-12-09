@@ -149,17 +149,17 @@ Scene::load_from_gltf(const std::string& file_name)
   } else {
     for (auto& t : gltf.textures) {
       if (!t.name.empty()) {
-        std::printf("glTF loader: Loading texture %s\n", t.name.c_str());
+        // std::printf("glTF loader: Loading texture %s\n", t.name.c_str());
       }
       auto& image = gltf.images[t.source];
       if (!image.name.empty()) {
-        std::printf("glTF loader: Loading image %s\n", t.name.c_str());
+        // std::printf("glTF loader: Loading image %s\n", t.name.c_str());
       }
       textures.emplace_back(Texture::load_from_gltf_image(image));
     }
     for (auto& m : gltf.materials) {
       if (!m.name.empty()) {
-        std::printf("glTF loader: Loading material %s\n", m.name.c_str());
+        // std::printf("glTF loader: Loading material %s\n", m.name.c_str());
       }
       auto color_texture = std::numeric_limits<uint32_t>::max();
       auto normal_texture = std::numeric_limits<uint32_t>::max();
@@ -177,8 +177,8 @@ Scene::load_from_gltf(const std::string& file_name)
   }
 
   // Lights
-  std::cerr << "Warn: No lights from glTF, using default point light."
-            << std::endl;
+  // std::cerr << "Warn: No lights from glTF, using default point light."
+  //           << std::endl;
   materials.emplace_back(std::make_unique<Emissive>(vec3(1.0, 1.0, 1.0))); // 1
   std::vector<std::unique_ptr<Object>> light_list;
   light_list.emplace_back(std::make_unique<Point>(vec3(5000.0f, 0, 0), 1));
@@ -443,9 +443,10 @@ Scene::load_from_gltf(const std::string& file_name)
 
   // Default camera
   if (!found_camera) {
-    std::cerr
-      << "Warn: There are no perspective cameras in glTF, using a default one."
-      << std::endl;
+    // std::cerr
+    //   << "Warn: There are no perspective cameras in glTF, using a default
+    //   one."
+    //   << std::endl;
     camera_index = nodes.size();
     SceneNode& camera_node = nodes.emplace_back();
     camera_node.camera = std::make_unique<Camera>(
@@ -453,13 +454,14 @@ Scene::load_from_gltf(const std::string& file_name)
     camera_node.type = SceneNode::Type::Camera;
   }
 
-  std::printf("glTF loader: Loaded %zu nodes, %zu textures, %zu materials, %zu "
-              "meshes, %zu lights\n",
-              nodes.size(),
-              textures.size(),
-              materials.size(),
-              meshes.size(),
-              light_list.size());
+  // std::printf("glTF loader: Loaded %zu nodes, %zu textures, %zu materials,
+  // %zu "
+  //             "meshes, %zu lights\n",
+  //             nodes.size(),
+  //             textures.size(),
+  //             materials.size(),
+  //             meshes.size(),
+  //             light_list.size());
 
   // TODO: remember to apply scene graph transforms on objects and camera
   return std::unique_ptr<Scene>(new Scene(std::move(nodes),
@@ -524,7 +526,7 @@ Scene::load_whitted_scene()
 }
 
 std::unique_ptr<Scene>
-Scene::load_cornel_box()
+Scene::load_cornell_box()
 {
   std::vector<std::unique_ptr<Texture>> textures;
   std::vector<std::unique_ptr<Material>> materials;

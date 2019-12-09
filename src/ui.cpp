@@ -51,7 +51,7 @@ Ui::run(std::unique_ptr<Scene>& scene, std::chrono::microseconds& dt) const
     }
     ImGui::SameLine();
     if (ImGui::Button("Cornel Box")) {
-      scene = Scene::load_cornel_box();
+      scene = Scene::load_cornell_box();
     }
     if (ImGui::Button("Mandrelbulb")) {
       scene = Scene::load_mandrelbulb();
