@@ -45,9 +45,17 @@ foreach(texture ${textures})
     set(EMBED_FILES "${EMBED_FILES} --embed-file ${texture_name}")
 endforeach()
 
-add_executable(Raytracer ${sources} ${headers}  ${private_impl_sources})
+add_library(RaytracerLib STATIC ${sources} ${headers} ${private_impl_sources})
+add_executable(Raytracer app/main.cpp)
 
 if (EMSCRIPTEN)
+    set_target_properties(RaytracerLib PROPERTIES
+      COMPILE_FLAGS_DEBUG "-g4"
+      LINK_FLAGS_DEBUG "-g4"
+      COMPILE_FLAGS "-s USE_PTHREADS=1 -s PTHREAD_POOL_SIZE=64 -s TOTAL_MEMORY=64MB"
+      LINK_FLAGS "-s USE_SDL=2 -s FULL_ES3=1 -s GL_ASSERTIONS=1 -s USE_WEBGL2=1 -s USE_PTHREADS=1 -s PTHREAD_POOL_SIZE=64 -s TOTAL_MEMORY=512MB ${EMBED_FILES} --emrun"
+      SUFFIX ".html"
+    )
     set_target_properties(Raytracer PROPERTIES
       COMPILE_FLAGS_DEBUG "-g4"
       LINK_FLAGS_DEBUG "-g4"
@@ -87,14 +95,17 @@ endif()
 add_subdirectory(3rd_party/glad)
 add_subdirectory(3rd_party/imgui-1.73)
 
-target_include_directories(Raytracer
-  PRIVATE
+target_include_directories(RaytracerLib
+  PUBLIC
     include/
+  PRIVATE
     3rd_party/stb
     3rd_party/nlohmann-json
     3rd_party/tinygltf
     # Compiled shaders
     ${CMAKE_CURRENT_BINARY_DIR}/src)
-target_link_libraries(Raytracer PRIVATE ${LIBRARIES})
-target_compile_definitions(Raytracer PRIVATE SDL_MAIN_HANDLED)
-set_property(TARGET Raytracer PROPERTY CXX_STANDARD 17)
+target_link_libraries(RaytracerLib PRIVATE ${LIBRARIES})
+target_compile_definitions(RaytracerLib PRIVATE SDL_MAIN_HANDLED)
+set_property(TARGET RaytracerLib PROPERTY CXX_STANDARD 17)
+
+target_link_libraries(Raytracer PRIVATE RaytracerLib)
