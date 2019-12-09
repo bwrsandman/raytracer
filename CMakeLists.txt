@@ -77,6 +77,13 @@ else()
     set(LIBRARIES SDL2::SDL2 glad imgui spirv-cross-core spirv-cross-glsl)
 endif()
 
+# 3d connexion 3d mouse
+find_library(SPNAV_LIBRARY spnav)
+if (SPNAV_LIBRARY)
+    target_compile_definitions(Whitted_Raytracing PRIVATE USE_SPNAV=1)
+    target_link_libraries(Whitted_Raytracing PRIVATE ${SPNAV_LIBRARY})
+endif()
+
 add_subdirectory(3rd_party/glad)
 add_subdirectory(3rd_party/imgui-1.73)
 
