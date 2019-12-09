@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 3.10)
-project (Whitted_Raytracing)
+project (Raytracer)
 
 find_program(GLSLVALIDATOR glslangValidator)
 
@@ -45,10 +45,10 @@ foreach(texture ${textures})
     set(EMBED_FILES "${EMBED_FILES} --embed-file ${texture_name}")
 endforeach()
 
-add_executable(Whitted_Raytracing ${sources} ${headers}  ${private_impl_sources})
+add_executable(Raytracer ${sources} ${headers}  ${private_impl_sources})
 
 if (EMSCRIPTEN)
-    set_target_properties(Whitted_Raytracing PROPERTIES
+    set_target_properties(Raytracer PROPERTIES
       COMPILE_FLAGS_DEBUG "-g4"
       LINK_FLAGS_DEBUG "-g4"
       COMPILE_FLAGS "-s USE_PTHREADS=1 -s PTHREAD_POOL_SIZE=64 -s TOTAL_MEMORY=64MB"
@@ -87,7 +87,7 @@ endif()
 add_subdirectory(3rd_party/glad)
 add_subdirectory(3rd_party/imgui-1.73)
 
-target_include_directories(Whitted_Raytracing
+target_include_directories(Raytracer
   PRIVATE
     include/
     3rd_party/stb
@@ -95,6 +95,6 @@ target_include_directories(Whitted_Raytracing
     3rd_party/tinygltf
     # Compiled shaders
     ${CMAKE_CURRENT_BINARY_DIR}/src)
-target_link_libraries(Whitted_Raytracing PRIVATE ${LIBRARIES})
-target_compile_definitions(Whitted_Raytracing PRIVATE SDL_MAIN_HANDLED)
-set_property(TARGET Whitted_Raytracing PROPERTY CXX_STANDARD 17)
+target_link_libraries(Raytracer PRIVATE ${LIBRARIES})
+target_compile_definitions(Raytracer PRIVATE SDL_MAIN_HANDLED)
+set_property(TARGET Raytracer PROPERTY CXX_STANDARD 17)

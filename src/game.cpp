@@ -11,7 +11,7 @@
 #endif
 
 Game::Game() {
-  window = std::make_unique<Window>("Whitted_Raytracing", 800, 600);
+  window = std::make_unique<Window>("Raytracer", 800, 600);
   input = std::make_unique<Input>();
   renderer = Renderer::create(Renderer::Type::Whitted, *window);
   ui = std::make_unique<Ui>(window->get_native_handle());
