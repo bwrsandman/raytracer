@@ -108,7 +108,7 @@ IndexedMesh::bind() const
   }
 }
 
-RendererWhitted::RendererWhitted(const Window& window)
+RendererWhitted::RendererWhitted(SDL_Window* window)
   : width(0)
   , height(0)
 {
@@ -124,7 +124,7 @@ RendererWhitted::RendererWhitted(const Window& window)
   SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
   SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 
-  context = SDL_GL_CreateContext(window.get_native_handle());
+  context = SDL_GL_CreateContext(window);
   gladLoadGLES2Loader(SDL_GL_GetProcAddress);
 
 #if !__EMSCRIPTEN__

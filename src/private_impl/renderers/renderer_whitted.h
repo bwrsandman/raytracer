@@ -37,7 +37,7 @@ struct IndexedMesh
 class RendererWhitted : public Renderer
 {
 public:
-  explicit RendererWhitted(const Window& window);
+  explicit RendererWhitted(SDL_Window* window);
   ~RendererWhitted() override;
 
   void compute_primary_rays(const Camera& camera);
