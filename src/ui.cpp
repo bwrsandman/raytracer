@@ -19,6 +19,11 @@
 #include "materials/metal.h"
 #include "scene.h"
 
+using namespace Raytracer;
+using namespace Raytracer::Math;
+using namespace Raytracer::Hittable;
+using namespace Raytracer::Materials;
+
 Ui::Ui(SDL_Window* window)
   : window(window)
 {
@@ -46,7 +51,7 @@ Ui::run(std::unique_ptr<Scene>& scene, std::chrono::microseconds& dt) const
     }
     ImGui::SameLine();
     if (ImGui::Button("Cornel Box")) {
-      scene = Scene::load_cornel_box();
+      scene = Scene::load_cornell_box();
     }
     if (ImGui::Button("Mandrelbulb")) {
       scene = Scene::load_mandrelbulb();

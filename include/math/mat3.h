@@ -2,6 +2,7 @@
 
 #include "vec3.h"
 
+namespace Raytracer::Math {
 struct mat3
 {
   constexpr mat3(float e00,
@@ -26,3 +27,4 @@ dot(const mat3& m, const vec3& v)
               m.m[1] * v.e[0] + m.m[4] * v.e[1] + m.m[7] * v.e[2],
               m.m[2] * v.e[0] + m.m[5] * v.e[1] + m.m[8] * v.e[2]);
 }
+} // namespace Raytracer::Math

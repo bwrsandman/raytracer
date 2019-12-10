@@ -1,8 +1,12 @@
 #pragma once
 
+#include "math/vec3.h"
+
 /// Signed distance function for primitives using the following as a reference
 /// http://iquilezles.org/www/articles/distfunctions/distfunctions.htm
-namespace sdf {
+namespace Raytracer::sdf {
+using Raytracer::Math::vec3;
+
 inline float
 intersect(float a, float b)
 {
@@ -42,4 +46,4 @@ cylinder(const vec3& position, float radius, float length)
     vec3(radius, length, 0.0f);
   return std::min(std::max(d.x(), d.y()), 0.0f) + std::max(d, 0.0f).length();
 }
-}
+} // namespace Raytracer::sdf

@@ -2,6 +2,7 @@
 
 #include "pipeline.h"
 
+namespace Raytracer::Graphics {
 class PipelineRasterOpenGL : public Pipeline
 {
 public:
@@ -16,3 +17,4 @@ public:
 private:
   const uint32_t program;
 };
+} // namespace Raytracer::Graphics

@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 
+namespace Raytracer::Graphics {
 struct PipelineCreateInfo
 {
   const uint32_t* vertex_shader_binary;
@@ -33,3 +34,4 @@ public:
   static std::unique_ptr<Pipeline> create(Type type,
                                           const PipelineCreateInfo& info);
 };
+} // namespace Raytracer::Graphics

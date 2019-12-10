@@ -27,6 +27,11 @@
 
 #include "../../shaders/bridging_header.h"
 
+using Raytracer::Graphics::IndexedMesh;
+using Raytracer::Graphics::RendererWhitted;
+using Raytracer::Hittable::Point;
+using namespace Raytracer::Math;
+
 namespace {
 void GLAPIENTRY
 MessageCallback(GLenum source,
@@ -108,7 +113,7 @@ IndexedMesh::bind() const
   }
 }
 
-RendererWhitted::RendererWhitted(const Window& window)
+RendererWhitted::RendererWhitted(SDL_Window* window)
   : width(0)
   , height(0)
 {
@@ -124,12 +129,13 @@ RendererWhitted::RendererWhitted(const Window& window)
   SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
   SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 
-  context = SDL_GL_CreateContext(window.get_native_handle());
-  gladLoadGLES2Loader(SDL_GL_GetProcAddress);
+  context = SDL_GL_CreateContext(window);
+  if (context) {
+    gladLoadGLES2Loader(SDL_GL_GetProcAddress);
 
 #if !__EMSCRIPTEN__
-  glEnable(GL_DEBUG_OUTPUT);
-  glDebugMessageCallback(MessageCallback, this);
+    glEnable(GL_DEBUG_OUTPUT);
+    glDebugMessageCallback(MessageCallback, this);
 #endif
 
   glGenTextures(1, &gpu_buffer);
@@ -147,12 +153,15 @@ RendererWhitted::RendererWhitted(const Window& window)
 
   create_geometry();
   create_pipeline();
+  }
 }
 
 RendererWhitted::~RendererWhitted()
 {
-  glDeleteTextures(1, &gpu_buffer);
-  glDeleteSamplers(1, &linear_sampler);
+  if (context) {
+    glDeleteTextures(1, &gpu_buffer);
+    glDeleteSamplers(1, &linear_sampler);
+  }
 }
 
 bool
@@ -195,8 +204,10 @@ RendererWhitted::trace(RayPayload& payload,
   return hit_anything;
 }
 
-vec3
-RendererWhitted::raygen(Ray primary_ray, const Scene& scene) const
+uint32_t
+RendererWhitted::raygen(const Ray& primary_ray,
+                        const Scene& scene,
+                        vec3& color) const
 {
   struct AttenuatedRay
   {
@@ -223,8 +234,6 @@ RendererWhitted::raygen(Ray primary_ray, const Scene& scene) const
   constexpr float t_min = 0.001f;
   constexpr float t_max = std::numeric_limits<float>::max();
 
-  vec3 color = { 0, 0, 0 };
-
   // Primary and Secondary rays
   for (uint8_t i = 0; i < next_secondary && i < scene.max_secondary_rays; ++i) {
     if (dot(secondary_rays[i].attenuation, secondary_rays[i].attenuation) <
@@ -240,7 +249,8 @@ RendererWhitted::raygen(Ray primary_ray, const Scene& scene) const
 
     if (payload.distance < 0.0f) {
       // TODO: Add nothing: internal reflection, this should never happen
-      return vec3(1, 1, 0);
+      color = vec3(1, 1, 0);
+      return next_secondary;
     } else if (payload.type == RayPayload::Type::Lambert) {
       // Add ray to shadow rays
       auto& geometry_list = scene.get_world();
@@ -340,7 +350,8 @@ RendererWhitted::raygen(Ray primary_ray, const Scene& scene) const
       } else if (payload.type != RayPayload::Type::NoHit) {
         // TODO: Add nothing: this should never happen unless there's a new type
         // of payload
-        return vec3(0, 1, 1);
+        color = vec3(0, 1, 1);
+        return next_secondary;
       }
     }
   }
@@ -356,7 +367,7 @@ RendererWhitted::raygen(Ray primary_ray, const Scene& scene) const
     }
   }
 
-  return color;
+  return next_secondary + shadow_rays.size();
 }
 
 void
@@ -396,7 +407,9 @@ RendererWhitted::run(const Scene& scene)
     threads.emplace_back([this, offset, length, &scene]() {
       for (uint32_t i = offset; i < offset + length && i < width * height;
            ++i) {
-        cpu_buffer[i] = std::sqrt(raygen(rays[i], scene));
+        vec3 color = vec3(0, 0, 0);
+        raygen(rays[i], scene, color);
+        cpu_buffer[i] = std::sqrt(color);
       }
     });
   }
@@ -406,27 +419,36 @@ RendererWhitted::run(const Scene& scene)
   }
 
   // binding texture
-  glBindTexture(GL_TEXTURE_2D, gpu_buffer);
-  glTexSubImage2D(
-    GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGB, GL_FLOAT, cpu_buffer.data());
+  if (context) {
+    glBindTexture(GL_TEXTURE_2D, gpu_buffer);
+    glTexSubImage2D(GL_TEXTURE_2D,
+                    0,
+                    0,
+                    0,
+                    width,
+                    height,
+                    GL_RGB,
+                    GL_FLOAT,
+                    cpu_buffer.data());
 
-  // clearing screen
-  glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  glClearBufferfv(GL_COLOR, 0, clear_color);
+    // clearing screen
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glClearBufferfv(GL_COLOR, 0, clear_color);
 
-  // Actually putting it to the screen?
-  screen_space_pipeline->bind();
-  fullscreen_quad->bind();
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, gpu_buffer);
-  glBindSampler(0, linear_sampler);
-  glDrawElements(GL_TRIANGLES,
-                 sizeof(fullscreen_quad_indices) /
-                   sizeof(fullscreen_quad_indices[0]),
-                 GL_UNSIGNED_SHORT,
-                 nullptr);
+    // Actually putting it to the screen?
+    screen_space_pipeline->bind();
+    fullscreen_quad->bind();
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, gpu_buffer);
+    glBindSampler(0, linear_sampler);
+    glDrawElements(GL_TRIANGLES,
+                   sizeof(fullscreen_quad_indices) /
+                     sizeof(fullscreen_quad_indices[0]),
+                   GL_UNSIGNED_SHORT,
+                   nullptr);
 
-  glFinish();
+    glFinish();
+  }
 }
 
 void
@@ -455,23 +477,25 @@ RendererWhitted::rebuild_backbuffers()
     }
   }
 
-  glBindTexture(GL_TEXTURE_2D, gpu_buffer);
-  glTexImage2D(GL_TEXTURE_2D,
-               0,
-               GL_RGB32F,
-               width,
-               height,
-               0,
-               GL_RGB,
-               GL_FLOAT,
-               cpu_buffer.data());
+  rays.resize(width * height);
+
+  if (context) {
+    glBindTexture(GL_TEXTURE_2D, gpu_buffer);
+    glTexImage2D(GL_TEXTURE_2D,
+                 0,
+                 GL_RGB32F,
+                 width,
+                 height,
+                 0,
+                 GL_RGB,
+                 GL_FLOAT,
+                 cpu_buffer.data());
 #if !__EMSCRIPTEN__
-  glObjectLabel(GL_TEXTURE, gpu_buffer, -1, "CPU-GPU buffer");
+    glObjectLabel(GL_TEXTURE, gpu_buffer, -1, "CPU-GPU buffer");
 #endif
 
-  glViewport(0, 0, width, height);
-
-  rays.resize(width * height);
+    glViewport(0, 0, width, height);
+  }
 }
 
 void

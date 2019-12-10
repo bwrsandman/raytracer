@@ -3,13 +3,15 @@
 #include <memory>
 #include <vector>
 
-#include "vec2.h"
-#include "vec3.h"
+#include "math/vec2.h"
+#include "math/vec3.h"
 
 namespace tinygltf {
 struct Image;
 }
 
+namespace Raytracer {
+using Raytracer::Math::vec3;
 class Texture
 {
 public:
@@ -27,3 +29,4 @@ private:
   const uint32_t height;
   const std::vector<vec3> data;
 };
+} // namespace Raytracer

@@ -1,9 +1,9 @@
 #include "scene.h"
-#include <cassert>
-#include <sdf.h>
 
 #define _USE_MATH_DEFINES
+#include <cassert>
 #include <math.h>
+#include <sdf.h>
 
 #define TINYGLTF_IMPLEMENTATION
 #define TINYGLTF_USE_CPP14
@@ -11,7 +11,6 @@
 #include <materials/emissive.h>
 #include <queue>
 #include <tiny_gltf.h>
-#include <vec4.h>
 
 #include "camera.h"
 #include "hittable/functional_geometry.h"
@@ -26,10 +25,17 @@
 #include "materials/emissive_quadratic_drop_off.h"
 #include "materials/lambert.h"
 #include "materials/metal.h"
+#include "math/vec4.h"
 #include "scene_node.h"
 #include "texture.h"
 
-namespace details {
+using Raytracer::Camera;
+using Raytracer::Scene;
+using Raytracer::Texture;
+using namespace Raytracer::Hittable;
+using namespace Raytracer::Materials;
+
+namespace __details {
 template<typename dstT,
          typename srcT,
          typename = std::enable_if<std::is_same<dstT, srcT>::type>>
@@ -47,7 +53,7 @@ copy_buffer_view(dstT* dst, const uint8_t* src, size_t count)
 {
   memcpy(dst, src, count * sizeof(dstT));
 }
-} // details
+} // namespace __details
 
 template<typename desT>
 void
@@ -58,28 +64,28 @@ copy_buffer_view(desT* dst,
 {
   switch (componentType) {
     case TINYGLTF_COMPONENT_TYPE_BYTE:
-      details::copy_buffer_view<desT, int8_t>(dst, src, count);
+      __details::copy_buffer_view<desT, int8_t>(dst, src, count);
       break;
     case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE:
-      details::copy_buffer_view<desT, uint8_t>(dst, src, count);
+      __details::copy_buffer_view<desT, uint8_t>(dst, src, count);
       break;
     case TINYGLTF_COMPONENT_TYPE_SHORT:
-      details::copy_buffer_view<desT, int16_t>(dst, src, count);
+      __details::copy_buffer_view<desT, int16_t>(dst, src, count);
       break;
     case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT:
-      details::copy_buffer_view<desT, uint16_t>(dst, src, count);
+      __details::copy_buffer_view<desT, uint16_t>(dst, src, count);
       break;
     case TINYGLTF_COMPONENT_TYPE_INT:
-      details::copy_buffer_view<desT, int32_t>(dst, src, count);
+      __details::copy_buffer_view<desT, int32_t>(dst, src, count);
       break;
     case TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT:
-      details::copy_buffer_view<desT, uint32_t>(dst, src, count);
+      __details::copy_buffer_view<desT, uint32_t>(dst, src, count);
       break;
     case TINYGLTF_COMPONENT_TYPE_FLOAT:
-      details::copy_buffer_view<desT, float>(dst, src, count);
+      __details::copy_buffer_view<desT, float>(dst, src, count);
       break;
     case TINYGLTF_COMPONENT_TYPE_DOUBLE:
-      details::copy_buffer_view<desT, double>(dst, src, count);
+      __details::copy_buffer_view<desT, double>(dst, src, count);
       break;
     default:
       // "Unsupported component type"
@@ -143,17 +149,17 @@ Scene::load_from_gltf(const std::string& file_name)
   } else {
     for (auto& t : gltf.textures) {
       if (!t.name.empty()) {
-        std::printf("glTF loader: Loading texture %s\n", t.name.c_str());
+        // std::printf("glTF loader: Loading texture %s\n", t.name.c_str());
       }
       auto& image = gltf.images[t.source];
       if (!image.name.empty()) {
-        std::printf("glTF loader: Loading image %s\n", t.name.c_str());
+        // std::printf("glTF loader: Loading image %s\n", t.name.c_str());
       }
       textures.emplace_back(Texture::load_from_gltf_image(image));
     }
     for (auto& m : gltf.materials) {
       if (!m.name.empty()) {
-        std::printf("glTF loader: Loading material %s\n", m.name.c_str());
+        // std::printf("glTF loader: Loading material %s\n", m.name.c_str());
       }
       auto color_texture = std::numeric_limits<uint32_t>::max();
       auto normal_texture = std::numeric_limits<uint32_t>::max();
@@ -171,8 +177,8 @@ Scene::load_from_gltf(const std::string& file_name)
   }
 
   // Lights
-  std::cerr << "Warn: No lights from glTF, using default point light."
-            << std::endl;
+  // std::cerr << "Warn: No lights from glTF, using default point light."
+  //           << std::endl;
   materials.emplace_back(std::make_unique<Emissive>(vec3(1.0, 1.0, 1.0))); // 1
   std::vector<std::unique_ptr<Object>> light_list;
   light_list.emplace_back(std::make_unique<Point>(vec3(5000.0f, 0, 0), 1));
@@ -437,9 +443,10 @@ Scene::load_from_gltf(const std::string& file_name)
 
   // Default camera
   if (!found_camera) {
-    std::cerr
-      << "Warn: There are no perspective cameras in glTF, using a default one."
-      << std::endl;
+    // std::cerr
+    //   << "Warn: There are no perspective cameras in glTF, using a default
+    //   one."
+    //   << std::endl;
     camera_index = nodes.size();
     SceneNode& camera_node = nodes.emplace_back();
     camera_node.camera = std::make_unique<Camera>(
@@ -447,13 +454,14 @@ Scene::load_from_gltf(const std::string& file_name)
     camera_node.type = SceneNode::Type::Camera;
   }
 
-  std::printf("glTF loader: Loaded %zu nodes, %zu textures, %zu materials, %zu "
-              "meshes, %zu lights\n",
-              nodes.size(),
-              textures.size(),
-              materials.size(),
-              meshes.size(),
-              light_list.size());
+  // std::printf("glTF loader: Loaded %zu nodes, %zu textures, %zu materials,
+  // %zu "
+  //             "meshes, %zu lights\n",
+  //             nodes.size(),
+  //             textures.size(),
+  //             materials.size(),
+  //             meshes.size(),
+  //             light_list.size());
 
   // TODO: remember to apply scene graph transforms on objects and camera
   return std::unique_ptr<Scene>(new Scene(std::move(nodes),
@@ -518,7 +526,7 @@ Scene::load_whitted_scene()
 }
 
 std::unique_ptr<Scene>
-Scene::load_cornel_box()
+Scene::load_cornell_box()
 {
   std::vector<std::unique_ptr<Texture>> textures;
   std::vector<std::unique_ptr<Material>> materials;

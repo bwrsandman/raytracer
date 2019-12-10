@@ -6,10 +6,19 @@
 
 #include "scene_node.h"
 
+namespace Raytracer {
+
 class Camera;
-struct Object;
-struct Material;
 class Texture;
+namespace Materials {
+struct Material;
+}
+namespace Hittable {
+struct Object;
+}
+
+using namespace Materials;
+using namespace Hittable;
 
 class Scene
 {
@@ -17,7 +26,7 @@ public:
   virtual ~Scene();
 
   static std::unique_ptr<Scene> load_whitted_scene();
-  static std::unique_ptr<Scene> load_cornel_box();
+  static std::unique_ptr<Scene> load_cornell_box();
   static std::unique_ptr<Scene> load_from_gltf(const std::string& file_name);
   static std::unique_ptr<Scene> load_mandrelbulb();
 
@@ -52,3 +61,4 @@ private:
   std::vector<std::unique_ptr<Object>> world_objects;
   std::vector<std::unique_ptr<Object>> lights;
 };
+} // namespace Raytracer

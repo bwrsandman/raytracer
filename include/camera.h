@@ -6,6 +6,9 @@
 
 union SDL_Event;
 
+namespace Raytracer {
+using Raytracer::Math::vec3;
+
 class Camera
 {
 public:
@@ -40,3 +43,4 @@ public:
   /// If not, then we can skip a lot of computation.
   bool dirty;
 };
+} // namespace Raytracer

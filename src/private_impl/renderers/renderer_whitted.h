@@ -1,18 +1,18 @@
 #pragma once
 
 #include "renderer.h"
+
 #include <memory>
 #include <vector>
 
 #include "ray.h"
-//#include "vec3.h"
-
-class vec3;
-class Object;
-class Camera;
-class Pipeline;
 
 typedef void* SDL_GLContext;
+
+namespace Raytracer {
+class Camera;
+namespace Graphics {
+class Pipeline;
 
 struct IndexedMesh
 {
@@ -37,7 +37,7 @@ struct IndexedMesh
 class RendererWhitted : public Renderer
 {
 public:
-  explicit RendererWhitted(const Window& window);
+  explicit RendererWhitted(SDL_Window* window);
   ~RendererWhitted() override;
 
   void compute_primary_rays(const Camera& camera);
@@ -54,7 +54,9 @@ private:
              bool early_out,
              float t_min,
              float t_max) const;
-  vec3 raygen(Ray ray, const Scene& scene) const;
+  uint32_t raygen(const Ray& ray,
+                  const Scene& scene,
+                  vec3& color) const override;
 
   SDL_GLContext context;
   uint16_t width;
@@ -67,3 +69,5 @@ private:
   std::unique_ptr<Pipeline> screen_space_pipeline;
   std::unique_ptr<IndexedMesh> fullscreen_quad;
 };
+} // namespace Graphics
+} // namespace Raytracer

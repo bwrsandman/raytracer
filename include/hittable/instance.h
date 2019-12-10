@@ -4,7 +4,10 @@
 
 #include <cstdint>
 
-#include "vec3.h"
+#include "math/vec3.h"
+
+namespace Raytracer::Hittable {
+using Raytracer::Math::vec3;
 
 class Translate : public Object
 {
@@ -36,3 +39,4 @@ private:
   float sin_theta;
   float cos_theta;
 };
+} // namespace Raytracer::Hittable

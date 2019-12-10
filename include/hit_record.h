@@ -2,9 +2,11 @@
 
 #include <cstdint>
 
-#include "vec2.h"
-#include "vec3.h"
+#include "math/vec2.h"
+#include "math/vec3.h"
 
+namespace Raytracer {
+using Raytracer::Math::vec3;
 struct hit_record
 {
   float t;
@@ -14,3 +16,4 @@ struct hit_record
   vec3 uv;
   uint16_t mat_id;
 };
+} // namespace Raytracer

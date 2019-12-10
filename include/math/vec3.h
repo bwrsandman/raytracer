@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <iostream>
 
+namespace Raytracer::Math {
 class vec3
 {
 public:
@@ -13,8 +14,7 @@ public:
   {}
   constexpr vec3(float e0, float e1, float e2) noexcept
     : e{ e0, e1, e2 }
-  {
-  }
+  {}
   inline float x() const { return e[0]; }
   inline float y() const { return e[1]; }
   inline float z() const { return e[2]; }
@@ -218,9 +218,72 @@ reflect(const vec3& v, const vec3& n)
   return v - 2 * dot(v, n) * n;
 }
 
+inline vec3
+reciprocal(const vec3& v)
+{
+  return vec3(1.0 / v.e[0], 1.0 / v.e[1], 1.0 / v.e[2]);
+}
+
+static vec3
+lerp(const vec3& from, const vec3& to, float t)
+{
+  return from * t + to * (1.0f - t);
+}
+} // namespace Raytracer::Math
+
+namespace std {
+using Raytracer::Math::vec3;
+inline vec3
+sqrt(const vec3& v)
+{
+  return vec3(std::sqrt(v.e[0]), std::sqrt(v.e[1]), std::sqrt(v.e[2]));
+}
+inline vec3
+abs(const vec3& v)
+{
+  return vec3(std::abs(v.e[0]), std::abs(v.e[1]), std::abs(v.e[2]));
+}
+inline vec3
+min(const vec3& lhs, const vec3& rhs)
+{
+  return vec3(std::min(lhs.e[0], rhs.e[0]),
+              std::min(lhs.e[1], rhs.e[1]),
+              std::min(lhs.e[2], rhs.e[2]));
+}
+inline vec3
+max(const vec3& lhs, const vec3& rhs)
+{
+  return vec3(std::max(lhs.e[0], rhs.e[0]),
+              std::max(lhs.e[1], rhs.e[1]),
+              std::max(lhs.e[2], rhs.e[2]));
+}
+inline vec3
+clamp(const vec3& val, const vec3& minimum, const vec3& maximum)
+{
+  return min(maximum, max(minimum, val));
+}
+inline vec3
+max(const vec3& v, float f)
+{
+  return vec3(std::max(v.e[0], f), std::max(v.e[1], f), std::max(v.e[2], f));
+}
+} // namespace std
+
+namespace Raytracer::Math {
+static vec3
+saturate(const vec3& val)
+{
+  return std::clamp(val, vec3(0.0f, 0.0f, 0.0f), vec3(1.0f, 1.0f, 1.0f));
+}
+
 // Snells law
 inline bool
-refract(const vec3& v, vec3& n, float ni, float nt, vec3& refracted, bool& inside)
+refract(const vec3& v,
+        vec3& n,
+        float ni,
+        float nt,
+        vec3& refracted,
+        bool& inside)
 {
   vec3 uv = unit_vector(v);
   float cosi = dot(uv, n); // cosi()
@@ -242,7 +305,7 @@ refract(const vec3& v, vec3& n, float ni, float nt, vec3& refracted, bool& insid
     refracted = vec3(1.f, 1.f, 1.f);
     return false;
   }
-    
+
   refracted = ni_over_nt * uv + (ni_over_nt * cosi - sqrt(cost2)) * n;
   return true;
 }
@@ -287,60 +350,4 @@ fresnel_rate(const vec3& v, const vec3& n, float ni, float nt)
   // As a consequence of the conservation of energy, transmittance is given by:
   // ft = 1 - fr;
 }
-
-
-
-inline vec3
-reciprocal(const vec3& v)
-{
-  return vec3(1.0 / v.e[0], 1.0 / v.e[1], 1.0 / v.e[2]);
-}
-
-static vec3
-lerp(const vec3& from, const vec3& to, float t)
-{
-  return from * t + to * (1.0f - t);
-}
-
-namespace std {
-inline vec3
-sqrt(const vec3& v)
-{
-  return vec3(std::sqrt(v.e[0]), std::sqrt(v.e[1]), std::sqrt(v.e[2]));
-}
-inline vec3
-abs(const vec3& v)
-{
-  return vec3(std::abs(v.e[0]), std::abs(v.e[1]), std::abs(v.e[2]));
-}
-inline vec3
-min(const vec3& lhs, const vec3& rhs)
-{
-  return vec3(std::min(lhs.e[0], rhs.e[0]),
-              std::min(lhs.e[1], rhs.e[1]),
-              std::min(lhs.e[2], rhs.e[2]));
-}
-inline vec3
-max(const vec3& lhs, const vec3& rhs)
-{
-  return vec3(std::max(lhs.e[0], rhs.e[0]),
-              std::max(lhs.e[1], rhs.e[1]),
-              std::max(lhs.e[2], rhs.e[2]));
-}
-inline vec3
-clamp(const vec3& val, const vec3& minimum, const vec3& maximum)
-{
-  return min(maximum, max(minimum, val));
-}
-inline vec3
-max(const vec3& v, float f)
-{
-  return vec3(std::max(v.e[0], f), std::max(v.e[1], f), std::max(v.e[2], f));
-}
-}
-
-static vec3
-saturate(const vec3& val)
-{
-  return std::clamp(val, vec3(0.0f, 0.0f, 0.0f), vec3(1.0f, 1.0f, 1.0f));
-}
+} // namespace Raytracer::Math

@@ -2,10 +2,12 @@
 
 #include <chrono>
 
+namespace Raytracer {
 class Scene;
 class Ui;
 
-class Input {
+class Input
+{
 public:
   Input();
   virtual ~Input();
@@ -15,3 +17,4 @@ public:
 private:
   bool quit;
 };
+} // namespace Raytracer

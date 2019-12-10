@@ -1,11 +1,15 @@
 #pragma once
 
-#include "vec2.h"
-#include "vec3.h"
-
+namespace Raytracer {
 struct RayPayload;
 class Scene;
+namespace Math {
+class vec3;
+}
+} // namespace Raytracer
 
+namespace Raytracer::Materials {
+using Raytracer::Math::vec3;
 struct Material
 {
   virtual ~Material() = default;
@@ -13,3 +17,4 @@ struct Material
                               RayPayload& payload,
                               const vec3& texture_coordinates) const = 0;
 };
+} // namespace Raytracer::Materials

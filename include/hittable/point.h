@@ -4,7 +4,10 @@
 
 #include <cstdint>
 
-#include "vec3.h"
+#include "math/vec3.h"
+
+namespace Raytracer::Hittable {
+using Raytracer::Math::vec3;
 
 struct Point : public Object
 {
@@ -18,3 +21,4 @@ struct Point : public Object
   vec3 position;
   uint16_t mat_id;
 };
+} // namespace Raytracer::Hittable

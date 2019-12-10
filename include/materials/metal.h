@@ -2,11 +2,9 @@
 
 #include "materials/material.h"
 
-#include "vec3.h"
+#include "math/vec3.h"
 
-struct Ray;
-struct hit_record;
-
+namespace Raytracer::Materials {
 struct Metal : public Material
 {
   Metal(const vec3& a,
@@ -20,3 +18,4 @@ struct Metal : public Material
   uint16_t albedo_texture_id;
   uint16_t normal_texture_id;
 };
+} // namespace Raytracer::Materials

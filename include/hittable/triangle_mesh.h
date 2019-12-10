@@ -4,8 +4,12 @@
 
 #include <vector>
 
-#include "vec2.h"
-#include "vec3.h"
+#include "math/vec2.h"
+#include "math/vec3.h"
+
+namespace Raytracer::Hittable {
+using Raytracer::Math::vec2;
+using Raytracer::Math::vec3;
 
 struct MeshVertexData
 {
@@ -32,3 +36,4 @@ struct TriangleMesh : Object
   std::vector<uint16_t> indices;
   uint16_t mat_id;
 };
+} // namespace Raytracer::Hittable

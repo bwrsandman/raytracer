@@ -3,8 +3,18 @@
 #include <chrono>
 #include <memory>
 
+struct SDL_Window;
+
+namespace Raytracer {
 class Scene;
-class Window;
+struct Ray;
+namespace Math {
+class vec3;
+}
+}
+
+namespace Raytracer::Graphics {
+using Raytracer::Math::vec3;
 
 /// Abstract Base Class of renderer
 ///
@@ -23,10 +33,14 @@ public:
   virtual ~Renderer() = default;
   virtual void run(const Scene& world) = 0;
   virtual void set_backbuffer_size(uint16_t width, uint16_t height) = 0;
+  virtual uint32_t raygen(const Ray& ray,
+                          const Scene& scene,
+                          vec3& color) const = 0;
 
   /// Factory function from which all types of renderers can be created
-  static std::unique_ptr<Renderer> create(Type type, const Window& window);
+  static std::unique_ptr<Renderer> create(Type type, SDL_Window* window);
 
 protected:
   Renderer() = default;
 };
+} // namespace Raytracer::Graphics

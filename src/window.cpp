@@ -2,6 +2,8 @@
 #include <SDL.h>
 #include <SDL_video.h>
 
+using namespace Raytracer;
+
 Window::Window(std::string name, uint16_t width, uint16_t height)
 {
   SDL_Init(SDL_INIT_VIDEO);

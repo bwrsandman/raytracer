@@ -4,6 +4,8 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
+using namespace Raytracer;
+
 Camera::Camera(const vec3& origin,
                const vec3& forward,
                const vec3& up,

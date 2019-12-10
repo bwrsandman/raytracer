@@ -10,6 +10,8 @@
 #include <spnav.h>
 #endif
 
+using Raytracer::Input;
+
 Input::Input()
   : quit(false)
 {

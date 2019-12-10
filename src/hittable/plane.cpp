@@ -3,6 +3,9 @@
 #include "hit_record.h"
 #include "ray.h"
 
+using namespace Raytracer::Hittable;
+using namespace Raytracer::Math;
+
 Plane::Plane(vec3 _min, vec3 _max, vec3 _n, uint16_t _m)
   : min(_min)
   , max(_max)

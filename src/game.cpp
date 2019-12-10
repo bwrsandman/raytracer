@@ -10,12 +10,16 @@
 #include <emscripten/emscripten.h>
 #endif
 
+using namespace Raytracer;
+using namespace Raytracer::Graphics;
+
 Game::Game() {
-  window = std::make_unique<Window>("Whitted_Raytracing", 800, 600);
+  window = std::make_unique<Window>("Raytracer", 800, 600);
   input = std::make_unique<Input>();
-  renderer = Renderer::create(Renderer::Type::Whitted, *window);
+  renderer =
+    Renderer::create(Renderer::Type::Whitted, window->get_native_handle());
   ui = std::make_unique<Ui>(window->get_native_handle());
-  scene = Scene::load_cornel_box();
+  scene = Scene::load_cornell_box();
 }
 
 Game::~Game() = default;
