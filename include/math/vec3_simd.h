@@ -40,4 +40,60 @@ inline vec3_simd<4>::vec3_simd(const vec3 scalars[])
          { scalars[3].z(), scalars[2].z(), scalars[1].z(), scalars[0].z() }) }
 {}
 
+template<>
+inline vec3_simd<8>::vec3_simd(const vec3 (&scalars)[8])
+  : e{ float_simd_t<8>({ scalars[7].x(),
+                         scalars[6].x(),
+                         scalars[5].x(),
+                         scalars[4].x(),
+                         scalars[3].x(),
+                         scalars[2].x(),
+                         scalars[1].x(),
+                         scalars[0].x() }),
+       float_simd_t<8>({ scalars[7].y(),
+                         scalars[6].y(),
+                         scalars[5].y(),
+                         scalars[4].y(),
+                         scalars[3].y(),
+                         scalars[2].y(),
+                         scalars[1].y(),
+                         scalars[0].y() }),
+       float_simd_t<8>({ scalars[7].z(),
+                         scalars[6].z(),
+                         scalars[5].z(),
+                         scalars[4].z(),
+                         scalars[3].z(),
+                         scalars[2].z(),
+                         scalars[1].z(),
+                         scalars[0].z() }) }
+{}
+
+template<>
+inline vec3_simd<8>::vec3_simd(const vec3 scalars[])
+  : e{ float_simd_t<8>({ scalars[7].x(),
+                         scalars[6].x(),
+                         scalars[5].x(),
+                         scalars[4].x(),
+                         scalars[3].x(),
+                         scalars[2].x(),
+                         scalars[1].x(),
+                         scalars[0].x() }),
+       float_simd_t<8>({ scalars[7].y(),
+                         scalars[6].y(),
+                         scalars[5].y(),
+                         scalars[4].y(),
+                         scalars[3].y(),
+                         scalars[2].y(),
+                         scalars[1].y(),
+                         scalars[0].y() }),
+       float_simd_t<8>({ scalars[7].z(),
+                         scalars[6].z(),
+                         scalars[5].z(),
+                         scalars[4].z(),
+                         scalars[3].z(),
+                         scalars[2].z(),
+                         scalars[1].z(),
+                         scalars[0].z() }) }
+{}
+
 } // namespace Raytracer::Math

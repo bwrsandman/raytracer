@@ -115,4 +115,81 @@ bool_simd_t<4>::all() const
   return _mm_movemask_ps(_raw) == 0xF;
 }
 
+// Oct bool
+
+template<>
+inline bool_simd_t<8>::bool_simd_t(bool value)
+  : _raw(
+      _mm256_cmp_ps(_mm256_set1_ps(value), _mm256_set1_ps(0.0f), _CMP_NEQ_UQ))
+{}
+
+template<>
+inline bool_simd_t<8>::bool_simd_t(
+  typename _details_bool_simd_t::raw_type<8>::type value)
+  : _raw(_mm256_cmp_ps(value, _mm256_set1_ps(0.0f), _CMP_NEQ_UQ))
+{}
+
+template<>
+inline bool_simd_t<8>::bool_simd_t(const bool (&values)[8])
+  : _raw(_mm256_cmp_ps(_mm256_set_ps(values[7],
+                                     values[6],
+                                     values[5],
+                                     values[4],
+                                     values[3],
+                                     values[2],
+                                     values[1],
+                                     values[0]),
+                       _mm256_set1_ps(0.0f),
+                       _CMP_NEQ_UQ))
+{}
+
+template<>
+inline bool_simd_t<8>::bool_simd_t(const bool values[])
+  : _raw(_mm256_cmp_ps(_mm256_set_ps(values[7],
+                                     values[6],
+                                     values[5],
+                                     values[4],
+                                     values[3],
+                                     values[2],
+                                     values[1],
+                                     values[0]),
+                       _mm256_set1_ps(0.0f),
+                       _CMP_NEQ_UQ))
+{}
+
+template<>
+inline bool_simd_t<8>
+bool_simd_t<8>::operator&&(bool_simd_t rhs) const
+{
+  return bool_simd_t{ _mm256_and_ps(_raw, rhs._raw) };
+}
+
+template<>
+inline bool_simd_t<8>
+bool_simd_t<8>::operator||(bool_simd_t rhs) const
+{
+  return bool_simd_t{ _mm256_or_ps(_raw, rhs._raw) };
+}
+
+template<>
+inline bool_simd_t<8>
+bool_simd_t<8>::and_not(bool_simd_t rhs) const
+{
+  return bool_simd_t{ _mm256_andnot_ps(_raw, rhs._raw) };
+}
+
+template<>
+inline bool
+bool_simd_t<8>::any() const
+{
+  return _mm256_movemask_ps(_raw) != 0;
+}
+
+template<>
+inline bool
+bool_simd_t<8>::all() const
+{
+  return _mm256_movemask_ps(_raw) == 0xFF;
+}
+
 } // namespace Raytracer::Math

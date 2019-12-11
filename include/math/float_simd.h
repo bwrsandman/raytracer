@@ -166,6 +166,121 @@ float_simd_t<4>::multiply_sub(float_simd_t multiplier,
   return float_simd_t{ _mm_fmsub_ps(_raw, multiplier._raw, subtraction._raw) };
 }
 
+// Oct float
+
+template<>
+inline float_simd_t<8>::float_simd_t(float value)
+  : _raw(_mm256_set1_ps(value))
+{}
+
+template<>
+inline float_simd_t<8>::float_simd_t(__m256 value)
+  : _raw(value)
+{}
+
+template<>
+inline float_simd_t<8>::float_simd_t(const float (&values)[8])
+  : _raw(_mm256_set_ps(values[7],
+                       values[6],
+                       values[5],
+                       values[4],
+                       values[3],
+                       values[2],
+                       values[1],
+                       values[0]))
+{}
+
+template<>
+inline float_simd_t<8>::float_simd_t(const float values[])
+  : _raw(_mm256_set_ps(values[7],
+                       values[6],
+                       values[5],
+                       values[4],
+                       values[3],
+                       values[2],
+                       values[1],
+                       values[0]))
+{}
+
+template<>
+inline float_simd_t<8>
+float_simd_t<8>::operator+(float_simd_t rhs) const
+{
+  return float_simd_t{ _mm256_add_ps(_raw, rhs._raw) };
+}
+
+template<>
+inline float_simd_t<8>
+float_simd_t<8>::operator-(float_simd_t rhs) const
+{
+  return float_simd_t{ _mm256_sub_ps(_raw, rhs._raw) };
+}
+
+template<>
+inline float_simd_t<8> float_simd_t<8>::operator*(float_simd_t rhs) const
+{
+  return float_simd_t{ _mm256_mul_ps(_raw, rhs._raw) };
+}
+
+template<>
+inline bool_simd_t<8>
+float_simd_t<8>::operator>(float_simd_t rhs) const
+{
+  return bool_simd_t<8>{ _mm256_cmp_ps(_raw, rhs._raw, _CMP_GT_OQ) };
+}
+
+template<>
+inline bool_simd_t<8>
+float_simd_t<8>::operator<(float_simd_t rhs) const
+{
+  return bool_simd_t<8>{ _mm256_cmp_ps(_raw, rhs._raw, _CMP_LT_OQ) };
+}
+
+template<>
+inline bool_simd_t<8>
+float_simd_t<8>::operator>=(float_simd_t rhs) const
+{
+  return bool_simd_t<8>{ _mm256_cmp_ps(_raw, rhs._raw, _CMP_GE_OQ) };
+}
+
+template<>
+inline bool_simd_t<8>
+float_simd_t<8>::operator<=(float_simd_t rhs) const
+{
+  return bool_simd_t<8>{ _mm256_cmp_ps(_raw, rhs._raw, _CMP_LE_OQ) };
+}
+
+template<>
+inline bool_simd_t<8>
+float_simd_t<8>::operator==(float_simd_t rhs) const
+{
+  return bool_simd_t<8>{ _mm256_cmp_ps(_raw, rhs._raw, _CMP_EQ_OQ) };
+}
+
+template<>
+inline bool_simd_t<8>
+float_simd_t<8>::operator!=(float_simd_t rhs) const
+{
+  return bool_simd_t<8>{ _mm256_cmp_ps(_raw, rhs._raw, _CMP_NEQ_OQ) };
+}
+
+template<>
+inline float_simd_t<8>
+float_simd_t<8>::multiply_add(float_simd_t multiplier,
+                              float_simd_t addition) const
+{
+  return float_simd_t{ _mm256_fmadd_ps(_raw, multiplier._raw, addition._raw) };
+}
+
+template<>
+inline float_simd_t<8>
+float_simd_t<8>::multiply_sub(float_simd_t multiplier,
+                              float_simd_t subtraction) const
+{
+  return float_simd_t{ _mm256_fmsub_ps(
+    _raw, multiplier._raw, subtraction._raw) };
+}
+
 } // namespace Raytracer::Math
 
 namespace std {
@@ -181,5 +296,17 @@ inline float_simd_t<4>
 max(float_simd_t<4> lhs, float_simd_t<4> rhs)
 {
   return float_simd_t<4>{ _mm_max_ps(lhs._raw, rhs._raw) };
+}
+
+// Oct floats
+inline float_simd_t<8>
+min(float_simd_t<8> lhs, float_simd_t<8> rhs)
+{
+  return float_simd_t<8>{ _mm256_min_ps(lhs._raw, rhs._raw) };
+}
+inline float_simd_t<8>
+max(float_simd_t<8> lhs, float_simd_t<8> rhs)
+{
+  return float_simd_t<8>{ _mm256_max_ps(lhs._raw, rhs._raw) };
 }
 } // namespace std
