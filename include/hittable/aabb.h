@@ -2,12 +2,16 @@
 
 #include "object.h"
 
-class vec3;
+#include <cstdint>
+
+#include "math/vec3.h"
 
 namespace Raytracer::Hittable {
+using Raytracer::Math::vec3;
 
-class AABB : Object
+class AABB : public Object
 {
+public:
   AABB(const vec3& _min, const vec3& _max);
   ~AABB() override;
   bool hit(const Ray& r,
@@ -16,6 +20,7 @@ class AABB : Object
            float t_max,
            hit_record& rec) const override;
 
+private:
   vec3 min, max;
 };
 } // namespace Raytracer::Hittable
