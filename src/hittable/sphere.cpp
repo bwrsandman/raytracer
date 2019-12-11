@@ -6,16 +6,20 @@
 #include "hit_record.h"
 #include "ray.h"
 
-using Raytracer::Hittable::Sphere;
-using Raytracer::Math::vec3;
 using Raytracer::hit_record;
 using Raytracer::Ray;
+using Raytracer::Hittable::AABB;
+using Raytracer::Hittable::Sphere;
+using Raytracer::Math::vec3;
 
 Sphere::Sphere(vec3 cen, float r, uint16_t m)
   : center(cen)
   , radius(r)
   , mat_id(m)
-{}
+  , aabb()
+{
+  bounding_box(aabb);
+}
 
 Sphere::~Sphere() = default;
 
@@ -26,6 +30,11 @@ Sphere::hit(const Ray& r,
             float t_max,
             hit_record& rec) const
 {
+
+  if (!aabb.hit(r, early_out, t_min, t_max, rec)) {
+    return false;
+  }
+
   static constexpr float f32_1_2PI = 0.5f / M_PI;
   static constexpr float f32_1_PI = 1.0f / M_PI;
 
@@ -54,4 +63,13 @@ Sphere::hit(const Ray& r,
     return true;
   }
   return false;
+}
+
+bool
+Sphere::bounding_box(AABB& box)
+{
+  box = AABB(center - vec3(radius, radius, radius),
+              center + vec3(radius, radius, radius));
+
+  return true;
 }

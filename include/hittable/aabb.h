@@ -12,6 +12,7 @@ using Raytracer::Math::vec3;
 class AABB : public Object
 {
 public:
+  AABB();
   AABB(const vec3& _min, const vec3& _max);
   ~AABB() override;
   bool hit(const Ray& r,

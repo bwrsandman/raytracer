@@ -9,7 +9,11 @@ using Raytracer::hit_record;
 using Raytracer::Ray;
 
 
-AABB::AABB(const vec3& _min, const vec3& _max) {}
+AABB::AABB() {}
+AABB::AABB(const vec3& _min, const vec3& _max)
+  : min(_min)
+  , max(_max)
+{}
 AABB::~AABB() = default;
 
 bool
@@ -21,8 +25,8 @@ AABB::hit(const Ray& r,
 {
   for (int axis = 0; axis < 3; axis++) {
     float reciprocal = 1.f / r.direction.e[axis];
-    float t0 = (min.e[axis] - r.origin.e[axis]) / reciprocal;
-    float t1 = (max.e[axis] - r.origin.e[axis]) / reciprocal;
+    float t0 = (min.e[axis] - r.origin.e[axis]) * reciprocal;
+    float t1 = (max.e[axis] - r.origin.e[axis]) * reciprocal;
 
     // If the ray enters from back to front (t0 is bigger than t1)
     if (reciprocal < 0.f) {

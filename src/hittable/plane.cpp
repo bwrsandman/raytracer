@@ -4,6 +4,7 @@
 #include "ray.h"
 
 using Raytracer::Hittable::Plane;
+using Raytracer::Hittable::AABB;
 using Raytracer::Math::vec3;
 using Raytracer::hit_record;
 using Raytracer::Ray;
@@ -13,7 +14,10 @@ Plane::Plane(vec3 _min, vec3 _max, vec3 _n, uint16_t _m)
   , max(_max)
   , n(_n)
   , mat_id(_m)
-{}
+  , aabb()
+{
+  bounding_box(aabb);
+}
 
 bool
 Plane::hit(const Ray& r,
@@ -22,6 +26,10 @@ Plane::hit(const Ray& r,
            float t_max,
            hit_record& rec) const
 {
+  /*if (!aabb.hit(r, early_out, t_min, t_max, rec)) {
+    return false;
+  }*/
+
   int index_one = 0, index_two = 0, axis = 0;
   float t;
 
@@ -75,5 +83,12 @@ Plane::hit(const Ray& r,
   rec.mat_id = mat_id;
   rec.p = r.point_at_parameter(t);
   rec.normal = n;
+  return true;
+}
+
+bool
+Plane::bounding_box(AABB& box)
+{
+  box = AABB(min, max);
   return true;
 }

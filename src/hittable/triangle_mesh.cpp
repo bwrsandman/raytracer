@@ -3,11 +3,12 @@
 #include "hit_record.h"
 #include "ray.h"
 
-using Raytracer::Hittable::TriangleMesh;
-using Raytracer::Hittable::MeshVertexData;
-using Raytracer::Math::vec3;
 using Raytracer::hit_record;
 using Raytracer::Ray;
+using Raytracer::Hittable::AABB;
+using Raytracer::Hittable::MeshVertexData;
+using Raytracer::Hittable::TriangleMesh;
+using Raytracer::Math::vec3;
 
 TriangleMesh::TriangleMesh(std::vector<vec3>&& positions,
                            std::vector<MeshVertexData>&& vertex_data,
@@ -17,7 +18,10 @@ TriangleMesh::TriangleMesh(std::vector<vec3>&& positions,
   , vertex_data(std::move(vertex_data))
   , indices(std::move(indices))
   , mat_id(m)
-{}
+  , aabb()
+{
+  bounding_box(aabb);
+}
 
 TriangleMesh::~TriangleMesh() = default;
 
@@ -29,6 +33,10 @@ TriangleMesh::hit(const Ray& r,
                   float t_max,
                   hit_record& rec) const
 {
+  if (!aabb.hit(r, early_out, t_min, t_max, rec)) {
+    return false;
+  }
+
   bool hit_anything = false;
   double closest_so_far = t_max;
   for (uint32_t i = 0; i < indices.size() / 3; ++i) {
@@ -95,4 +103,24 @@ TriangleMesh::hit(const Ray& r,
     }
   }
   return hit_anything;
+}
+
+bool
+TriangleMesh::bounding_box(AABB& box)
+{
+  vec3 min = positions[0], max = positions[0];
+  float min_x, min_y, min_z;
+
+  for (int i = 1; i < positions.size(); i++) {
+    for (int j = 0; j < 3; j++) {
+      if (min.e[j] > positions[i].e[j])
+        min.e[j] = positions[i].e[j];
+
+	  if (max.e[j] < positions[i].e[j])
+        max.e[j] = positions[i].e[j];
+    }
+  }
+
+  box = AABB(min, max);
+  return true;
 }

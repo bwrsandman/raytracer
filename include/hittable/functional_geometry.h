@@ -6,9 +6,11 @@
 #include <functional>
 #include <memory>
 
+#include "aabb.h"
 #include "math/vec3.h"
 
 namespace Raytracer::Hittable {
+using Raytracer::Hittable::AABB;
 using Raytracer::Math::vec3;
 
 struct FunctionalGeometry : public Object
@@ -31,9 +33,12 @@ struct FunctionalGeometry : public Object
            float t_min,
            float t_max,
            hit_record& rec) const override;
+  bool bounding_box(AABB& box);
+
   const signed_distance_function_t sdf;
   const uint8_t max_steps;
   vec3 center;
   uint16_t mat_id;
+  AABB aabb;
 };
 } // namespace Raytracer::Hittable

@@ -8,6 +8,7 @@
 #include "sdf.h"
 
 using Raytracer::Hittable::FunctionalGeometry;
+using Raytracer::Hittable::AABB;
 using Raytracer::Math::vec3;
 using Raytracer::hit_record;
 using Raytracer::Ray;
@@ -20,7 +21,10 @@ FunctionalGeometry::FunctionalGeometry(const vec3& center,
   , max_steps(max_steps)
   , center(center)
   , mat_id(m)
-{}
+  , aabb()
+{
+  bounding_box(aabb);
+}
 
 // From
 // http://blog.hvidtfeldts.net/index.php/2011/09/distance-estimated-3d-fractals-v-the-mandelbulb-different-de-approximations/
@@ -70,6 +74,10 @@ FunctionalGeometry::hit(const Ray& r,
                         float t_max,
                         hit_record& rec) const
 {
+  if (!aabb.hit(r, early_out, t_min, t_max, rec)) {
+    return false;
+  }
+
   static constexpr float f32_1_2PI = 0.5f / M_PI;
   static constexpr float f32_1_PI = 1.0f / M_PI;
   static constexpr float grad_step = 0.05f;
@@ -122,5 +130,14 @@ FunctionalGeometry::hit(const Ray& r,
   rec.uv.e[0] = 0.5f + std::atan2(-rec.normal.z(), rec.normal.x()) * f32_1_2PI;
   rec.uv.e[1] = 0.5f - std::asin(-rec.normal.y()) * f32_1_PI;
   rec.mat_id = mat_id;
+  return true;
+}
+
+bool
+FunctionalGeometry::bounding_box(AABB& box)
+{
+  vec3 min(0.f, 0.f, 0.f), max(1.f, 1.f, 1.f);
+
+  box = AABB(min, max);
   return true;
 }
