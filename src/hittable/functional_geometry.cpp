@@ -7,11 +7,11 @@
 #include "ray.h"
 #include "sdf.h"
 
-using Raytracer::Hittable::FunctionalGeometry;
-using Raytracer::Hittable::AABB;
-using Raytracer::Math::vec3;
+using Raytracer::Aabb;
 using Raytracer::hit_record;
 using Raytracer::Ray;
+using Raytracer::Hittable::FunctionalGeometry;
+using Raytracer::Math::vec3;
 
 FunctionalGeometry::FunctionalGeometry(const vec3& center,
                                        uint8_t max_steps,
@@ -74,7 +74,7 @@ FunctionalGeometry::hit(const Ray& r,
                         float t_max,
                         hit_record& rec) const
 {
-  if (!aabb.hit(r, early_out, t_min, t_max, rec)) {
+  if (!Aabb::hit(aabb, r, t_min, t_max)) {
     return false;
   }
 
@@ -134,10 +134,10 @@ FunctionalGeometry::hit(const Ray& r,
 }
 
 bool
-FunctionalGeometry::bounding_box(AABB& box)
+FunctionalGeometry::bounding_box(Aabb& box)
 {
   vec3 min(0.f, 0.f, 0.f), max(1.f, 1.f, 1.f);
 
-  box = AABB(min, max);
+  box = Aabb{ min, max };
   return true;
 }

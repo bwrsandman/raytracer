@@ -9,7 +9,7 @@
 #include "math/vec3.h"
 
 namespace Raytracer::Hittable {
-using Raytracer::Hittable::AABB;
+using Raytracer::Aabb;
 using Raytracer::Math::vec2;
 using Raytracer::Math::vec3;
 
@@ -32,12 +32,12 @@ struct TriangleMesh : Object
            float t_min,
            float t_max,
            hit_record& rec) const override;
-  bool bounding_box(AABB& box);
+  bool bounding_box(Aabb& box);
 
   std::vector<vec3> positions;
   std::vector<MeshVertexData> vertex_data;
   std::vector<uint16_t> indices;
   uint16_t mat_id;
-  AABB aabb;
+  Aabb aabb;
 };
 } // namespace Raytracer::Hittable

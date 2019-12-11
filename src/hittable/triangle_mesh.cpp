@@ -3,9 +3,9 @@
 #include "hit_record.h"
 #include "ray.h"
 
+using Raytracer::Aabb;
 using Raytracer::hit_record;
 using Raytracer::Ray;
-using Raytracer::Hittable::AABB;
 using Raytracer::Hittable::MeshVertexData;
 using Raytracer::Hittable::TriangleMesh;
 using Raytracer::Math::vec3;
@@ -33,7 +33,7 @@ TriangleMesh::hit(const Ray& r,
                   float t_max,
                   hit_record& rec) const
 {
-  if (!aabb.hit(r, early_out, t_min, t_max, rec)) {
+  if (!Aabb::hit(aabb, r, t_min, t_max)) {
     return false;
   }
 
@@ -106,7 +106,7 @@ TriangleMesh::hit(const Ray& r,
 }
 
 bool
-TriangleMesh::bounding_box(AABB& box)
+TriangleMesh::bounding_box(Aabb& box)
 {
   vec3 min = positions[0], max = positions[0];
   float min_x, min_y, min_z;
@@ -121,6 +121,6 @@ TriangleMesh::bounding_box(AABB& box)
     }
   }
 
-  box = AABB(min, max);
+  box = Aabb{ min, max };
   return true;
 }
