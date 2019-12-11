@@ -3,8 +3,10 @@
 #include "hit_record.h"
 #include "ray.h"
 
-using namespace Raytracer::Hittable;
-using namespace Raytracer::Math;
+using Raytracer::Hittable::Plane;
+using Raytracer::Math::vec3;
+using Raytracer::hit_record;
+using Raytracer::Ray;
 
 Plane::Plane(vec3 _min, vec3 _max, vec3 _n, uint16_t _m)
   : min(_min)

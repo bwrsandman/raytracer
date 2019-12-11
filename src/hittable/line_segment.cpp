@@ -4,7 +4,10 @@
 #include "hit_record.h"
 #include "ray.h"
 
-using namespace Raytracer::Hittable;
+using Raytracer::Hittable::LineSegment;
+using Raytracer::Math::vec3;
+using Raytracer::hit_record;
+using Raytracer::Ray;
 
 LineSegment::LineSegment(const vec3 pos[2], uint16_t m)
   : position{ pos[0], pos[1] }

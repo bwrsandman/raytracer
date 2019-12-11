@@ -6,7 +6,10 @@
 #include "hit_record.h"
 #include "ray.h"
 
-using namespace Raytracer::Hittable;
+using Raytracer::Hittable::Sphere;
+using Raytracer::Math::vec3;
+using Raytracer::hit_record;
+using Raytracer::Ray;
 
 Sphere::Sphere(vec3 cen, float r, uint16_t m)
   : center(cen)

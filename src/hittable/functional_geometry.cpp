@@ -8,6 +8,9 @@
 #include "sdf.h"
 
 using Raytracer::Hittable::FunctionalGeometry;
+using Raytracer::Math::vec3;
+using Raytracer::hit_record;
+using Raytracer::Ray;
 
 FunctionalGeometry::FunctionalGeometry(const vec3& center,
                                        uint8_t max_steps,

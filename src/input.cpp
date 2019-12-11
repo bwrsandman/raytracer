@@ -11,6 +11,8 @@
 #endif
 
 using Raytracer::Input;
+using Raytracer::Scene;
+using Raytracer::Ui;
 
 Input::Input()
   : quit(false)

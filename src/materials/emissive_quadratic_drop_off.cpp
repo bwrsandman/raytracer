@@ -4,6 +4,9 @@
 #include "ray.h"
 
 using Raytracer::Materials::EmissiveQuadraticDropOff;
+using Raytracer::Math::vec3;
+using Raytracer::RayPayload;
+using Raytracer::Ray;
 
 EmissiveQuadraticDropOff::EmissiveQuadraticDropOff(const vec3& a, float factor)
   : albedo(a)

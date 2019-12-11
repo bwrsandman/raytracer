@@ -3,6 +3,9 @@
 #include "ray.h"
 
 using Raytracer::Materials::EmissiveLinearDropOff;
+using Raytracer::Math::vec3;
+using Raytracer::RayPayload;
+using Raytracer::Ray;
 
 EmissiveLinearDropOff::EmissiveLinearDropOff(const vec3& a, float factor)
   : albedo(a)

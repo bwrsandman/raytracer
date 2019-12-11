@@ -7,6 +7,9 @@
 
 using Raytracer::Materials::Metal;
 using namespace Raytracer::Math;
+using Raytracer::RayPayload;
+using Raytracer::Ray;
+using Raytracer::vec3;
 
 Metal::Metal(const vec3& a,
              uint16_t albedo_texture_id,

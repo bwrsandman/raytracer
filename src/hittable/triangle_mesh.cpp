@@ -3,7 +3,11 @@
 #include "hit_record.h"
 #include "ray.h"
 
-using namespace Raytracer::Hittable;
+using Raytracer::Hittable::TriangleMesh;
+using Raytracer::Hittable::MeshVertexData;
+using Raytracer::Math::vec3;
+using Raytracer::hit_record;
+using Raytracer::Ray;
 
 TriangleMesh::TriangleMesh(std::vector<vec3>&& positions,
                            std::vector<MeshVertexData>&& vertex_data,

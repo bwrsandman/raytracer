@@ -6,6 +6,9 @@
 #include "texture.h"
 
 using Raytracer::Materials::Lambert;
+using Raytracer::Math::vec3;
+using Raytracer::RayPayload;
+using Raytracer::Ray;
 
 Lambert::Lambert(const vec3& a,
                  uint16_t albedo_texture_id,

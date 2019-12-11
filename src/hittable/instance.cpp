@@ -6,7 +6,11 @@
 #include "hit_record.h"
 #include "ray.h"
 
-using namespace Raytracer::Hittable;
+using Raytracer::Hittable::Translate;
+using Raytracer::Hittable::Rotate_y;
+using Raytracer::Math::vec3;
+using Raytracer::hit_record;
+using Raytracer::Ray;
 
 Translate::Translate(Object* _p, vec3 _offset)
   : p(_p)

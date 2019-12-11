@@ -1,7 +1,9 @@
 #include "hittable/point.h"
 
-using namespace Raytracer::Hittable;
-using namespace Raytracer::Math;
+using Raytracer::Hittable::Point;
+using Raytracer::Math::vec3;
+using Raytracer::hit_record;
+using Raytracer::Ray;
 
 Point::Point(vec3 pos, uint16_t m)
   : position(pos)
