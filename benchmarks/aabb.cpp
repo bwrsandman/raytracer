@@ -1,12 +1,18 @@
 #include <benchmark/benchmark.h>
 
+#include <array>
+
 #include <aabb.h>
+#include <math/vec3_simd.h>
 #include <ray.h>
 
 using Raytracer::Aabb;
+using Raytracer::AabbSimd;
 using Raytracer::Ray;
+using Raytracer::Math::float_simd_t;
 using Raytracer::Math::random_in_unit_sphere;
 using Raytracer::Math::vec3;
+using Raytracer::Math::vec3_simd;
 
 // skips y and z
 // reciprocal is positive
@@ -135,3 +141,81 @@ ray_aabb_hit_random(benchmark::State& state)
   state.counters["intersections_per_second"] = intersection_count;
 }
 BENCHMARK(ray_aabb_hit_random);
+
+static void
+ray_aabb_simd4_hit_random(benchmark::State& state)
+{
+  constexpr uint8_t simd_multiplier = 4;
+  struct ray_aabb_combo
+  {
+    AabbSimd<simd_multiplier> box;
+    Ray ray;
+  };
+  std::array<ray_aabb_combo, 1000> combos;
+  for (uint32_t i = 0; i < combos.size(); ++i) {
+    combos[i].ray = Ray(random_in_unit_sphere(), random_in_unit_sphere());
+    combos[i].box.min = vec3_simd<simd_multiplier>({ random_in_unit_sphere(),
+                                                     random_in_unit_sphere(),
+                                                     random_in_unit_sphere(),
+                                                     random_in_unit_sphere() });
+    combos[i].box.max = vec3_simd<simd_multiplier>({ random_in_unit_sphere(),
+                                                     random_in_unit_sphere(),
+                                                     random_in_unit_sphere(),
+                                                     random_in_unit_sphere() });
+  }
+  uint32_t intersection_count = 0;
+  for (auto _ : state) {
+    AabbSimd<simd_multiplier>::hit(
+      combos[intersection_count % combos.size()].box,
+      combos[intersection_count % combos.size()].ray,
+      float_simd_t<simd_multiplier>(0.0f),
+      float_simd_t<simd_multiplier>(1e10f));
+    ++intersection_count;
+  }
+  state.counters["intersections_per_second"] =
+    intersection_count * simd_multiplier;
+}
+BENCHMARK(ray_aabb_simd4_hit_random);
+
+static void
+ray_aabb_simd8_hit_random(benchmark::State& state)
+{
+  constexpr uint8_t simd_multiplier = 8;
+  struct ray_aabb_combo
+  {
+    AabbSimd<simd_multiplier> box;
+    Ray ray;
+  };
+  std::array<ray_aabb_combo, 1000> combos;
+  for (uint32_t i = 0; i < combos.size(); ++i) {
+    combos[i].ray = Ray(random_in_unit_sphere(), random_in_unit_sphere());
+    combos[i].box.min = vec3_simd<simd_multiplier>({ random_in_unit_sphere(),
+                                                     random_in_unit_sphere(),
+                                                     random_in_unit_sphere(),
+                                                     random_in_unit_sphere(),
+                                                     random_in_unit_sphere(),
+                                                     random_in_unit_sphere(),
+                                                     random_in_unit_sphere(),
+                                                     random_in_unit_sphere() });
+    combos[i].box.max = vec3_simd<simd_multiplier>({ random_in_unit_sphere(),
+                                                     random_in_unit_sphere(),
+                                                     random_in_unit_sphere(),
+                                                     random_in_unit_sphere(),
+                                                     random_in_unit_sphere(),
+                                                     random_in_unit_sphere(),
+                                                     random_in_unit_sphere(),
+                                                     random_in_unit_sphere() });
+  }
+  uint32_t intersection_count = 0;
+  for (auto _ : state) {
+    AabbSimd<simd_multiplier>::hit(
+      combos[intersection_count % combos.size()].box,
+      combos[intersection_count % combos.size()].ray,
+      float_simd_t<simd_multiplier>(0.0f),
+      float_simd_t<simd_multiplier>(1e10f));
+    ++intersection_count;
+  }
+  state.counters["intersections_per_second"] =
+    intersection_count * simd_multiplier;
+}
+BENCHMARK(ray_aabb_simd8_hit_random);
