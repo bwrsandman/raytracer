@@ -2,10 +2,11 @@
 
 #include "ray.h"
 
+using Raytracer::Ray;
+using Raytracer::RayPayload;
+using Raytracer::Scene;
 using Raytracer::Materials::Dielectric;
 using Raytracer::Math::vec3;
-using Raytracer::RayPayload;
-using Raytracer::Ray;
 
 Dielectric::Dielectric(const vec3& a, float ri, float ni)
   : albedo(a)

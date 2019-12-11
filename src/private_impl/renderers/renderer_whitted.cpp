@@ -31,6 +31,7 @@ using Raytracer::Graphics::IndexedMesh;
 using Raytracer::Graphics::RendererWhitted;
 using Raytracer::Hittable::Point;
 using namespace Raytracer::Math;
+using namespace Raytracer;
 
 namespace {
 void GLAPIENTRY

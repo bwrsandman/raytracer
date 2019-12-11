@@ -9,6 +9,8 @@ class vec3;
 } // namespace Raytracer
 
 namespace Raytracer::Materials {
+using Raytracer::RayPayload;
+using Raytracer::Scene;
 using Raytracer::Math::vec3;
 struct Material
 {

@@ -29,11 +29,9 @@
 #include "scene_node.h"
 #include "texture.h"
 
-using Raytracer::Camera;
-using Raytracer::Scene;
-using Raytracer::Texture;
 using namespace Raytracer::Hittable;
 using namespace Raytracer::Materials;
+using namespace Raytracer;
 
 namespace __details {
 template<typename dstT,
