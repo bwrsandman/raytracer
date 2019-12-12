@@ -106,6 +106,11 @@ target_include_directories(RaytracerLib
     ${CMAKE_CURRENT_BINARY_DIR}/src)
 target_link_libraries(RaytracerLib PRIVATE ${LIBRARIES})
 target_compile_definitions(RaytracerLib PRIVATE SDL_MAIN_HANDLED)
+if (MSVC)
+    target_compile_options(RaytracerLib PUBLIC /arch:AVX2)
+else()
+    target_compile_options(RaytracerLib PUBLIC -march=haswell)
+endif()
 set_property(TARGET RaytracerLib PROPERTY CXX_STANDARD 17)
 
 target_link_libraries(Raytracer PRIVATE RaytracerLib)

@@ -3,11 +3,11 @@
 #include "hit_record.h"
 #include "ray.h"
 
-using Raytracer::Hittable::Plane;
-using Raytracer::Hittable::AABB;
-using Raytracer::Math::vec3;
+using Raytracer::Aabb;
 using Raytracer::hit_record;
 using Raytracer::Ray;
+using Raytracer::Hittable::Plane;
+using Raytracer::Math::vec3;
 
 Plane::Plane(vec3 _min, vec3 _max, vec3 _n, uint16_t _m)
   : min(_min)
@@ -87,8 +87,8 @@ Plane::hit(const Ray& r,
 }
 
 bool
-Plane::bounding_box(AABB& box)
+Plane::bounding_box(Aabb& box)
 {
-  box = AABB(min, max);
+  box = Aabb{ min, max };
   return true;
 }

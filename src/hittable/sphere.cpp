@@ -6,9 +6,9 @@
 #include "hit_record.h"
 #include "ray.h"
 
+using Raytracer::Aabb;
 using Raytracer::hit_record;
 using Raytracer::Ray;
-using Raytracer::Hittable::AABB;
 using Raytracer::Hittable::Sphere;
 using Raytracer::Math::vec3;
 
@@ -31,7 +31,7 @@ Sphere::hit(const Ray& r,
             hit_record& rec) const
 {
 
-  if (!aabb.hit(r, early_out, t_min, t_max, rec)) {
+  if (!Aabb::hit(aabb, r, t_min, t_max)) {
     return false;
   }
 
@@ -66,10 +66,10 @@ Sphere::hit(const Ray& r,
 }
 
 bool
-Sphere::bounding_box(AABB& box)
+Sphere::bounding_box(Aabb& box)
 {
-  box = AABB(center - vec3(radius, radius, radius),
-              center + vec3(radius, radius, radius));
+  box = Aabb{ center - vec3(radius, radius, radius),
+              center + vec3(radius, radius, radius) };
 
   return true;
 }
