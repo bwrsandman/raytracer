@@ -142,7 +142,10 @@ Scene::load_from_gltf(const std::string& file_name)
       << std::endl;
     textures.emplace_back(Texture::load_from_file("whitted_floor.png")); // 0
     materials.emplace_back(
-      std::make_unique<Lambert>(vec3(1.0, 1.0, 1.0), 0)); // 0
+      std::make_unique<Lambert>(vec3(1.0, 0.0, 0.0), 0)); // 0
+    // materials.emplace_back(std::make_unique<Dielectric>(vec3(0.0, 2.0, 2.0), 1.5f,
+    // 1.0f)); // 0
+
     use_default_material = true;
   } else {
     for (auto& t : gltf.textures) {
@@ -478,7 +481,7 @@ Scene::load_whitted_scene()
     std::make_unique<Lambert>(vec3(1.0, 1.0, 1.0), 0));                 // 0
   materials.emplace_back(std::make_unique<Metal>(vec3(0.8, 0.8, 0.8))); // 1
   materials.emplace_back(
-    std::make_unique<Dielectric>(vec3(0.f, 0.f, 0.f) ,1.5f, 1.0f)); // 2
+    std::make_unique<Dielectric>(vec3(0.f, 0.f, 0.f), 1.5f, 1.0f)); // 2
   materials.emplace_back(std::make_unique<EmissiveQuadraticDropOff>(
     vec3(2000.0, 2000.0, 2000.0), 1.0f)); // 3
 
@@ -529,7 +532,7 @@ Scene::load_cornell_box()
   textures.emplace_back(Texture::load_from_file("earth_normal_map.tga")); // 1
 
   materials.emplace_back(
-    std::make_unique<Lambert>(vec3(1.0, 1.0, 1.0), 0, 1));                 // 0
+    std::make_unique<Lambert>(vec3(1.0, 1.0, 1.0), 0, 1));                // 0
   materials.emplace_back(std::make_unique<Lambert>(vec3(0.6, 0.6, 0.6))); // 1
   materials.emplace_back(std::make_unique<Metal>(
     vec3(0.8, 0.6, 0.2), std::numeric_limits<uint16_t>::max(), 1));     // 2
@@ -568,54 +571,55 @@ Scene::load_cornell_box()
     vec3(-2.6, -1.5f, -4.f), vec3(2.6, -1.5f, 0.0), vec3(0.f, 1.f, 0.f), 1));
 
   // small box rotated
-  vec3 translation(1.5f, -0.5f, -1.1f);
-  list.emplace_back(
-    std::make_unique<Translate>(new Rotate_y(new Plane(vec3(0.f, -0.5f, -1.25f),
-                                                       vec3(0.f, 0.5f, -.75f),
-                                                       vec3(-1.f, 0.f, 0.f),
-                                                       3),
-                                             20),
-                                translation));
+  vec3 translation(1.5f, 0.5f, -1.1f);
+  vec4 rotation(0.f, 0.f, 1.f, 5.f);
+  list.emplace_back(std::make_unique<Translate>(
+    std::make_unique<Rotate>(std::make_unique<Plane>(vec3(0.f, -0.5f, -1.25f),
+                                                     vec3(0.f, 0.5f, -.75f),
+                                                     vec3(-1.f, 0.f, 0.f),
+                                                     3),
+                             rotation),
+    translation));
 
-  list.emplace_back(
-    std::make_unique<Translate>(new Rotate_y(new Plane(vec3(1.f, -0.5f, -1.25f),
-                                                       vec3(1.f, 0.5f, -.75f),
-                                                       vec3(1.f, 0.f, 0.f),
-                                                       3),
-                                             20),
-                                translation));
+  list.emplace_back(std::make_unique<Translate>(
+    std::make_unique<Rotate>(std::make_unique<Plane>(vec3(1.f, -0.5f, -1.25f),
+                                                     vec3(1.f, 0.5f, -.75f),
+                                                     vec3(1.f, 0.f, 0.f),
+                                                     3),
+                             rotation),
+    translation));
 
-  list.emplace_back(
-    std::make_unique<Translate>(new Rotate_y(new Plane(vec3(0.f, -0.5f, -1.25f),
-                                                       vec3(1.f, -0.5f, -.75f),
-                                                       vec3(0.f, -1.f, 0.f),
-                                                       3),
-                                             20),
-                                translation));
+  list.emplace_back(std::make_unique<Translate>(
+    std::make_unique<Rotate>(std::make_unique<Plane>(vec3(0.f, -0.5f, -1.25f),
+                                                     vec3(1.f, -0.5f, -.75f),
+                                                     vec3(0.f, -1.f, 0.f),
+                                                     3),
+                             rotation),
+    translation));
 
-  list.emplace_back(
-    std::make_unique<Translate>(new Rotate_y(new Plane(vec3(0.f, 0.5f, -1.25f),
-                                                       vec3(1.f, 0.5f, -.75f),
-                                                       vec3(0.f, 1.f, 0.f),
-                                                       3),
-                                             20),
-                                translation));
+  list.emplace_back(std::make_unique<Translate>(
+    std::make_unique<Rotate>(std::make_unique<Plane>(vec3(0.f, 0.5f, -1.25f),
+                                                     vec3(1.f, 0.5f, -.75f),
+                                                     vec3(0.f, 1.f, 0.f),
+                                                     3),
+                             rotation),
+    translation));
 
-  list.emplace_back(
-    std::make_unique<Translate>(new Rotate_y(new Plane(vec3(0.f, -0.5f, -1.25f),
-                                                       vec3(1.f, 0.5f, -1.25f),
-                                                       vec3(0.f, 0.f, -1.f),
-                                                       3),
-                                             20),
-                                translation));
+  list.emplace_back(std::make_unique<Translate>(
+    std::make_unique<Rotate>(std::make_unique<Plane>(vec3(0.f, -0.5f, -1.25f),
+                                                     vec3(1.f, 0.5f, -1.25f),
+                                                     vec3(0.f, 0.f, -1.f),
+                                                     3),
+                             rotation),
+    translation));
 
-  list.emplace_back(
-    std::make_unique<Translate>(new Rotate_y(new Plane(vec3(0.f, -0.5f, -.75f),
-                                                       vec3(1.f, 0.5f, -.75f),
-                                                       vec3(0.f, 0.f, 1.f),
-                                                       3),
-                                             20),
-                                translation));
+  list.emplace_back(std::make_unique<Translate>(
+    std::make_unique<Rotate>(std::make_unique<Plane>(vec3(0.f, -0.5f, -.75f),
+                                                     vec3(1.f, 0.5f, -.75f),
+                                                     vec3(0.f, 0.f, 1.f),
+                                                     3),
+                             rotation),
+    translation));
 
   std::vector<std::unique_ptr<Object>> light_list;
   light_list.emplace_back(std::make_unique<Point>(vec3(1, 1.5, -2), 4));
@@ -662,9 +666,17 @@ Scene::load_mandrelbulb()
     vec3(1000.0f, 1000.0f, 1000.0f), 1.0f));                            // 1
   materials.emplace_back(std::make_unique<Metal>(vec3(0.8, 0.6, 0.2))); // 2
 
+  float box_scale = 2.f;
+
   std::vector<std::unique_ptr<Object>> list;
-  list.emplace_back(
-    FunctionalGeometry::mandrelbulb(vec3(0.0f, 0.0f, -1), 10, 5.0f, 8.0f, 0));
+  list.emplace_back(FunctionalGeometry::mandrelbulb(
+    vec3(0.0f, 0.0f, -1),
+    10,
+    5.0f,
+    8.0f,
+    0,
+    Aabb{ vec3(-box_scale, -box_scale, -box_scale),
+          vec3(box_scale, box_scale, box_scale) }));
 
   auto complex_shape = [](const vec3& position) -> float {
     auto sphere = sdf::sphere(position, 0.6f);
@@ -682,7 +694,11 @@ Scene::load_mandrelbulb()
     return sdf::difference(sphere_box, cylinder_cross);
   };
   list.emplace_back(std::make_unique<FunctionalGeometry>(
-    vec3(-2.f, 1.5, -2.5), 100, complex_shape, 2));
+    vec3(-2.f, 1.5, -2.5),
+    100,
+    complex_shape,
+    2,
+    Aabb{ vec3(-1.f, -1.f, -1.f), vec3(1.f, 1.f, 1.f) }));
 
   // Construct scene graph
   std::vector<SceneNode> nodes;

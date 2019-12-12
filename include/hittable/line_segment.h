@@ -17,6 +17,7 @@ struct LineSegment : public Object
            float t_min,
            float t_max,
            hit_record& rec) const override;
+  void build_bvh() {};
 
   vec3 position[2];
   uint16_t mat_id;

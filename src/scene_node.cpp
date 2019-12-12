@@ -16,11 +16,15 @@ mat4
 Transform::matrix() const
 {
   mat4 t =
-    mat4{ 1.0f, 0.0f, 0.0f, translation.x(), 0.0f, 1.0f, 0.0f, translation.y(),
-          0.0f, 0.0f, 1.0f, translation.z(), 0.0f, 0.0f, 0.0f, 1.0f };
+    mat4{ 1.0f, 0.0f, 0.0f, translation.x(),
+	  0.0f, 1.0f, 0.0f, translation.y(),
+      0.0f, 0.0f, 1.0f, translation.z(),
+	  0.0f, 0.0f, 0.0f, 1.0f };
   mat4 r = static_cast<mat4>(rotation);
-  mat4 s = mat4{ scale, 0.0f, 0.0f,  0.0f, 0.0f, scale, 0.0f, 0.0f,
-                 0.0f,  0.0f, scale, 0.0f, 0.0f, 0.0f,  0.0f, 1.0f };
+  mat4 s = mat4{ scale, 0.0f, 0.0f,  0.0f,
+	  0.0f, scale, 0.0f, 0.0f,
+                 0.0f,  0.0f, scale, 0.0f,
+	  0.0f, 0.0f,  0.0f, 1.0f };
   return dot(t, dot(r, s));
 }
 

@@ -42,7 +42,7 @@ struct TriangleMesh : Object
                                float t_max,
                                hit_record& rec) const;
   bool bounding_box(Aabb& box);
-  void build_bvh();
+  void build_bvh() override;
 
   std::vector<vec3> positions;
   std::vector<MeshVertexData> vertex_data;

@@ -20,13 +20,15 @@ struct FunctionalGeometry : public Object
   FunctionalGeometry(const vec3& center,
                      uint8_t max_steps,
                      signed_distance_function_t sdf,
-                     uint16_t m);
+                     uint16_t m,
+                     Aabb _aabb);
 
   static std::unique_ptr<FunctionalGeometry> mandrelbulb(const vec3& center,
                                                          uint8_t max_iterations,
                                                          float max_radius,
                                                          float power,
-                                                         uint16_t m);
+                                                         uint16_t m,
+                                                         Aabb _aabb);
 
   bool hit(const Ray& r,
            bool early_out,
@@ -34,6 +36,7 @@ struct FunctionalGeometry : public Object
            float t_max,
            hit_record& rec) const override;
   bool bounding_box(Aabb& box);
+  void build_bvh() {};
 
   const signed_distance_function_t sdf;
   const uint8_t max_steps;

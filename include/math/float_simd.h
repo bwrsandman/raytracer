@@ -323,7 +323,7 @@ using Raytracer::Math::float_simd_t;
 inline float_simd_t<4>
 abs(float_simd_t<4> value)
 {
-  return float_simd_t<4>{ _mm_and_ps(value._raw, _mm_set1_epi32(0x7FFFFFFFU)) };
+  return float_simd_t<4>{ _mm_and_ps(value._raw, _mm_set1_ps(0x7FFFFFFFU)) };
 }
 inline float_simd_t<4>
 min(float_simd_t<4> lhs, float_simd_t<4> rhs)

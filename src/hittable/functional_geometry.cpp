@@ -16,14 +16,15 @@ using Raytracer::Math::vec3;
 FunctionalGeometry::FunctionalGeometry(const vec3& center,
                                        uint8_t max_steps,
                                        signed_distance_function_t sdf,
-                                       uint16_t m)
+                                       uint16_t m,
+                                       Aabb _aabb)
   : sdf(std::move(sdf))
   , max_steps(max_steps)
   , center(center)
   , mat_id(m)
-  , aabb()
+  , aabb(_aabb)
 {
-  bounding_box(aabb);
+  // bounding_box(aabb);
 }
 
 // From
@@ -33,7 +34,8 @@ FunctionalGeometry::mandrelbulb(const vec3& center,
                                 uint8_t max_iterations,
                                 float max_radius,
                                 float power,
-                                uint16_t m)
+                                uint16_t m,
+                                Aabb _aabb)
 {
   auto signed_distance_function =
     [center, max_iterations, max_radius, power](const vec3& position) {
@@ -64,7 +66,7 @@ FunctionalGeometry::mandrelbulb(const vec3& center,
       return 0.5f * std::log(radius) * radius / dr;
     };
   return std::make_unique<FunctionalGeometry>(
-    center, 100, signed_distance_function, m);
+    center, 100, signed_distance_function, m, _aabb);
 }
 
 bool
