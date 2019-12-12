@@ -62,6 +62,8 @@ struct float_simd_t
   /// multiply sub: this * multiplier - subtraction
   inline float_simd_t multiply_sub(float_simd_t multiplier,
                                    float_simd_t subtraction) const;
+  /// 1 / this
+  inline float_simd_t reciprocal() const;
 
   raw_type_t _raw;
 };
@@ -164,6 +166,13 @@ float_simd_t<4>::multiply_sub(float_simd_t multiplier,
                               float_simd_t subtraction) const
 {
   return float_simd_t{ _mm_fmsub_ps(_raw, multiplier._raw, subtraction._raw) };
+}
+
+template<>
+inline float_simd_t<4>
+float_simd_t<4>::reciprocal() const
+{
+  return float_simd_t{ _mm_rcp_ps(_raw) };
 }
 
 // Oct float
@@ -281,12 +290,25 @@ float_simd_t<8>::multiply_sub(float_simd_t multiplier,
     _raw, multiplier._raw, subtraction._raw) };
 }
 
+template<>
+inline float_simd_t<8>
+float_simd_t<8>::reciprocal() const
+{
+  return float_simd_t{ _mm256_rcp_ps(_raw) };
+}
+
 } // namespace Raytracer::Math
 
 namespace std {
+using Raytracer::Math::bool_simd_t;
 using Raytracer::Math::float_simd_t;
 
 // Quad floats
+inline float_simd_t<4>
+abs(float_simd_t<4> value)
+{
+  return float_simd_t<4>{ _mm_and_ps(value._raw, _mm_set1_epi32(0x7FFFFFFFU)) };
+}
 inline float_simd_t<4>
 min(float_simd_t<4> lhs, float_simd_t<4> rhs)
 {
@@ -296,6 +318,36 @@ inline float_simd_t<4>
 max(float_simd_t<4> lhs, float_simd_t<4> rhs)
 {
   return float_simd_t<4>{ _mm_max_ps(lhs._raw, rhs._raw) };
+}
+
+inline void
+swap(float_simd_t<4>& lhs, float_simd_t<4>& rhs, bool_simd_t<4> mask)
+{
+  //  true  false   mix with a mask
+  // c = a; c = a; c = a;
+  // a = b; a = a; a = (b & mask) | (a & ~mask)
+  // b = c; b = b; b = (c & mask) | (b & ~mask)
+
+  float_simd_t<4> temp = lhs;
+  lhs._raw = _mm_or_ps(_mm_and_ps(rhs._raw, mask._raw),
+                       _mm_andnot_ps(lhs._raw, mask._raw));
+  rhs._raw = _mm_or_ps(_mm_and_ps(temp._raw, mask._raw),
+                       _mm_andnot_ps(rhs._raw, mask._raw));
+}
+
+inline void
+swap(float_simd_t<8>& lhs, float_simd_t<8>& rhs, bool_simd_t<8> mask)
+{
+  //  true  false   mix with a mask
+  // c = a; c = a; c = a;
+  // a = b; a = a; a = (b & mask) | (a & ~mask)
+  // b = c; b = b; b = (c & mask) | (b & ~mask)
+
+  float_simd_t<8> temp = lhs;
+  lhs._raw = _mm256_or_ps(_mm256_and_ps(rhs._raw, mask._raw),
+                          _mm256_andnot_ps(lhs._raw, mask._raw));
+  rhs._raw = _mm256_or_ps(_mm256_and_ps(temp._raw, mask._raw),
+                          _mm256_andnot_ps(rhs._raw, mask._raw));
 }
 
 // Oct floats

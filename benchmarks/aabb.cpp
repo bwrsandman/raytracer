@@ -9,6 +9,7 @@
 using Raytracer::Aabb;
 using Raytracer::AabbSimd;
 using Raytracer::Ray;
+using Raytracer::RaySimd;
 using Raytracer::Math::float_simd_t;
 using Raytracer::Math::random_in_unit_sphere;
 using Raytracer::Math::vec3;
@@ -219,3 +220,85 @@ ray_aabb_simd8_hit_random(benchmark::State& state)
     intersection_count * simd_multiplier;
 }
 BENCHMARK(ray_aabb_simd8_hit_random);
+
+static void
+ray_simd4_aabb_hit_random(benchmark::State& state)
+{
+  constexpr uint8_t simd_multiplier = 4;
+  struct ray_aabb_combo
+  {
+    Aabb box;
+    RaySimd<simd_multiplier> ray;
+  };
+  std::array<ray_aabb_combo, 1000> combos;
+  for (uint32_t i = 0; i < combos.size(); ++i) {
+    combos[i].ray.origin =
+      vec3_simd<simd_multiplier>({ random_in_unit_sphere(),
+                                   random_in_unit_sphere(),
+                                   random_in_unit_sphere(),
+                                   random_in_unit_sphere() });
+    combos[i].ray.direction =
+      vec3_simd<simd_multiplier>({ random_in_unit_sphere(),
+                                   random_in_unit_sphere(),
+                                   random_in_unit_sphere(),
+                                   random_in_unit_sphere() });
+    combos[i].box.min = random_in_unit_sphere();
+    combos[i].box.max = random_in_unit_sphere();
+  }
+  uint32_t intersection_count = 0;
+  for (auto _ : state) {
+    Aabb::hit(combos[intersection_count % combos.size()].box,
+              combos[intersection_count % combos.size()].ray,
+              float_simd_t<simd_multiplier>(0.0f),
+              float_simd_t<simd_multiplier>(1e10f));
+    ++intersection_count;
+  }
+  state.counters["intersections_per_second"] =
+    intersection_count * simd_multiplier;
+}
+BENCHMARK(ray_simd4_aabb_hit_random);
+
+static void
+ray_simd8_aabb_hit_random(benchmark::State& state)
+{
+  constexpr uint8_t simd_multiplier = 8;
+  struct ray_aabb_combo
+  {
+    Aabb box;
+    RaySimd<simd_multiplier> ray;
+  };
+  std::array<ray_aabb_combo, 1000> combos;
+  for (uint32_t i = 0; i < combos.size(); ++i) {
+    combos[i].ray.origin =
+      vec3_simd<simd_multiplier>({ random_in_unit_sphere(),
+                                   random_in_unit_sphere(),
+                                   random_in_unit_sphere(),
+                                   random_in_unit_sphere(),
+                                   random_in_unit_sphere(),
+                                   random_in_unit_sphere(),
+                                   random_in_unit_sphere(),
+                                   random_in_unit_sphere() });
+    combos[i].ray.direction =
+      vec3_simd<simd_multiplier>({ random_in_unit_sphere(),
+                                   random_in_unit_sphere(),
+                                   random_in_unit_sphere(),
+                                   random_in_unit_sphere(),
+                                   random_in_unit_sphere(),
+                                   random_in_unit_sphere(),
+                                   random_in_unit_sphere(),
+                                   random_in_unit_sphere() });
+    combos[i].box.min = random_in_unit_sphere();
+    combos[i].box.max = random_in_unit_sphere();
+  }
+  uint32_t intersection_count = 0;
+  for (auto _ : state) {
+    Aabb::hit(combos[intersection_count % combos.size()].box,
+              combos[intersection_count % combos.size()].ray,
+              float_simd_t<simd_multiplier>(0.0f),
+              float_simd_t<simd_multiplier>(1e10f));
+    ++intersection_count;
+  }
+  state.counters["intersections_per_second"] =
+    intersection_count * simd_multiplier;
+}
+BENCHMARK(ray_simd8_aabb_hit_random);
