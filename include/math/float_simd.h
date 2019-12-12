@@ -64,6 +64,8 @@ struct float_simd_t
                                    float_simd_t subtraction) const;
   /// 1 / this
   inline float_simd_t reciprocal() const;
+  /// sqrt(1 / this)
+  inline float_simd_t reciprocal_sqrt() const;
 
   raw_type_t _raw;
 };
@@ -173,6 +175,13 @@ inline float_simd_t<4>
 float_simd_t<4>::reciprocal() const
 {
   return float_simd_t{ _mm_rcp_ps(_raw) };
+}
+
+template<>
+inline float_simd_t<4>
+float_simd_t<4>::reciprocal_sqrt() const
+{
+  return float_simd_t{ _mm_rsqrt_ps(_raw) };
 }
 
 // Oct float
@@ -295,6 +304,13 @@ inline float_simd_t<8>
 float_simd_t<8>::reciprocal() const
 {
   return float_simd_t{ _mm256_rcp_ps(_raw) };
+}
+
+template<>
+inline float_simd_t<8>
+float_simd_t<8>::reciprocal_sqrt() const
+{
+  return float_simd_t{ _mm256_rsqrt_ps(_raw) };
 }
 
 } // namespace Raytracer::Math

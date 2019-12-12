@@ -128,6 +128,7 @@ ray_aabb_hit_random(benchmark::State& state)
   std::array<ray_aabb_combo, 1000> combos;
   for (uint32_t i = 0; i < combos.size(); ++i) {
     combos[i].ray = Ray(random_in_unit_sphere(), random_in_unit_sphere());
+    combos[i].ray.direction.make_unit_vector();
     combos[i].box.min = random_in_unit_sphere();
     combos[i].box.max = random_in_unit_sphere();
   }
@@ -155,6 +156,7 @@ ray_aabb_simd4_hit_random(benchmark::State& state)
   std::array<ray_aabb_combo, 1000> combos;
   for (uint32_t i = 0; i < combos.size(); ++i) {
     combos[i].ray = Ray(random_in_unit_sphere(), random_in_unit_sphere());
+    combos[i].ray.direction.make_unit_vector();
     combos[i].box.min = vec3_simd<simd_multiplier>({ random_in_unit_sphere(),
                                                      random_in_unit_sphere(),
                                                      random_in_unit_sphere(),
@@ -190,6 +192,7 @@ ray_aabb_simd8_hit_random(benchmark::State& state)
   std::array<ray_aabb_combo, 1000> combos;
   for (uint32_t i = 0; i < combos.size(); ++i) {
     combos[i].ray = Ray(random_in_unit_sphere(), random_in_unit_sphere());
+    combos[i].ray.direction.make_unit_vector();
     combos[i].box.min = vec3_simd<simd_multiplier>({ random_in_unit_sphere(),
                                                      random_in_unit_sphere(),
                                                      random_in_unit_sphere(),
@@ -242,6 +245,7 @@ ray_simd4_aabb_hit_random(benchmark::State& state)
                                    random_in_unit_sphere(),
                                    random_in_unit_sphere(),
                                    random_in_unit_sphere() });
+    combos[i].ray.direction.make_unit_vector();
     combos[i].box.min = random_in_unit_sphere();
     combos[i].box.max = random_in_unit_sphere();
   }
@@ -287,6 +291,7 @@ ray_simd8_aabb_hit_random(benchmark::State& state)
                                    random_in_unit_sphere(),
                                    random_in_unit_sphere(),
                                    random_in_unit_sphere() });
+    combos[i].ray.direction.make_unit_vector();
     combos[i].box.min = random_in_unit_sphere();
     combos[i].box.max = random_in_unit_sphere();
   }
