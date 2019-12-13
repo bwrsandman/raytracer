@@ -9,23 +9,32 @@ using Raytracer::RaySimd;
 using Raytracer::Math::bool_simd_t;
 using Raytracer::Math::float_simd_t;
 using Raytracer::Math::vec3;
+using Raytracer::Math::vec3_simd;
 
 bool
 Aabb::hit(const Aabb& box, const Ray& r, float t_min, float t_max)
 {
+  thread_local float reciprocal[3];
+  reciprocal[0] = 1.f / r.direction.e[0];
+  reciprocal[1] = 1.f / r.direction.e[1];
+  reciprocal[2] = 1.f / r.direction.e[2];
+
+  // If the ray enters from back to front (t0 is bigger than t1)
+  thread_local bool negative[3];
+  negative[0] = std::signbit(r.direction.e[0]);
+  negative[1] = std::signbit(r.direction.e[1]);
+  negative[2] = std::signbit(r.direction.e[2]);
+
   for (uint8_t axis = 0; axis < 3; axis++) {
-    if (std::abs(r.direction.e[axis]) < std::numeric_limits<float>::epsilon()) {
+    if ((negative[axis] ? -r.direction.e[axis] : r.direction.e[axis]) <
+        std::numeric_limits<float>::epsilon()) {
       continue;
     }
-    float reciprocal = 1.f / r.direction.e[axis];
-    float ray_origin_axis_scaled(r.origin.e[axis] * reciprocal);
-    float t0 = box.min.e[axis] * reciprocal - ray_origin_axis_scaled;
-    float t1 = box.max.e[axis] * reciprocal - ray_origin_axis_scaled;
-
-    // If the ray enters from back to front (t0 is bigger than t1)
-    if (reciprocal < 0.f) {
-      std::swap(t0, t1);
-    }
+    float ray_origin_axis_scaled(r.origin.e[axis] * reciprocal[axis]);
+    float t0 = (&box.min)[negative[axis]].e[axis] * reciprocal[axis] -
+               ray_origin_axis_scaled;
+    float t1 = (&box.min)[1 - negative[axis]].e[axis] * reciprocal[axis] -
+               ray_origin_axis_scaled;
 
     t_min = std::max(t0, t_min);
     t_max = std::min(t1, t_max);
@@ -44,7 +53,23 @@ Raytracer::Aabb::hit(const Aabb& box,
                      float_simd_t<D> t_min,
                      float_simd_t<D> t_max)
 {
-  bool_simd_t<D> result(true);
+  thread_local float_simd_t<D> reciprocal[3] = {
+    r.direction.e[0].reciprocal(),
+    r.direction.e[1].reciprocal(),
+    r.direction.e[2].reciprocal(),
+  };
+  thread_local bool_simd_t<D> swap_mask[3] = {
+    reciprocal[0] < float_simd_t<D>(0.f),
+    reciprocal[1] < float_simd_t<D>(0.f),
+    reciprocal[2] < float_simd_t<D>(0.f),
+  };
+
+  thread_local float_simd_t<D> ray_origin_axis_scaled[3] = {
+    r.origin.e[0] * reciprocal[0],
+    r.origin.e[1] * reciprocal[1],
+    r.origin.e[2] * reciprocal[2],
+  };
+
   for (uint8_t axis = 0; axis < 3; axis++) {
     // FIXME: ignoring divide by zero since simd can continue on...
     //        behaviour is uncertain so keep an eye out
@@ -52,29 +77,21 @@ Raytracer::Aabb::hit(const Aabb& box,
     // std::numeric_limits<float>::epsilon()) {
     //   continue;
     // }
-    float_simd_t<D> box_min = float_simd_t<D>(box.min.e[axis]);
-    float_simd_t<D> box_max = float_simd_t<D>(box.max.e[axis]);
-    float_simd_t<D> reciprocal = r.direction.e[axis].reciprocal();
-    float_simd_t<D> ray_origin_axis_scaled(r.origin.e[axis] * reciprocal);
+    auto box_min = float_simd_t<D>(box.min.e[axis]);
+    auto box_max = float_simd_t<D>(box.max.e[axis]);
 
-    float_simd_t<D> t0 =
-      box_min.multiply_sub(reciprocal, ray_origin_axis_scaled);
-    float_simd_t<D> t1 =
-      box_max.multiply_sub(reciprocal, ray_origin_axis_scaled);
+    auto t0 =
+      box_min.multiply_sub(reciprocal[axis], ray_origin_axis_scaled[axis]);
+    auto t1 =
+      box_max.multiply_sub(reciprocal[axis], ray_origin_axis_scaled[axis]);
 
     // If the ray enters from back to front (t0 is bigger than t1)
-    auto swap_mask = reciprocal < float_simd_t<D>(0.f);
-    std::swap(t0, t1, swap_mask);
+    std::swap(t0, t1, swap_mask[axis]);
 
     t_min = std::max(t0, t_min);
     t_max = std::min(t1, t_max);
-
-    result = result && (t_max > t_min);
-    if (!result.any()) {
-      return result;
-    }
   }
-  return result;
+  return t_max > t_min;
 }
 
 template<uint8_t D>
