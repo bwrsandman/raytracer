@@ -48,6 +48,20 @@ public:
   }
   inline void make_unit_vector();
 
+  inline uint8_t major_axis() const
+  {
+    uint8_t result = 0;
+    float widest_axis = e[0];
+    if (widest_axis < e[1]) {
+      result = 1;
+      widest_axis = e[1];
+    }
+    if (widest_axis < e[2]) {
+      result = 2;
+    }
+    return result;
+  }
+
   float e[3];
 };
 
