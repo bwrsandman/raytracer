@@ -436,8 +436,10 @@ Scene::load_from_gltf(const std::string& file_name)
         if (gltf_primitive.material >= 0) {
           material = static_cast<uint32_t>(gltf_primitive.material);
         }
-        meshes.emplace_back(new TriangleMesh(
-          std::move(positions), std::move(data), std::move(indices), material));
+        auto mesh = std::make_unique<TriangleMesh>(
+          std::move(positions), std::move(data), std::move(indices), material);
+        mesh->build_bvh();
+        meshes.emplace_back(std::move(mesh));
       }
     }
   }
