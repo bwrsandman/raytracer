@@ -41,6 +41,9 @@ public:
   /// Factory function from which all types of renderers can be created
   static std::unique_ptr<Renderer> create(Type type, SDL_Window* window);
 
+  virtual bool get_debug() const = 0;
+  virtual void set_debug(bool value) = 0;
+
 protected:
   Renderer() = default;
 };

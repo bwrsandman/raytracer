@@ -17,6 +17,7 @@
 #include "materials/lambert.h"
 #include "materials/material.h"
 #include "materials/metal.h"
+#include "renderer.h"
 #include "scene.h"
 
 using namespace Raytracer;
@@ -36,7 +37,9 @@ Ui::Ui(SDL_Window* window)
 }
 
 void
-Ui::run(std::unique_ptr<Scene>& scene, std::chrono::microseconds& dt) const
+Ui::run(std::unique_ptr<Scene>& scene,
+        Graphics::Renderer& renderer,
+        std::chrono::microseconds& dt) const
 {
   ImGui_ImplOpenGL3_NewFrame();
   ImGui_ImplSDL2_NewFrame(window);
@@ -44,6 +47,13 @@ Ui::run(std::unique_ptr<Scene>& scene, std::chrono::microseconds& dt) const
 
   if (ImGui::Begin("Configuration ")) {
     ImGui::Text("%.2f fps %.2f ms", 1e6f / dt.count(), dt.count() / 1000.0f);
+
+    {
+      bool debug = renderer.get_debug();
+      ImGui::Checkbox("Debug BVH", &debug);
+      renderer.set_debug(debug);
+    }
+
     ImGui::Text("Load Scene");
     if (ImGui::Button("Whitted")) {
       SDL_SetWindowSize(window, 512, 512);

@@ -117,6 +117,7 @@ IndexedMesh::bind() const
 RendererWhitted::RendererWhitted(SDL_Window* window)
   : width(0)
   , height(0)
+  , debug_bvh(false)
 {
   // Request opengl 3.2 context.
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
@@ -427,7 +428,6 @@ RendererWhitted::run(const Scene& scene)
       for (uint32_t i = offset; i < offset + length && i < width * height;
            ++i) {
         vec3 color = vec3(0, 0, 0);
-        constexpr bool debug_bvh = false;
         raygen(rays[i], scene, debug_bvh, color);
         cpu_buffer[i] = std::sqrt(color);
       }
@@ -480,6 +480,17 @@ RendererWhitted::set_backbuffer_size(uint16_t w, uint16_t h)
 
     rebuild_backbuffers();
   }
+}
+
+bool
+RendererWhitted::get_debug() const
+{
+  return debug_bvh;
+}
+void
+RendererWhitted::set_debug(bool value)
+{
+  debug_bvh = value;
 }
 
 void
