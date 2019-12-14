@@ -57,6 +57,7 @@ TriangleMesh::hit(const Ray& r,
     while (!nodes_to_visit.empty()) {
       auto& node = bvh[nodes_to_visit.front()];
       if (Aabb::hit(node.bounds, r, t_min, closest_so_far)) {
+        rec.bvh_hits++;
         if (node.is_leaf) {
           hit_record temp_rec;
           if (ray_triangles_intersect(r,

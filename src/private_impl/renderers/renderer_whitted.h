@@ -56,6 +56,7 @@ private:
              float t_max) const;
   uint32_t raygen(const Ray& ray,
                   const Scene& scene,
+                  bool debug_bvh,
                   vec3& color) const override;
 
   SDL_GLContext context;

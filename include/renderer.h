@@ -35,6 +35,7 @@ public:
   virtual void set_backbuffer_size(uint16_t width, uint16_t height) = 0;
   virtual uint32_t raygen(const Ray& ray,
                           const Scene& scene,
+                          bool debug_bvh,
                           vec3& color) const = 0;
 
   /// Factory function from which all types of renderers can be created

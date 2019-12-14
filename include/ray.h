@@ -73,5 +73,6 @@ struct RayPayload
   vec3 normal;
   vec3 tangent;
   Type type;
+  uint32_t bvh_hits;
 };
 } // namespace Raytracer

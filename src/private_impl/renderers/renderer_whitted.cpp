@@ -180,15 +180,17 @@ RendererWhitted::trace(RayPayload& payload,
   double closest_so_far = t_max;
 
   for (auto& object : object_list) {
-    if (object->hit(r, early_out, t_min, closest_so_far, temp_rec)) {
-      if (closest_so_far > temp_rec.t) {
-        hit_anything = true;
-        closest_so_far = temp_rec.t;
-        rec = temp_rec;
-        if (early_out) {
-          break;
-        }
+    if (object->hit(r, early_out, t_min, closest_so_far, temp_rec) &&
+        closest_so_far > temp_rec.t) {
+      hit_anything = true;
+      closest_so_far = temp_rec.t;
+      temp_rec.bvh_hits += rec.bvh_hits;
+      rec = temp_rec;
+      if (early_out) {
+        break;
       }
+    } else {
+      rec.bvh_hits += temp_rec.bvh_hits;
     }
   }
   if (hit_anything) {
@@ -202,12 +204,14 @@ RendererWhitted::trace(RayPayload& payload,
     payload.distance = 0;
     payload.type = RayPayload::Type::NoHit;
   }
+  payload.bvh_hits = rec.bvh_hits;
   return hit_anything;
 }
 
 uint32_t
 RendererWhitted::raygen(const Ray& primary_ray,
                         const Scene& scene,
+                        bool debug_bvh,
                         vec3& color) const
 {
   struct AttenuatedRay
@@ -243,6 +247,20 @@ RendererWhitted::raygen(const Ray& primary_ray,
       payload.type = RayPayload::Type::NoHit;
     } else {
       trace(payload, scene, secondary_rays[i].ray, false, t_min, t_max);
+    }
+
+    if (debug_bvh) {
+      constexpr uint32_t ray_threshold = 10;
+      float bvh_debug = payload.bvh_hits / static_cast<float>(ray_threshold);
+      color = vec3(bvh_debug, bvh_debug, bvh_debug);
+      if (payload.bvh_hits > ray_threshold * 3) {
+        color = vec3(1.0f, 0.0f, 0.0f);
+      } else if (payload.bvh_hits > ray_threshold * 2) {
+        color = vec3(0.0f, 1.0f, 0.0f);
+      } else if (payload.bvh_hits > ray_threshold) {
+        color = vec3(0.0f, 0.0f, 1.0f);
+      }
+      return payload.bvh_hits;
     }
 
     vec3 hit_pos = secondary_rays[i].ray.origin +
@@ -409,7 +427,8 @@ RendererWhitted::run(const Scene& scene)
       for (uint32_t i = offset; i < offset + length && i < width * height;
            ++i) {
         vec3 color = vec3(0, 0, 0);
-        raygen(rays[i], scene, color);
+        constexpr bool debug_bvh = false;
+        raygen(rays[i], scene, debug_bvh, color);
         cpu_buffer[i] = std::sqrt(color);
       }
     });

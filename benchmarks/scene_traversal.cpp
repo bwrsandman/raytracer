@@ -49,7 +49,7 @@ protected:
     for (auto _ : state) {
       vec3 color = vec3(0.0f, 0.0f, 0.0f);
       auto ray = rays[ray_index % ray_count];
-      total_rays += renderer->raygen(ray, *scene, color);
+      total_rays += renderer->raygen(ray, *scene, false, color);
       ray_index++;
     }
   }
