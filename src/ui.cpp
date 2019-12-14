@@ -60,12 +60,21 @@ Ui::run(std::unique_ptr<Scene>& scene, std::chrono::microseconds& dt) const
     if (ImGui::Button("BoxTextured.gltf")) {
       scene = Scene::load_from_gltf("BoxTextured.gltf");
     }
+    if (ImGui::IsItemHovered()) {
+      ImGui::SetTooltip("12 triangles");
+    }
     ImGui::SameLine();
     if (ImGui::Button("Duck.gltf")) {
       scene = Scene::load_from_gltf("Duck.gltf");
     }
-    if (ImGui::Button("DamagedHelmet.gltf (slow)")) {
+    if (ImGui::IsItemHovered()) {
+      ImGui::SetTooltip("4212 triangles");
+    }
+    if (ImGui::Button("DamagedHelmet.gltf")) {
       scene = Scene::load_from_gltf("DamagedHelmet.gltf");
+    }
+    if (ImGui::IsItemHovered()) {
+      ImGui::SetTooltip("15452 triangles");
     }
     if (ImGui::CollapsingHeader("Camera", ImGuiTreeNodeFlags_DefaultOpen)) {
       ImGui::Text("Use WASD to move the camera and\n"
