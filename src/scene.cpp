@@ -161,16 +161,19 @@ Scene::load_from_gltf(const std::string& file_name)
       }
       auto color_texture = std::numeric_limits<uint32_t>::max();
       auto normal_texture = std::numeric_limits<uint32_t>::max();
-      if (m.emissiveTexture.index >= 0) {
-        color_texture = m.emissiveTexture.index;
-      } else if (m.pbrMetallicRoughness.baseColorTexture.index >= 0) {
+      if (m.pbrMetallicRoughness.baseColorTexture.index >= 0) {
         color_texture = m.pbrMetallicRoughness.baseColorTexture.index;
       }
       if (m.normalTexture.index >= 0) {
         normal_texture = m.normalTexture.index;
       }
-      materials.emplace_back(std::make_unique<Lambert>(
-        vec3(1.0, 1.0, 1.0), color_texture, normal_texture));
+      if (m.pbrMetallicRoughness.metallicFactor > 0.5f) {
+        materials.emplace_back(std::make_unique<Metal>(
+          vec3(1.0, 1.0, 1.0), color_texture, normal_texture));
+      } else {
+        materials.emplace_back(std::make_unique<Lambert>(
+          vec3(1.0, 1.0, 1.0), color_texture, normal_texture));
+      }
     }
   }
 
