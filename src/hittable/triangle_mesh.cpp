@@ -36,72 +36,159 @@ TriangleMesh::hit(const Ray& r,
                   float t_max,
                   hit_record& rec) const
 {
-  if (!Aabb::hit(aabb, r, t_min, t_max)) {
+  if (bvh.empty()) {
+    // No bvh, bruteforce all triangles
+    if (!Aabb::hit(aabb, r, t_min, t_max)) {
+      return false;
+    }
+    return ray_triangles_intersect(r,
+                                   indices.data(),
+                                   static_cast<uint32_t>(indices.size()),
+                                   early_out,
+                                   t_min,
+                                   t_max,
+                                   rec);
+  } else {
+    // Traverse bvh and find indices
+    std::queue<uint32_t> nodes_to_visit;
+    nodes_to_visit.emplace(0);
+    double closest_so_far = t_max;
+    bool hit_anything = false;
+    while (!nodes_to_visit.empty()) {
+      auto& node = bvh[nodes_to_visit.front()];
+      if (Aabb::hit(node.bounds, r, t_min, closest_so_far)) {
+        if (node.is_leaf) {
+          hit_record temp_rec;
+          if (ray_triangles_intersect(r,
+                                      &bvh_optimized_indices[node.index_offset],
+                                      node.index_count,
+                                      early_out,
+                                      t_min,
+                                      closest_so_far,
+                                      temp_rec)) {
+            hit_anything = true;
+            // TODO: This might always be true
+            if (closest_so_far > temp_rec.t) {
+              closest_so_far = temp_rec.t;
+              rec = temp_rec;
+              if (early_out) {
+                break;
+              }
+            }
+          }
+
+        } else {
+          // Add children
+          nodes_to_visit.emplace(node.left_bvh_offset);
+          nodes_to_visit.emplace(node.right_bvh_offset());
+        }
+      }
+
+      nodes_to_visit.pop();
+    }
+    return hit_anything;
+  }
+}
+
+inline bool
+ray_triangle_intersect(const Ray& r,
+                       const vec3& v0,
+                       const vec3& v1,
+                       const vec3& v2,
+                       float& t,
+                       vec3& barycentric_coordinates)
+{
+  vec3 v0v1 = v1 - v0;
+  vec3 v0v2 = v2 - v0;
+  vec3 ray_edge_cross = cross(r.direction, v0v2);
+  auto det = dot(v0v1, ray_edge_cross);
+  if (std::abs(det) < std::numeric_limits<float>::epsilon()) {
+    // This ray is parallel to this triangle.
     return false;
   }
+  auto det_inv = 1.0f / det;
+  auto v0ro = r.origin - v0;
+  auto u = det_inv * dot(v0ro, ray_edge_cross);
+  if (u < 0.0f || u > 1.0f) {
+    return false;
+  }
+  auto q = cross(v0ro, v0v1);
+  auto v = det_inv * dot(r.direction, q);
+  if (v < 0.0f || u + v > 1.0f) {
+    return false;
+  }
+  // At this stage we can compute t to find out where the intersection point
+  // is on the line.
+  t = det_inv * dot(v0v2, q);
 
+  if (t > std::numeric_limits<float>::epsilon() &&
+      t < std::numeric_limits<float>::infinity()) {
+    barycentric_coordinates.e[0] = u;
+    barycentric_coordinates.e[1] = v;
+    barycentric_coordinates.e[2] = 1 - u - v;
+    return true;
+  }
+  return false;
+}
+
+bool
+TriangleMesh::ray_triangles_intersect(const Ray& r,
+                                      const uint16_t* index_buffer,
+                                      uint32_t index_count,
+                                      bool early_out,
+                                      float t_min,
+                                      float t_max,
+                                      hit_record& rec) const
+{
   bool hit_anything = false;
   double closest_so_far = t_max;
-  for (uint32_t i = 0; i < indices.size() / 3; ++i) {
-    auto& i0 = indices[i * 3];
-    auto& i1 = indices[i * 3 + 1];
-    auto& i2 = indices[i * 3 + 2];
+  for (uint32_t i = 0; i < index_count / 3; ++i) {
+    auto& i0 = index_buffer[i * 3];
+    auto& i1 = index_buffer[i * 3 + 1];
+    auto& i2 = index_buffer[i * 3 + 2];
     const auto& v0 = positions[i0];
-    vec3 v0v1 = positions[i1] - v0;
-    vec3 v0v2 = positions[i2] - v0;
-    vec3 ray_edge_cross = cross(r.direction, v0v2);
-    auto det = dot(v0v1, ray_edge_cross);
-    if (std::abs(det) < std::numeric_limits<float>::epsilon()) {
-      // This ray is parallel to this triangle.
+    const auto& v1 = positions[i1];
+    const auto& v2 = positions[i2];
+
+    float t;
+    vec3 barycentric_coordinates;
+    if (!ray_triangle_intersect(r, v0, v1, v2, t, barycentric_coordinates)) {
       continue;
     }
-    auto det_inv = 1.0f / det;
-    auto v0ro = r.origin - v0;
-    auto u = det_inv * dot(v0ro, ray_edge_cross);
-    if (u < 0.0f || u > 1.0f) {
-      continue;
-    }
-    auto q = cross(v0ro, v0v1);
-    auto v = det_inv * dot(r.direction, q);
-    if (v < 0.0f || u + v > 1.0f) {
-      continue;
-    }
-    // At this stage we can compute t to find out where the intersection point
-    // is on the line.
-    float t = det_inv * dot(v0v2, q);
-    if (t > std::numeric_limits<float>::epsilon() &&
-        t < std::numeric_limits<float>::infinity()) {
 
-      auto w = 1 - u - v;
+    auto& uv0 = vertex_data[i0].uv;
+    auto& uv1 = vertex_data[i1].uv;
+    auto& uv2 = vertex_data[i2].uv;
 
-      auto& uv0 = vertex_data[i0].uv;
-      auto& uv1 = vertex_data[i1].uv;
-      auto& uv2 = vertex_data[i2].uv;
+    auto& normal0 = vertex_data[i0].normal;
+    auto& normal1 = vertex_data[i1].normal;
+    auto& normal2 = vertex_data[i2].normal;
 
-      auto& normal0 = vertex_data[i0].normal;
-      auto& normal1 = vertex_data[i1].normal;
-      auto& normal2 = vertex_data[i2].normal;
+    vec2 uv0uv1 = uv1 - uv0;
+    vec2 uv0uv2 = uv2 - uv0;
 
-      vec2 uv0uv1 = uv1 - uv0;
-      vec2 uv0uv2 = uv2 - uv0;
-
-      if (closest_so_far > t) {
-        rec.t = t;
-        rec.p = r.origin + r.direction * t;
-        rec.normal = normal0 * w + normal1 * u + normal2 * v;
-        rec.normal.make_unit_vector();
-        auto denom_inv =
-          1.0f / (uv0uv1.e[0] * uv0uv2.e[1] - uv0uv1.e[1] * uv0uv2.e[0]);
-        rec.tangent = (v0v1 * uv0uv2.e[1] - v0v2 * uv0uv1.e[1]) * denom_inv;
-        rec.tangent.make_unit_vector();
-        vec2 uv = uv0 * w + uv1 * u + uv2 * v;
-        rec.uv = vec3(uv.e[0], uv.e[1], 0.0f);
-        rec.mat_id = mat_id;
-        hit_anything = true;
-        closest_so_far = t;
-        if (early_out) {
-          break;
-        }
+    if (closest_so_far > t) {
+      rec.t = t;
+      rec.p = r.origin + r.direction * t;
+      rec.normal = normal0 * barycentric_coordinates.e[2] +
+                   normal1 * barycentric_coordinates.e[0] +
+                   normal2 * barycentric_coordinates.e[1];
+      rec.normal.make_unit_vector();
+      auto denom_inv =
+        1.0f / (uv0uv1.e[0] * uv0uv2.e[1] - uv0uv1.e[1] * uv0uv2.e[0]);
+      vec3 v0v1 = v1 - v0;
+      vec3 v0v2 = v2 - v0;
+      rec.tangent = (v0v1 * uv0uv2.e[1] - v0v2 * uv0uv1.e[1]) * denom_inv;
+      rec.tangent.make_unit_vector();
+      vec2 uv = uv0 * barycentric_coordinates.e[2] +
+                uv1 * barycentric_coordinates.e[0] +
+                uv2 * barycentric_coordinates.e[1];
+      rec.uv = vec3(uv.e[0], uv.e[1], 0.0f);
+      rec.mat_id = mat_id;
+      hit_anything = true;
+      closest_so_far = t;
+      if (early_out) {
+        break;
       }
     }
   }

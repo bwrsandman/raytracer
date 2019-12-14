@@ -34,6 +34,13 @@ struct TriangleMesh : Object
            float t_min,
            float t_max,
            hit_record& rec) const override;
+  bool ray_triangles_intersect(const Ray& r,
+                               const uint16_t* indices,
+                               uint32_t index_count,
+                               bool early_out,
+                               float t_min,
+                               float t_max,
+                               hit_record& rec) const;
   bool bounding_box(Aabb& box);
   void build_bvh();
 
