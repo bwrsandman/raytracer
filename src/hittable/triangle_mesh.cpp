@@ -216,7 +216,7 @@ TriangleMesh::bounding_box(Aabb& box)
   return true;
 }
 
-template<uint8_t num_bins, uint32_t max_size>
+template<uint8_t num_bins, uint32_t max_size, uint32_t cost_of_split>
 inline bool
 split_binned_sah(const std::vector<uint16_t>& indices,
                  const std::vector<vec3>& centroids,
@@ -320,6 +320,9 @@ split_binned_sah(const std::vector<uint16_t>& indices,
         // TODO terminate?
       }
     }
+    if (best_cost + cost_of_split > indices.size() * total_bin_area) {
+      return false;
+    }
   }
   for (uint8_t i = 0; i < best_index; ++i) {
     left_indices.insert(left_indices.cend(), bins[i].cbegin(), bins[i].cend());
@@ -395,18 +398,19 @@ Raytracer::Hittable::TriangleMesh::build_bvh()
     right_children.clear();
     constexpr uint8_t num_bins = 16;
     constexpr uint32_t max_child_size = 4;
+    constexpr uint32_t cost_of_split = 1;
     Aabb left_bb{ std::numeric_limits<vec3>::infinity(),
                   -std::numeric_limits<vec3>::infinity() };
     Aabb right_bb{ std::numeric_limits<vec3>::infinity(),
                    -std::numeric_limits<vec3>::infinity() };
     bool make_children =
-      split_binned_sah<num_bins, max_child_size>(params.indices,
-                                                 centroids,
-                                                 triangle_bbs,
-                                                 left_children,
-                                                 right_children,
-                                                 left_bb,
-                                                 right_bb);
+      split_binned_sah<num_bins, max_child_size, cost_of_split>(params.indices,
+                                                                centroids,
+                                                                triangle_bbs,
+                                                                left_children,
+                                                                right_children,
+                                                                left_bb,
+                                                                right_bb);
 
     // Create bvh node
     if (make_children) {
