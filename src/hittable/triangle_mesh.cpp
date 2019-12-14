@@ -216,7 +216,7 @@ TriangleMesh::bounding_box(Aabb& box)
   return true;
 }
 
-template<uint8_t num_bins, uint32_t min_size>
+template<uint8_t num_bins, uint32_t max_size>
 inline bool
 split_binned_sah(const std::vector<uint16_t>& indices,
                  const std::vector<vec3>& centroids,
@@ -226,7 +226,7 @@ split_binned_sah(const std::vector<uint16_t>& indices,
                  Aabb& left_bb,
                  Aabb& right_bb)
 {
-  if (indices.size() <= min_size) {
+  if (indices.size() <= max_size) {
     return false;
   }
   // Compute the bounds for all objects/triangles as well as the bounds for
@@ -394,13 +394,13 @@ Raytracer::Hittable::TriangleMesh::build_bvh()
     left_children.clear();
     right_children.clear();
     constexpr uint8_t num_bins = 16;
-    constexpr uint32_t min_child_size = 1;
+    constexpr uint32_t max_child_size = 4;
     Aabb left_bb{ std::numeric_limits<vec3>::infinity(),
                   -std::numeric_limits<vec3>::infinity() };
     Aabb right_bb{ std::numeric_limits<vec3>::infinity(),
                    -std::numeric_limits<vec3>::infinity() };
     bool make_children =
-      split_binned_sah<num_bins, min_child_size>(params.indices,
+      split_binned_sah<num_bins, max_child_size>(params.indices,
                                                  centroids,
                                                  triangle_bbs,
                                                  left_children,
@@ -421,8 +421,6 @@ Raytracer::Hittable::TriangleMesh::build_bvh()
                            static_cast<uint32_t>(bvh.size() - 1) });
       workload.emplace(workload_params_t{ right_children, right_bb });
     } else {
-      static_assert(min_child_size == 1,
-                    "Adjust for sizes different from 1"); // TODO
       bvh.emplace_back(
         BvhNode{ params.mesh_bb,
                  static_cast<uint32_t>(bvh_optimized_indices.size()),
