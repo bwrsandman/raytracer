@@ -167,13 +167,13 @@ Scene::load_from_gltf(const std::string& file_name)
       if (m.normalTexture.index >= 0) {
         normal_texture = m.normalTexture.index;
       }
-      if (m.pbrMetallicRoughness.metallicFactor > 0.5f) {
-        materials.emplace_back(std::make_unique<Metal>(
-          vec3(1.0, 1.0, 1.0), color_texture, normal_texture));
-      } else {
-        materials.emplace_back(std::make_unique<Lambert>(
-          vec3(1.0, 1.0, 1.0), color_texture, normal_texture));
-      }
+      //      if (m.pbrMetallicRoughness.metallicFactor > 0.5f) {
+      //        materials.emplace_back(std::make_unique<Metal>(
+      //          vec3(1.0, 1.0, 1.0), color_texture, normal_texture));
+      //      } else {
+      materials.emplace_back(std::make_unique<Lambert>(
+        vec3(1.0, 1.0, 1.0), color_texture, normal_texture));
+      //      }
     }
   }
 
