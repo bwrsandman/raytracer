@@ -321,7 +321,8 @@ class Value {
   }
 
   // Use this function if you want to have number value as int.
-  double GetNumberAsInt() const {
+  int GetNumberAsInt() const
+  {
     if (type_ == REAL_TYPE) {
       return int(real_value_);
     } else {

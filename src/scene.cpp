@@ -177,12 +177,8 @@ Scene::load_from_gltf(const std::string& file_name)
     }
   }
 
-  // Lights
-  // std::cerr << "Warn: No lights from glTF, using default point light."
-  //           << std::endl;
-  materials.emplace_back(std::make_unique<Emissive>(vec3(1.0, 1.0, 1.0))); // 1
+  bool found_lights = false;
   std::vector<std::unique_ptr<Object>> light_list;
-  light_list.emplace_back(std::make_unique<Point>(vec3(5000.0f, 0, 0), 1));
 
   // Construct scene graph
   std::vector<SceneNode> nodes;
@@ -303,6 +299,37 @@ Scene::load_from_gltf(const std::string& file_name)
                                              gltf_camera.aspectRatio);
       camera_index = nodes.size() - 1;
       found_camera = true;
+    } else if (gltf_node.extensions.count("KHR_lights_punctual") > 0) {
+      int light_id =
+        gltf_node.extensions["KHR_lights_punctual"].GetNumberAsInt();
+      if (light_id >= 0) {
+        auto& light = gltf.lights[light_id];
+
+        vec3 position;
+        // Full scene graph is necessary to do this properly
+        if (p >= 0) {
+          auto& parent_node = gltf.nodes[p];
+          if (!parent_node.translation.empty()) {
+            position = vec3(parent_node.translation[0],
+                            parent_node.translation[1],
+                            parent_node.translation[2]);
+          }
+        }
+        if (!gltf_node.translation.empty()) {
+          position += vec3(gltf_node.translation[0],
+                           gltf_node.translation[1],
+                           gltf_node.translation[2]);
+        }
+
+        materials.emplace_back(std::make_unique<EmissiveQuadraticDropOff>(
+          light.intensity *
+            vec3(light.color[0], light.color[1], light.color[2]),
+          1.0f));
+        light_list.emplace_back(
+          std::make_unique<Point>(position, materials.size() - 1));
+
+        found_lights = true;
+      }
     } else if (gltf_node.mesh >= 0) {
       auto& gltf_mesh = gltf.meshes[gltf_node.mesh];
       // TODO Support multiple primitives
@@ -442,6 +469,16 @@ Scene::load_from_gltf(const std::string& file_name)
         meshes.emplace_back(std::move(mesh));
       }
     }
+  }
+
+  // Default light
+  if (!found_lights) {
+    // Lights
+    // std::cerr << "Warn: No lights from glTF, using default point light."
+    //           << std::endl;
+    materials.emplace_back(
+      std::make_unique<Emissive>(vec3(1.0, 1.0, 1.0))); // 1
+    light_list.emplace_back(std::make_unique<Point>(vec3(5000.0f, 0, 0), 1));
   }
 
   // Default camera
