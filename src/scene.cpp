@@ -185,21 +185,71 @@ Scene::load_from_gltf(const std::string& file_name)
   uint32_t camera_index = 0;
 
   // BFS on children to have children contiguous
-  std::queue<std::pair<int, int>> bfs_gltf_nodes_queue;
-  std::vector<std::pair<int, int>> bfs_gltf_nodes;
+  std::queue<std::pair<int, std::vector<int>>> bfs_gltf_nodes_queue;
+  std::vector<std::pair<int, std::vector<int>>> bfs_gltf_nodes;
   for (auto gltf_node_index : gltf.scenes[gltf.defaultScene].nodes) {
-    bfs_gltf_nodes_queue.push(std::make_pair(gltf_node_index, -1));
+    bfs_gltf_nodes_queue.push(
+      std::make_pair(gltf_node_index, std::vector<int>()));
   }
   while (!bfs_gltf_nodes_queue.empty()) {
     auto [v, p] = bfs_gltf_nodes_queue.front();
     bfs_gltf_nodes_queue.pop();
     for (auto c : gltf.nodes[v].children) {
-      bfs_gltf_nodes_queue.emplace(c, v);
+      auto new_p = p;
+      new_p.push_back(v);
+      bfs_gltf_nodes_queue.emplace(c, std::move(new_p));
     }
     bfs_gltf_nodes.emplace_back(v, p);
   }
 
-  for (auto [i, p] : bfs_gltf_nodes) {
+  for (auto [i, ancestor_ids] : bfs_gltf_nodes) {
+
+    mat4 matrix;
+    // TODO Full scene graph is necessary to do this properly
+    ancestor_ids.push_back(i);
+    for (auto p : ancestor_ids) {
+      auto& parent_node = gltf.nodes[p];
+      if (!parent_node.matrix.empty()) {
+        matrix = dot(matrix,
+                     mat4(parent_node.matrix[0],
+                          parent_node.matrix[4],
+                          parent_node.matrix[8],
+                          parent_node.matrix[12],
+                          parent_node.matrix[1],
+                          parent_node.matrix[5],
+                          parent_node.matrix[9],
+                          parent_node.matrix[13],
+                          parent_node.matrix[2],
+                          parent_node.matrix[6],
+                          parent_node.matrix[10],
+                          parent_node.matrix[14],
+                          parent_node.matrix[3],
+                          parent_node.matrix[7],
+                          parent_node.matrix[11],
+                          parent_node.matrix[15]));
+      } else {
+        Transform transform;
+        if (!parent_node.translation.empty()) {
+          transform.translation = vec3(parent_node.translation[0],
+                                       parent_node.translation[1],
+                                       parent_node.translation[2]);
+        }
+        if (!parent_node.rotation.empty()) {
+          transform.rotation =
+            quat{ static_cast<float>(parent_node.rotation[0]),
+                  static_cast<float>(parent_node.rotation[1]),
+                  static_cast<float>(parent_node.rotation[2]),
+                  static_cast<float>(parent_node.rotation[3]) };
+        }
+        if (!parent_node.scale.empty()) {
+          transform.scale = (parent_node.scale[0] + parent_node.scale[1] +
+                             parent_node.scale[2]) /
+                            3.0f;
+        }
+        matrix = dot(matrix, transform.matrix());
+      }
+    }
+
     auto& gltf_node = gltf.nodes[i];
     auto& node = nodes.emplace_back();
     if (gltf_node.translation.size() == 3) {
@@ -241,80 +291,6 @@ Scene::load_from_gltf(const std::string& file_name)
         gltf.cameras[gltf_node.camera].type == "perspective" && !found_camera) {
       node.type = SceneNode::Type::Camera;
 
-      mat4 matrix;
-      // FIXME this is just a quick patch to get duck to work.
-      // Full scene graph is necessary to do this properly
-      if (p >= 0) {
-        auto& parent_node = gltf.nodes[p];
-        if (!parent_node.matrix.empty()) {
-          matrix = mat4(parent_node.matrix[0],
-                        parent_node.matrix[1],
-                        parent_node.matrix[2],
-                        parent_node.matrix[3],
-                        parent_node.matrix[4],
-                        parent_node.matrix[5],
-                        parent_node.matrix[6],
-                        parent_node.matrix[7],
-                        parent_node.matrix[8],
-                        parent_node.matrix[9],
-                        parent_node.matrix[10],
-                        parent_node.matrix[11],
-                        parent_node.matrix[12],
-                        parent_node.matrix[13],
-                        parent_node.matrix[14],
-                        parent_node.matrix[15]);
-        } else {
-          Transform transform;
-          if (!parent_node.translation.empty()) {
-            transform.translation = vec3(parent_node.translation[0],
-                                         parent_node.translation[1],
-                                         parent_node.translation[2]);
-          }
-          if (!parent_node.rotation.empty()) {
-            transform.rotation =
-              quat{ static_cast<float>(parent_node.rotation[0]),
-                    static_cast<float>(parent_node.rotation[1]),
-                    static_cast<float>(parent_node.rotation[2]),
-                    static_cast<float>(parent_node.rotation[3]) };
-          }
-          matrix = transform.matrix();
-        }
-      }
-      if (!gltf_node.matrix.empty()) {
-        matrix = dot(matrix,
-                     mat4(gltf_node.matrix[0],
-                          gltf_node.matrix[1],
-                          gltf_node.matrix[2],
-                          gltf_node.matrix[3],
-                          gltf_node.matrix[4],
-                          gltf_node.matrix[5],
-                          gltf_node.matrix[6],
-                          gltf_node.matrix[7],
-                          gltf_node.matrix[8],
-                          gltf_node.matrix[9],
-                          gltf_node.matrix[10],
-                          gltf_node.matrix[11],
-                          gltf_node.matrix[12],
-                          gltf_node.matrix[13],
-                          gltf_node.matrix[14],
-                          gltf_node.matrix[15]));
-      } else {
-        Transform transform;
-        if (!gltf_node.translation.empty()) {
-          transform.translation = vec3(gltf_node.translation[0],
-                                       gltf_node.translation[1],
-                                       gltf_node.translation[2]);
-        }
-        if (!gltf_node.rotation.empty()) {
-          transform.rotation =
-            quat{ static_cast<float>(gltf_node.rotation[0]),
-                  static_cast<float>(gltf_node.rotation[1]),
-                  static_cast<float>(gltf_node.rotation[2]),
-                  static_cast<float>(gltf_node.rotation[3]) };
-        }
-        matrix = dot(matrix, transform.matrix());
-      }
-
       auto origin4 = dot(matrix, vec4(0, 0, 0, 1));
       auto direction4 = dot(matrix, vec4(0, 0, -1, 0));
       auto origin = vec3(origin4.e[0], origin4.e[1], origin4.e[2]);
@@ -335,28 +311,15 @@ Scene::load_from_gltf(const std::string& file_name)
       if (light_id >= 0) {
         auto& light = gltf.lights[light_id];
 
-        vec3 position;
-        // Full scene graph is necessary to do this properly
-        if (p >= 0) {
-          auto& parent_node = gltf.nodes[p];
-          if (!parent_node.translation.empty()) {
-            position = vec3(parent_node.translation[0],
-                            parent_node.translation[1],
-                            parent_node.translation[2]);
-          }
-        }
-        if (!gltf_node.translation.empty()) {
-          position += vec3(gltf_node.translation[0],
-                           gltf_node.translation[1],
-                           gltf_node.translation[2]);
-        }
+        vec4 position = dot(matrix, vec4(0, 0, 0, 1));
 
         materials.emplace_back(std::make_unique<EmissiveQuadraticDropOff>(
           light.intensity *
             vec3(light.color[0], light.color[1], light.color[2]),
           1.0f));
-        light_list.emplace_back(
-          std::make_unique<Point>(position, materials.size() - 1));
+        light_list.emplace_back(std::make_unique<Point>(
+          vec3(position.e[0], position.e[1], position.e[2]),
+          materials.size() - 1));
 
         found_lights = true;
       }
@@ -437,49 +400,6 @@ Scene::load_from_gltf(const std::string& file_name)
           data[j].tangent =
             cross(data[j].normal,
                   vec3(0, 1, 0)); // FIXME: This is not a good approximation
-        }
-        mat4 matrix;
-        // FIXME this is just a quick patch to get duck to work.
-        // Full scene graph is necessary to do this properly
-        if (p >= 0) {
-          //          auto& parent_node = gltf.nodes[p];
-          //          if (!parent_node.matrix.empty()) {
-          //            matrix = mat4(parent_node.matrix[0],
-          //                          parent_node.matrix[1],
-          //                          parent_node.matrix[2],
-          //                          parent_node.matrix[3],
-          //                          parent_node.matrix[4],
-          //                          parent_node.matrix[5],
-          //                          parent_node.matrix[6],
-          //                          parent_node.matrix[7],
-          //                          parent_node.matrix[8],
-          //                          parent_node.matrix[9],
-          //                          parent_node.matrix[10],
-          //                          parent_node.matrix[11],
-          //                          parent_node.matrix[12],
-          //                          parent_node.matrix[13],
-          //                          parent_node.matrix[14],
-          //                          parent_node.matrix[15]);
-          //          }
-        }
-        if (!gltf_node.matrix.empty()) {
-          matrix = dot(matrix,
-                       mat4(gltf_node.matrix[0],
-                            gltf_node.matrix[1],
-                            gltf_node.matrix[2],
-                            gltf_node.matrix[3],
-                            gltf_node.matrix[4],
-                            gltf_node.matrix[5],
-                            gltf_node.matrix[6],
-                            gltf_node.matrix[7],
-                            gltf_node.matrix[8],
-                            gltf_node.matrix[9],
-                            gltf_node.matrix[10],
-                            gltf_node.matrix[11],
-                            gltf_node.matrix[12],
-                            gltf_node.matrix[13],
-                            gltf_node.matrix[14],
-                            gltf_node.matrix[15]));
         }
 
         for (auto& p : positions) {
