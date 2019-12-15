@@ -329,94 +329,98 @@ Scene::load_from_gltf(const std::string& file_name)
       if (!gltf_mesh.primitives.empty()) {
         node.type = SceneNode::Type::Mesh;
         node.mesh_id = meshes.size();
-        auto& gltf_primitive = gltf_mesh.primitives[0];
 
-        // Indices
-        std::vector<uint16_t> indices;
-        {
-          auto& accessor = gltf.accessors[gltf_primitive.indices];
-          auto& buffer_view = gltf.bufferViews[accessor.bufferView];
-          auto& buffer = gltf.buffers[buffer_view.buffer];
-          indices.resize(accessor.count);
-          auto offset = buffer_view.byteOffset + accessor.byteOffset;
-          copy_buffer_view(indices.data(),
-                           buffer.data.data() + offset,
-                           indices.size(),
-                           accessor.componentType);
-        }
+        for (auto& gltf_primitive : gltf_mesh.primitives) {
+          // Indices
+          std::vector<uint16_t> indices;
+          {
+            auto& accessor = gltf.accessors[gltf_primitive.indices];
+            auto& buffer_view = gltf.bufferViews[accessor.bufferView];
+            auto& buffer = gltf.buffers[buffer_view.buffer];
+            indices.resize(accessor.count);
+            auto offset = buffer_view.byteOffset + accessor.byteOffset;
+            copy_buffer_view(indices.data(),
+                             buffer.data.data() + offset,
+                             indices.size(),
+                             accessor.componentType);
+          }
 
-        // Positions
-        std::vector<vec3> positions;
-        {
-          auto& accessor =
-            gltf.accessors[gltf_primitive.attributes["POSITION"]];
-          assert(accessor.type == TINYGLTF_TYPE_VEC3);
-          auto& buffer_view = gltf.bufferViews[accessor.bufferView];
-          auto& buffer = gltf.buffers[buffer_view.buffer];
-          positions.resize(accessor.count);
-          auto offset = buffer_view.byteOffset + accessor.byteOffset;
-          copy_buffer_view(positions.data(),
-                           buffer.data.data() + offset,
-                           positions.size(),
-                           accessor.componentType);
-        }
+          // Positions
+          std::vector<vec3> positions;
+          {
+            auto& accessor =
+              gltf.accessors[gltf_primitive.attributes["POSITION"]];
+            assert(accessor.type == TINYGLTF_TYPE_VEC3);
+            auto& buffer_view = gltf.bufferViews[accessor.bufferView];
+            auto& buffer = gltf.buffers[buffer_view.buffer];
+            positions.resize(accessor.count);
+            auto offset = buffer_view.byteOffset + accessor.byteOffset;
+            copy_buffer_view(positions.data(),
+                             buffer.data.data() + offset,
+                             positions.size(),
+                             accessor.componentType);
+          }
 
-        // UV
-        std::vector<vec2> uv;
-        {
-          auto& accessor =
-            gltf.accessors[gltf_primitive.attributes["TEXCOORD_0"]];
-          assert(accessor.type == TINYGLTF_TYPE_VEC2);
-          auto& buffer_view = gltf.bufferViews[accessor.bufferView];
-          auto& buffer = gltf.buffers[buffer_view.buffer];
-          uv.resize(accessor.count);
-          auto offset = buffer_view.byteOffset + accessor.byteOffset;
-          copy_buffer_view(uv.data(),
-                           buffer.data.data() + offset,
-                           uv.size(),
-                           accessor.componentType);
-        }
-        // Normals
-        std::vector<vec3> normals;
-        {
-          auto& accessor = gltf.accessors[gltf_primitive.attributes["NORMAL"]];
-          assert(accessor.type == TINYGLTF_TYPE_VEC3);
-          auto& buffer_view = gltf.bufferViews[accessor.bufferView];
-          auto& buffer = gltf.buffers[buffer_view.buffer];
-          normals.resize(accessor.count);
-          auto offset = buffer_view.byteOffset + accessor.byteOffset;
-          copy_buffer_view(normals.data(),
-                           buffer.data.data() + offset,
-                           normals.size(),
-                           accessor.componentType);
-        }
+          // UV
+          std::vector<vec2> uv;
+          {
+            auto& accessor =
+              gltf.accessors[gltf_primitive.attributes["TEXCOORD_0"]];
+            assert(accessor.type == TINYGLTF_TYPE_VEC2);
+            auto& buffer_view = gltf.bufferViews[accessor.bufferView];
+            auto& buffer = gltf.buffers[buffer_view.buffer];
+            uv.resize(accessor.count);
+            auto offset = buffer_view.byteOffset + accessor.byteOffset;
+            copy_buffer_view(uv.data(),
+                             buffer.data.data() + offset,
+                             uv.size(),
+                             accessor.componentType);
+          }
+          // Normals
+          std::vector<vec3> normals;
+          {
+            auto& accessor =
+              gltf.accessors[gltf_primitive.attributes["NORMAL"]];
+            assert(accessor.type == TINYGLTF_TYPE_VEC3);
+            auto& buffer_view = gltf.bufferViews[accessor.bufferView];
+            auto& buffer = gltf.buffers[buffer_view.buffer];
+            normals.resize(accessor.count);
+            auto offset = buffer_view.byteOffset + accessor.byteOffset;
+            copy_buffer_view(normals.data(),
+                             buffer.data.data() + offset,
+                             normals.size(),
+                             accessor.componentType);
+          }
 
-        assert(uv.size() == normals.size());
-        std::vector<MeshVertexData> data;
-        data.resize(uv.size());
-        for (uint32_t j = 0; j < uv.size(); ++j) {
-          data[j].uv = uv[j];
-          data[j].normal = normals[j];
-          data[j].tangent =
-            cross(data[j].normal,
-                  vec3(0, 1, 0)); // FIXME: This is not a good approximation
-        }
+          assert(uv.size() == normals.size());
+          std::vector<MeshVertexData> data;
+          data.resize(uv.size());
+          for (uint32_t j = 0; j < uv.size(); ++j) {
+            data[j].uv = uv[j];
+            data[j].normal = normals[j];
+            data[j].tangent =
+              cross(data[j].normal,
+                    vec3(0, 1, 0)); // FIXME: This is not a good approximation
+          }
 
-        for (auto& p : positions) {
-          auto moved = dot(matrix, vec4(p.e[0], p.e[1], p.e[2], 1.0f));
-          p.e[0] = moved.e[0];
-          p.e[1] = moved.e[1];
-          p.e[2] = moved.e[2];
-        }
+          for (auto& p : positions) {
+            auto moved = dot(matrix, vec4(p.e[0], p.e[1], p.e[2], 1.0f));
+            p.e[0] = moved.e[0];
+            p.e[1] = moved.e[1];
+            p.e[2] = moved.e[2];
+          }
 
-        uint32_t material = 0;
-        if (gltf_primitive.material >= 0) {
-          material = static_cast<uint32_t>(gltf_primitive.material);
+          uint32_t material = 0;
+          if (gltf_primitive.material >= 0) {
+            material = static_cast<uint32_t>(gltf_primitive.material);
+          }
+          auto mesh = std::make_unique<TriangleMesh>(std::move(positions),
+                                                     std::move(data),
+                                                     std::move(indices),
+                                                     material);
+          mesh->build_bvh();
+          meshes.emplace_back(std::move(mesh));
         }
-        auto mesh = std::make_unique<TriangleMesh>(
-          std::move(positions), std::move(data), std::move(indices), material);
-        mesh->build_bvh();
-        meshes.emplace_back(std::move(mesh));
       }
     }
   }
