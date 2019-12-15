@@ -245,25 +245,40 @@ Scene::load_from_gltf(const std::string& file_name)
       // FIXME this is just a quick patch to get duck to work.
       // Full scene graph is necessary to do this properly
       if (p >= 0) {
-        //        auto& parent_node = gltf.nodes[p];
-        //        if (!parent_node.matrix.empty()) {
-        //          matrix = mat4(parent_node.matrix[0],
-        //                        parent_node.matrix[1],
-        //                        parent_node.matrix[2],
-        //                        parent_node.matrix[3],
-        //                        parent_node.matrix[4],
-        //                        parent_node.matrix[5],
-        //                        parent_node.matrix[6],
-        //                        parent_node.matrix[7],
-        //                        parent_node.matrix[8],
-        //                        parent_node.matrix[9],
-        //                        parent_node.matrix[10],
-        //                        parent_node.matrix[11],
-        //                        parent_node.matrix[12],
-        //                        parent_node.matrix[13],
-        //                        parent_node.matrix[14],
-        //                        parent_node.matrix[15]);
-        //        }
+        auto& parent_node = gltf.nodes[p];
+        if (!parent_node.matrix.empty()) {
+          matrix = mat4(parent_node.matrix[0],
+                        parent_node.matrix[1],
+                        parent_node.matrix[2],
+                        parent_node.matrix[3],
+                        parent_node.matrix[4],
+                        parent_node.matrix[5],
+                        parent_node.matrix[6],
+                        parent_node.matrix[7],
+                        parent_node.matrix[8],
+                        parent_node.matrix[9],
+                        parent_node.matrix[10],
+                        parent_node.matrix[11],
+                        parent_node.matrix[12],
+                        parent_node.matrix[13],
+                        parent_node.matrix[14],
+                        parent_node.matrix[15]);
+        } else {
+          Transform transform;
+          if (!parent_node.translation.empty()) {
+            transform.translation = vec3(parent_node.translation[0],
+                                         parent_node.translation[1],
+                                         parent_node.translation[2]);
+          }
+          if (!parent_node.rotation.empty()) {
+            transform.rotation =
+              quat{ static_cast<float>(parent_node.rotation[0]),
+                    static_cast<float>(parent_node.rotation[1]),
+                    static_cast<float>(parent_node.rotation[2]),
+                    static_cast<float>(parent_node.rotation[3]) };
+          }
+          matrix = transform.matrix();
+        }
       }
       if (!gltf_node.matrix.empty()) {
         matrix = dot(matrix,
@@ -283,6 +298,21 @@ Scene::load_from_gltf(const std::string& file_name)
                           gltf_node.matrix[13],
                           gltf_node.matrix[14],
                           gltf_node.matrix[15]));
+      } else {
+        Transform transform;
+        if (!gltf_node.translation.empty()) {
+          transform.translation = vec3(gltf_node.translation[0],
+                                       gltf_node.translation[1],
+                                       gltf_node.translation[2]);
+        }
+        if (!gltf_node.rotation.empty()) {
+          transform.rotation =
+            quat{ static_cast<float>(gltf_node.rotation[0]),
+                  static_cast<float>(gltf_node.rotation[1]),
+                  static_cast<float>(gltf_node.rotation[2]),
+                  static_cast<float>(gltf_node.rotation[3]) };
+        }
+        matrix = dot(matrix, transform.matrix());
       }
 
       auto origin4 = dot(matrix, vec4(0, 0, 0, 1));
