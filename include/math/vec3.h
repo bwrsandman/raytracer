@@ -9,7 +9,7 @@ namespace Raytracer::Math {
 class vec3
 {
 public:
-  vec3()
+  constexpr vec3() noexcept
     : e{ 0.0f, 0.0f, 0.0f }
   {}
   constexpr vec3(float e0, float e1, float e2) noexcept

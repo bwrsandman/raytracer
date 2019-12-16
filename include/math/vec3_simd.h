@@ -1,5 +1,7 @@
 #pragma once
 
+#include <array>
+
 #include "float_simd.h"
 #include "vec3.h"
 
@@ -26,6 +28,31 @@ struct vec3_simd
     e[0] = e[0] * k;
     e[1] = e[1] * k;
     e[2] = e[2] * k;
+  }
+
+  template<uint8_t index>
+  inline constexpr static vec3 get_scalar(const vec3_simd& vector)
+  {
+    static_assert(index < D, "scalar index out of bounds");
+    return vec3{
+      float_simd_t<D>::get_scalar<index>(vector.e[0]),
+      float_simd_t<D>::get_scalar<index>(vector.e[1]),
+      float_simd_t<D>::get_scalar<index>(vector.e[2]),
+    };
+  }
+  inline constexpr static std::array<vec3, D> get_scalars(
+    const vec3_simd& vector)
+  {
+    auto e0 = float_simd_t<D>::get_scalars(vector.e[0]);
+    auto e1 = float_simd_t<D>::get_scalars(vector.e[1]);
+    auto e2 = float_simd_t<D>::get_scalars(vector.e[2]);
+    std::array<vec3, D> result;
+    for (uint8_t i = 0; i < D; ++i) {
+      result[i].e[0] = e0[i];
+      result[i].e[1] = e1[i];
+      result[i].e[2] = e2[i];
+    }
+    return result;
   }
 
   float_simd_t<D> e[3];
