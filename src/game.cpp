@@ -18,8 +18,7 @@ Game::Game() {
   constexpr uint16_t height = 600;
   window = std::make_unique<Window>("Raytracer", width, height);
   input = std::make_unique<Input>();
-  renderer =
-    Renderer::create(Renderer::Type::Whitted, window->get_native_handle());
+  renderer = Renderer::create(Renderer::Type::Gpu, window->get_native_handle());
   ui = std::make_unique<Ui>(window->get_native_handle());
   scene = Scene::load_cornell_box();
 }

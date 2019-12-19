@@ -29,6 +29,7 @@ public:
   enum class Type
   {
     Whitted,
+    Gpu,
   };
   virtual ~Renderer() = default;
   virtual void run(const Scene& world) = 0;

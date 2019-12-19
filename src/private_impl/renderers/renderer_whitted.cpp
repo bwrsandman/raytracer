@@ -20,9 +20,9 @@
 #include "ray.h"
 #include "scene.h"
 
-#include "shaders/fullscreen_fs.h"
-#include "shaders/passthrough_vs.h"
 #include "../../shaders/bridging_header.h"
+#include "shaders/fullscreen_fs.h"
+#include "shaders/passthrough_flip_y_vs.h"
 
 #include "../graphics/indexed_mesh.h"
 #include "../graphics/texture.h"
@@ -446,8 +446,9 @@ void
 RendererWhitted::create_pipeline()
 {
   PipelineCreateInfo info;
-  info.vertex_shader_binary = passthrough_vs;
-  info.vertex_shader_size = sizeof(passthrough_vs) / sizeof(passthrough_vs[0]);
+  info.vertex_shader_binary = passthrough_flip_y_vs;
+  info.vertex_shader_size =
+    sizeof(passthrough_flip_y_vs) / sizeof(passthrough_flip_y_vs[0]);
   info.vertex_shader_entry_point = "main";
   info.fragment_shader_binary = fullscreen_fs;
   info.fragment_shader_size = sizeof(fullscreen_fs) / sizeof(fullscreen_fs[0]);
