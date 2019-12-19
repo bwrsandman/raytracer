@@ -47,6 +47,11 @@ public:
   void set_debug(bool value) override;
   void set_debug_data(uint32_t data) override;
 
+  uint32_t raygen(const Ray& ray,
+                  const Scene& scene,
+                  bool debug_bvh,
+                  vec3& color) const;
+
 private:
   void rebuild_backbuffers();
   void create_geometry();
@@ -57,10 +62,6 @@ private:
              bool early_out,
              float t_min,
              float t_max) const;
-  uint32_t raygen(const Ray& ray,
-                  const Scene& scene,
-                  bool debug_bvh,
-                  vec3& color) const override;
 
   SDL_GLContext context;
   uint16_t width;
