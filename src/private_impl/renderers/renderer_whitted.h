@@ -14,6 +14,7 @@ class Camera;
 namespace Graphics {
 class Pipeline;
 struct IndexedMesh;
+struct Texture;
 
 class RendererWhitted : public Renderer
 {
@@ -52,8 +53,7 @@ private:
 
   std::vector<Ray> rays;
   std::vector<vec3> cpu_buffer;
-  uint32_t gpu_buffer;
-  uint32_t linear_sampler;
+  std::unique_ptr<Texture> gpu_buffer;
   std::unique_ptr<Pipeline> screen_space_pipeline;
   std::unique_ptr<IndexedMesh> fullscreen_quad;
 };

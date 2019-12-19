@@ -25,6 +25,7 @@
 #include "../../shaders/bridging_header.h"
 
 #include "../graphics/indexed_mesh.h"
+#include "../graphics/texture.h"
 
 using Raytracer::Graphics::IndexedMesh;
 using Raytracer::Graphics::RendererWhitted;
@@ -77,31 +78,14 @@ RendererWhitted::RendererWhitted(SDL_Window* window)
     glEnable(GL_DEBUG_OUTPUT);
     glDebugMessageCallback(MessageCallback, this);
 #endif
-
-  glGenTextures(1, &gpu_buffer);
-
-  glGenSamplers(1, &linear_sampler);
-  int32_t linear = GL_LINEAR;
-  int32_t clamp_to_edge = GL_CLAMP_TO_EDGE;
-  glSamplerParameteriv(linear_sampler, GL_TEXTURE_WRAP_S, &clamp_to_edge);
-  glSamplerParameteriv(linear_sampler, GL_TEXTURE_WRAP_T, &clamp_to_edge);
-  glSamplerParameteriv(linear_sampler, GL_TEXTURE_MIN_FILTER, &linear);
-  glSamplerParameteriv(linear_sampler, GL_TEXTURE_MAG_FILTER, &linear);
-#if !__EMSCRIPTEN__
-  glObjectLabel(GL_SAMPLER, linear_sampler, -1, "Linear Sampler");
-#endif
-
-  create_geometry();
-  create_pipeline();
+    create_geometry();
+    create_pipeline();
   }
 }
 
 RendererWhitted::~RendererWhitted()
 {
-  if (context) {
-    glDeleteTextures(1, &gpu_buffer);
-    glDeleteSamplers(1, &linear_sampler);
-  }
+  SDL_GL_DeleteContext(context);
 }
 
 bool
@@ -341,7 +325,7 @@ RendererWhitted::compute_primary_rays(const Camera& camera)
 void
 RendererWhitted::run(const Scene& scene)
 {
-  static const float clear_color[4] = { 1.0f, 1.0f, 0.0f, 1.0f };
+  static const vec4 clear_color = { 1.0f, 1.0f, 0.0f, 1.0f };
 
   auto& cam = scene.get_camera();
 
@@ -377,26 +361,21 @@ RendererWhitted::run(const Scene& scene)
 
   // binding texture
   if (context) {
-    glBindTexture(GL_TEXTURE_2D, gpu_buffer);
-    glTexSubImage2D(GL_TEXTURE_2D,
-                    0,
-                    0,
-                    0,
-                    width,
-                    height,
-                    GL_RGB,
-                    GL_FLOAT,
-                    cpu_buffer.data());
+    if (gpu_buffer) {
+      gpu_buffer->upload(
+        cpu_buffer.data(),
+        static_cast<uint32_t>(cpu_buffer.size() * sizeof(cpu_buffer[0])));
+    }
 
     // clearing screen
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glClearBufferfv(GL_COLOR, 0, clear_color);
+    glClearBufferfv(GL_COLOR, 0, clear_color.e);
 
     // Actually putting it to the screen?
     screen_space_pipeline->bind();
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, gpu_buffer);
-    glBindSampler(0, linear_sampler);
+    if (gpu_buffer) {
+      gpu_buffer->bind(0);
+    }
     fullscreen_quad->draw();
 
     glFinish();
@@ -448,19 +427,8 @@ RendererWhitted::rebuild_backbuffers()
   rays.resize(width * height);
 
   if (context) {
-    glBindTexture(GL_TEXTURE_2D, gpu_buffer);
-    glTexImage2D(GL_TEXTURE_2D,
-                 0,
-                 GL_RGB32F,
-                 width,
-                 height,
-                 0,
-                 GL_RGB,
-                 GL_FLOAT,
-                 cpu_buffer.data());
-#if !__EMSCRIPTEN__
-    glObjectLabel(GL_TEXTURE, gpu_buffer, -1, "CPU-GPU buffer");
-#endif
+    gpu_buffer = Texture::create(width, height, Texture::Format::rgb32f);
+    gpu_buffer->set_debug_name("CPU-GPU buffer");
 
     glViewport(0, 0, width, height);
   }
