@@ -1,6 +1,5 @@
 #include "renderer_whitted.h"
 
-#include <array>
 #include <thread>
 #include <vector>
 
@@ -20,12 +19,12 @@
 #include "pipeline.h"
 #include "ray.h"
 #include "scene.h"
-#include "window.h"
 
 #include "shaders/fullscreen_fs.h"
 #include "shaders/passthrough_vs.h"
-
 #include "../../shaders/bridging_header.h"
+
+#include "../graphics/indexed_mesh.h"
 
 using Raytracer::Graphics::IndexedMesh;
 using Raytracer::Graphics::RendererWhitted;
@@ -50,69 +49,7 @@ MessageCallback([[maybe_unused]] GLenum source,
           severity,
           message);
 }
-
-static const float fullscreen_quad_vertices[8] = {
-  // Top left
-  0.0f,
-  0.0f,
-  // Top right
-  1.0f,
-  0.0f,
-  // Bottom left
-  1.0f,
-  1.0f,
-  // Bottom right
-  0.0f,
-  1.0f,
-};
-static const uint16_t fullscreen_quad_indices[6] = { 0, 1, 2, 2, 3, 0 };
-}
-
-IndexedMesh::IndexedMesh(uint32_t vertex_buffer,
-                         uint32_t index_buffer,
-                         uint32_t vao,
-                         std::vector<MeshAttributes> attributes)
-  : vertex_buffer(vertex_buffer)
-  , index_buffer(index_buffer)
-  , vao(vao)
-  , attributes(std::move(attributes))
-{}
-
-IndexedMesh::~IndexedMesh()
-{
-  glDeleteBuffers(2, reinterpret_cast<uint32_t*>(this));
-  glDeleteVertexArrays(1, &vao);
-}
-
-void
-IndexedMesh::bind() const
-{
-  glBindVertexArray(vao);
-  glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
-  uint32_t attr_index = 0;
-  uintptr_t attr_offset = 0;
-  for (auto& attr : attributes) {
-    auto size = attr.count;
-    switch (attr.type) {
-      case GL_FLOAT:
-        size *= sizeof(float);
-        break;
-      default:
-        printf("unsupported type\n");
-        return;
-    }
-    glEnableVertexAttribArray(attr_index);
-    glVertexAttribPointer(attr_index,
-                          attr.count,
-                          attr.type,
-                          GL_FALSE,
-                          size,
-                          reinterpret_cast<const void*>(attr_offset));
-    attr_index++;
-    attr_offset += size;
-  }
-}
+} // namespace
 
 RendererWhitted::RendererWhitted(SDL_Window* window)
   : width(0)
@@ -457,15 +394,10 @@ RendererWhitted::run(const Scene& scene)
 
     // Actually putting it to the screen?
     screen_space_pipeline->bind();
-    fullscreen_quad->bind();
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, gpu_buffer);
     glBindSampler(0, linear_sampler);
-    glDrawElements(GL_TRIANGLES,
-                   sizeof(fullscreen_quad_indices) /
-                     sizeof(fullscreen_quad_indices[0]),
-                   GL_UNSIGNED_SHORT,
-                   nullptr);
+    fullscreen_quad->draw();
 
     glFinish();
   }
@@ -537,25 +469,7 @@ RendererWhitted::rebuild_backbuffers()
 void
 RendererWhitted::create_geometry()
 {
-  uint32_t buffers[2];
-  uint32_t vao;
-  glGenBuffers(2, buffers);
-  glGenVertexArrays(1, &vao);
-  fullscreen_quad = std::make_unique<IndexedMesh>(
-    buffers[0],
-    buffers[1],
-    vao,
-    std::vector<IndexedMesh::MeshAttributes>{
-      IndexedMesh::MeshAttributes{ GL_FLOAT, 2 } });
-  fullscreen_quad->bind();
-  glBufferData(GL_ARRAY_BUFFER,
-               sizeof(fullscreen_quad_vertices),
-               fullscreen_quad_vertices,
-               GL_STATIC_DRAW);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-               sizeof(fullscreen_quad_indices),
-               fullscreen_quad_indices,
-               GL_STATIC_DRAW);
+  fullscreen_quad = IndexedMesh::create_fullscreen_quad();
 }
 
 void
