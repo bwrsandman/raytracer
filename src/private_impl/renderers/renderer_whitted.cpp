@@ -453,5 +453,5 @@ RendererWhitted::create_pipeline()
   info.fragment_shader_binary = fullscreen_fs;
   info.fragment_shader_size = sizeof(fullscreen_fs) / sizeof(fullscreen_fs[0]);
   info.fragment_shader_entry_point = "main";
-  screen_space_pipeline = Pipeline::create(Pipeline::Type::RaterOpenGL, info);
+  screen_space_pipeline = Pipeline::create(Pipeline::Type::RasterOpenGL, info);
 }

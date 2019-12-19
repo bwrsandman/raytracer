@@ -26,7 +26,7 @@ class Pipeline
 public:
   enum class Type
   {
-    RaterOpenGL,
+    RasterOpenGL,
   };
   virtual ~Pipeline() = default;
   virtual void bind() = 0;
