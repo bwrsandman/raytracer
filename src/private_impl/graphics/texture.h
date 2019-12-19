@@ -35,5 +35,7 @@ private:
   const uint32_t width;
   const uint32_t height;
   const Format format;
+
+  friend struct Framebuffer;
 };
 } // namespace Raytracer::Graphics

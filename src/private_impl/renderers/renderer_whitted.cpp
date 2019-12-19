@@ -26,9 +26,11 @@
 
 #include "../graphics/indexed_mesh.h"
 #include "../graphics/texture.h"
+#include "../graphics/framebuffer.h"
 
 using Raytracer::Graphics::IndexedMesh;
 using Raytracer::Graphics::RendererWhitted;
+using Raytracer::Graphics::Framebuffer;
 using Raytracer::Hittable::Point;
 using namespace Raytracer::Math;
 using namespace Raytracer;
@@ -78,6 +80,7 @@ RendererWhitted::RendererWhitted(SDL_Window* window)
     glEnable(GL_DEBUG_OUTPUT);
     glDebugMessageCallback(MessageCallback, this);
 #endif
+    backbuffer = Framebuffer::default_framebuffer();
     create_geometry();
     create_pipeline();
   }
@@ -368,8 +371,7 @@ RendererWhitted::run(const Scene& scene)
     }
 
     // clearing screen
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glClearBufferfv(GL_COLOR, 0, clear_color.e);
+    backbuffer->clear({ clear_color });
 
     // Actually putting it to the screen?
     screen_space_pipeline->bind();
