@@ -17,6 +17,7 @@
 #include "materials/lambert.h"
 #include "materials/material.h"
 #include "materials/metal.h"
+#include "renderer.h"
 #include "scene.h"
 
 using namespace Raytracer;
@@ -36,7 +37,9 @@ Ui::Ui(SDL_Window* window)
 }
 
 void
-Ui::run(std::unique_ptr<Scene>& scene, std::chrono::microseconds& dt) const
+Ui::run(std::unique_ptr<Scene>& scene,
+        Graphics::Renderer& renderer,
+        std::chrono::microseconds& dt) const
 {
   ImGui_ImplOpenGL3_NewFrame();
   ImGui_ImplSDL2_NewFrame(window);
@@ -44,6 +47,13 @@ Ui::run(std::unique_ptr<Scene>& scene, std::chrono::microseconds& dt) const
 
   if (ImGui::Begin("Configuration ")) {
     ImGui::Text("%.2f fps %.2f ms", 1e6f / dt.count(), dt.count() / 1000.0f);
+
+    {
+      bool debug = renderer.get_debug();
+      ImGui::Checkbox("Debug BVH", &debug);
+      renderer.set_debug(debug);
+    }
+
     ImGui::Text("Load Scene");
     if (ImGui::Button("Whitted")) {
       SDL_SetWindowSize(window, 512, 512);
@@ -60,12 +70,26 @@ Ui::run(std::unique_ptr<Scene>& scene, std::chrono::microseconds& dt) const
     if (ImGui::Button("BoxTextured.gltf")) {
       scene = Scene::load_from_gltf("BoxTextured.gltf");
     }
-    ImGui::SameLine();
+    if (ImGui::IsItemHovered()) {
+      ImGui::SetTooltip("12 triangles");
+    }
     if (ImGui::Button("Duck.gltf")) {
       scene = Scene::load_from_gltf("Duck.gltf");
     }
-    if (ImGui::Button("DamagedHelmet.gltf (slow)")) {
+    if (ImGui::IsItemHovered()) {
+      ImGui::SetTooltip("4,212 triangles");
+    }
+    if (ImGui::Button("DamagedHelmet.gltf")) {
       scene = Scene::load_from_gltf("DamagedHelmet.gltf");
+    }
+    if (ImGui::IsItemHovered()) {
+      ImGui::SetTooltip("15,452 triangles");
+    }
+    if (ImGui::Button("Sponza.gltf")) {
+      scene = Scene::load_from_gltf("Sponza.gltf");
+    }
+    if (ImGui::IsItemHovered()) {
+      ImGui::SetTooltip("785,900 triangles");
     }
     if (ImGui::CollapsingHeader("Camera", ImGuiTreeNodeFlags_DefaultOpen)) {
       ImGui::Text("Use WASD to move the camera and\n"

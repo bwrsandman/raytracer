@@ -43,6 +43,8 @@ public:
   void compute_primary_rays(const Camera& camera);
   void run(const Scene& scene) override;
   void set_backbuffer_size(uint16_t w, uint16_t h) override;
+  bool get_debug() const override;
+  void set_debug(bool value) override;
 
 private:
   void rebuild_backbuffers();
@@ -56,9 +58,11 @@ private:
              float t_max) const;
   uint32_t raygen(const Ray& ray,
                   const Scene& scene,
+                  bool debug_bvh,
                   vec3& color) const override;
 
   SDL_GLContext context;
+  bool debug_bvh;
   uint16_t width;
   uint16_t height;
 

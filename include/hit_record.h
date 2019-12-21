@@ -15,5 +15,6 @@ struct hit_record
   vec3 tangent;
   vec3 uv;
   uint16_t mat_id;
+  uint32_t bvh_hits = 0;
 };
 } // namespace Raytracer

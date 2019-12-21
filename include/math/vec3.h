@@ -48,6 +48,20 @@ public:
   }
   inline void make_unit_vector();
 
+  inline uint8_t major_axis() const
+  {
+    uint8_t result = 0;
+    float widest_axis = e[0];
+    if (widest_axis < e[1]) {
+      result = 1;
+      widest_axis = e[1];
+    }
+    if (widest_axis < e[2]) {
+      result = 2;
+    }
+    return result;
+  }
+
   float e[3];
 };
 
@@ -267,6 +281,100 @@ max(const vec3& v, float f)
 {
   return vec3(std::max(v.e[0], f), std::max(v.e[1], f), std::max(v.e[2], f));
 }
+template<>
+class numeric_limits<vec3>
+{
+public:
+  static constexpr bool is_specialized =
+    std::numeric_limits<float>::is_specialized;
+  static constexpr vec3 min() noexcept
+  {
+    return vec3(std::numeric_limits<float>::min(),
+                std::numeric_limits<float>::min(),
+                std::numeric_limits<float>::min());
+  }
+  static constexpr vec3 max() noexcept
+  {
+    return vec3(std::numeric_limits<float>::max(),
+                std::numeric_limits<float>::max(),
+                std::numeric_limits<float>::max());
+  }
+  static constexpr vec3 lowest() noexcept
+  {
+    return vec3(std::numeric_limits<float>::lowest(),
+                std::numeric_limits<float>::lowest(),
+                std::numeric_limits<float>::lowest());
+  }
+  static constexpr int digits = std::numeric_limits<float>::digits;
+  static constexpr int digits10 = std::numeric_limits<float>::digits10;
+  static constexpr bool is_signed = std::numeric_limits<float>::is_signed;
+  static constexpr bool is_integer = std::numeric_limits<float>::is_integer;
+  static constexpr bool is_exact = std::numeric_limits<float>::is_exact;
+  static constexpr int radix = std::numeric_limits<float>::radix;
+  static constexpr vec3 epsilon() noexcept
+  {
+    return vec3(std::numeric_limits<float>::epsilon(),
+                std::numeric_limits<float>::epsilon(),
+                std::numeric_limits<float>::epsilon());
+  }
+  static constexpr vec3 round_error() noexcept
+  {
+    return vec3(std::numeric_limits<float>::round_error(),
+                std::numeric_limits<float>::round_error(),
+                std::numeric_limits<float>::round_error());
+  }
+
+  static constexpr int min_exponent = std::numeric_limits<float>::min_exponent;
+  static constexpr int min_exponent10 =
+    std::numeric_limits<float>::min_exponent10;
+  static constexpr int max_exponent = std::numeric_limits<float>::max_exponent;
+  static constexpr int max_exponent10 =
+    std::numeric_limits<float>::max_exponent10;
+
+  static constexpr bool has_infinity = std::numeric_limits<float>::has_infinity;
+  static constexpr bool has_quiet_NaN =
+    std::numeric_limits<float>::has_quiet_NaN;
+  static constexpr bool has_signaling_NaN =
+    std::numeric_limits<float>::has_signaling_NaN;
+  static constexpr float_denorm_style has_denorm =
+    std::numeric_limits<float>::has_denorm;
+  static constexpr bool has_denorm_loss =
+    std::numeric_limits<float>::has_denorm_loss;
+  static constexpr vec3 infinity() noexcept
+  {
+    return vec3(std::numeric_limits<float>::infinity(),
+                std::numeric_limits<float>::infinity(),
+                std::numeric_limits<float>::infinity());
+  }
+  static constexpr vec3 quiet_NaN() noexcept
+  {
+    return vec3(std::numeric_limits<float>::quiet_NaN(),
+                std::numeric_limits<float>::quiet_NaN(),
+                std::numeric_limits<float>::quiet_NaN());
+  }
+  static constexpr vec3 signaling_NaN() noexcept
+  {
+    return vec3(std::numeric_limits<float>::signaling_NaN(),
+                std::numeric_limits<float>::signaling_NaN(),
+                std::numeric_limits<float>::signaling_NaN());
+  }
+  static constexpr vec3 denorm_min() noexcept
+  {
+    return vec3(std::numeric_limits<float>::denorm_min(),
+                std::numeric_limits<float>::denorm_min(),
+                std::numeric_limits<float>::denorm_min());
+  }
+
+  static constexpr bool is_iec559 = std::numeric_limits<float>::is_iec559;
+  static constexpr bool is_bounded = std::numeric_limits<float>::is_bounded;
+  static constexpr bool is_modulo = std::numeric_limits<float>::is_modulo;
+
+  static constexpr bool traps = std::numeric_limits<float>::traps;
+  static constexpr bool tinyness_before =
+    std::numeric_limits<float>::tinyness_before;
+  static constexpr float_round_style round_style =
+    std::numeric_limits<float>::round_style;
+};
 } // namespace std
 
 namespace Raytracer::Math {

@@ -49,7 +49,7 @@ protected:
     for (auto _ : state) {
       vec3 color = vec3(0.0f, 0.0f, 0.0f);
       auto ray = rays[ray_index % ray_count];
-      total_rays += renderer->raygen(ray, *scene, color);
+      total_rays += renderer->raygen(ray, *scene, false, color);
       ray_index++;
     }
   }
@@ -150,10 +150,3 @@ BENCHMARK_F(glTFDamagedHelmet, PrimaryRayTraverse)(benchmark::State& state)
 {
   raygen_test(state);
 }
-
-BENCHMARK_REGISTER_F(Whitted, PrimaryRayTraverse);
-BENCHMARK_REGISTER_F(Cornell, PrimaryRayTraverse);
-BENCHMARK_REGISTER_F(Mandelbulb, PrimaryRayTraverse);
-BENCHMARK_REGISTER_F(glTFBox, PrimaryRayTraverse);
-BENCHMARK_REGISTER_F(glTFDuck, PrimaryRayTraverse);
-BENCHMARK_REGISTER_F(glTFDamagedHelmet, PrimaryRayTraverse);
