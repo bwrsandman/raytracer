@@ -23,5 +23,5 @@ void main() {
     direction.y *= -1.0f;
 
     rg_out_ray_origin = vec4(uniform_block.camera.origin, 1);
-    rg_out_ray_direction = vec4(direction, 1);
+    rg_out_ray_direction = vec4(direction, 0);
 }

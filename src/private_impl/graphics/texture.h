@@ -3,6 +3,7 @@
 #include <cstdint>
 
 #include <memory>
+#include <string>
 
 namespace Raytracer::Graphics {
 struct Texture
@@ -11,10 +12,19 @@ struct Texture
   {
     rgb32f,
     rgba32f,
+    rgba32u,
+    rgba32i,
+  };
+
+  enum class MipMapFilter
+  {
+    linear,
+    nearest,
   };
 
   static std::unique_ptr<Texture> create(uint32_t width,
                                          uint32_t height,
+                                         MipMapFilter filter,
                                          Format format);
   virtual ~Texture();
 

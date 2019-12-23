@@ -1,5 +1,7 @@
 #include "framebuffer.h"
 
+#include <cassert>
+
 #include <glad/glad.h>
 
 #include "texture.h"
@@ -53,8 +55,9 @@ Framebuffer::~Framebuffer()
 void
 Framebuffer::clear(const std::vector<vec4>& color) const
 {
+  assert(color.size() == size || native_handle == 0);
   bind();
-  for (uint8_t i = 0; i < size; ++i) {
+  for (uint8_t i = 0; i < color.size(); ++i) {
     glClearBufferfv(GL_COLOR, i, color[i].e);
   }
 }

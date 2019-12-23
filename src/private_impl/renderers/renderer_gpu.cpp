@@ -18,6 +18,9 @@
 #include "../../shaders/bridging_header.h"
 #include "shaders/fullscreen_fs.h"
 #include "shaders/gpu_1_raygen_fs.h"
+#include "shaders/gpu_2_scene_traversal_fs.h"
+#include "shaders/gpu_3a_closest_hit_fs.h"
+#include "shaders/gpu_3b_miss_all_fs.h"
 #include "shaders/passthrough_vs.h"
 
 using namespace Raytracer::Graphics;
@@ -95,6 +98,96 @@ RendererGpu::encode_raygen()
 }
 
 void
+RendererGpu::encode_scene_traversal()
+{
+  constexpr vec4 clear_color = { 1.0f, 1.0f, 0.0f, 1.0f };
+  glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "scene traversal");
+  scene_traversal_framebuffer->clear({
+    clear_color,
+    clear_color,
+    clear_color,
+    clear_color,
+    clear_color,
+    clear_color,
+  });
+  scene_traversal_pipeline->bind();
+  {
+    GLint st_ray_direction = glGetUniformLocation(
+      scene_traversal_pipeline->get_native_handle(), "st_ray_direction");
+    glUniform1i(st_ray_direction, ST_RAY_DIRECTION_LOCATION);
+    }
+    raygen_textures[RG_OUT_RAY_ORIGIN_LOCATION]->bind(ST_RAY_ORIGIN_LOCATION);
+    raygen_textures[RG_OUT_RAY_DIRECTION_LOCATION]->bind(
+      ST_RAY_DIRECTION_LOCATION);
+    scene_traversal_framebuffer->bind();
+    fullscreen_quad->draw();
+    glPopDebugGroup(); // scene_traversal_pipeline
+}
+
+void
+RendererGpu::encode_any_hit()
+{
+  constexpr vec4 clear_color = { 0.0f, 0.0f, 0.0f, 1.0f };
+  constexpr std::string_view debug_strs[2] = {
+    "closest hit",
+    "miss all",
+  };
+  Pipeline* pipelines[2] = {
+    closest_hit_pipeline.get(),
+    miss_all_pipeline.get(),
+  };
+  Framebuffer* framebuffers[2] = {
+    closest_hit_framebuffer.get(),
+    miss_all_framebuffer.get(),
+  };
+  for (uint8_t i = 0; i < 2; ++i) {
+    glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, debug_strs[i].data());
+    framebuffers[i]->clear({ clear_color });
+    pipelines[i]->bind();
+    {
+      GLint ah_hit_record_0 = glGetUniformLocation(
+        pipelines[i]->get_native_handle(), "ah_hit_record_0");
+      glUniform1i(ah_hit_record_0, AH_HIT_RECORD_0_LOCATION);
+      GLint ah_hit_record_1 = glGetUniformLocation(
+        pipelines[i]->get_native_handle(), "ah_hit_record_1");
+      glUniform1i(ah_hit_record_1, AH_HIT_RECORD_1_LOCATION);
+      GLint ah_hit_record_2 = glGetUniformLocation(
+        pipelines[i]->get_native_handle(), "ah_hit_record_2");
+      glUniform1i(ah_hit_record_2, AH_HIT_RECORD_2_LOCATION);
+      GLint ah_hit_record_3 = glGetUniformLocation(
+        pipelines[i]->get_native_handle(), "ah_hit_record_3");
+      glUniform1i(ah_hit_record_3, AH_HIT_RECORD_3_LOCATION);
+      GLint ah_incident_ray_origin = glGetUniformLocation(
+        pipelines[i]->get_native_handle(), "ah_incident_ray_origin");
+      glUniform1i(ah_incident_ray_origin, AH_INCIDENT_RAY_ORIGIN_LOCATION);
+      GLint ah_incident_ray_direction = glGetUniformLocation(
+        pipelines[i]->get_native_handle(), "ah_incident_ray_direction");
+      glUniform1i(ah_incident_ray_direction,
+                  AH_INCIDENT_RAY_DIRECTION_LOCATION);
+      GLint ma_color =
+        glGetUniformLocation(pipelines[i]->get_native_handle(), "ma_color");
+      glUniform1i(ma_color, MA_IN_COLOR_LOCATION);
+    }
+    scene_traversal_textures[AH_HIT_RECORD_0_LOCATION]->bind(
+      AH_HIT_RECORD_0_LOCATION);
+    scene_traversal_textures[AH_HIT_RECORD_1_LOCATION]->bind(
+      AH_HIT_RECORD_1_LOCATION);
+    scene_traversal_textures[AH_HIT_RECORD_2_LOCATION]->bind(
+      AH_HIT_RECORD_2_LOCATION);
+    scene_traversal_textures[AH_HIT_RECORD_3_LOCATION]->bind(
+      AH_HIT_RECORD_3_LOCATION);
+    scene_traversal_textures[AH_INCIDENT_RAY_ORIGIN_LOCATION]->bind(
+      AH_INCIDENT_RAY_ORIGIN_LOCATION);
+    scene_traversal_textures[AH_INCIDENT_RAY_DIRECTION_LOCATION]->bind(
+      AH_INCIDENT_RAY_DIRECTION_LOCATION);
+    closest_hit_textures[AH_OUT_COLOR_LOCATION]->bind(MA_IN_COLOR_LOCATION);
+    framebuffers[i]->bind();
+    fullscreen_quad->draw();
+    glPopDebugGroup();
+  }
+}
+
+void
 RendererGpu::encode_final_blit()
 {
   constexpr vec4 clear_color = { 1.0f, 1.0f, 0.0f, 1.0f };
@@ -102,7 +195,7 @@ RendererGpu::encode_final_blit()
   backbuffer->clear({ clear_color });
   backbuffer->bind();
   final_blit_pipeline->bind();
-  raygen_textures[RG_OUT_RAY_ORIGIN_LOCATION]->bind(0);
+  miss_all_textures[AH_OUT_COLOR_LOCATION]->bind(EA_COLOR_LOCATION);
   fullscreen_quad->draw();
   glPopDebugGroup();
 }
@@ -133,6 +226,9 @@ RendererGpu::run(const Scene& world)
 
     upload_uniforms(world);
     encode_raygen();
+    encode_scene_traversal();
+    encode_any_hit();
+    // TODO: Accumulate in framebuffer and sample it as second texture
     encode_final_blit();
 
     glFinish();
@@ -153,11 +249,11 @@ RendererGpu::set_backbuffer_size(uint16_t w, uint16_t h)
 void
 RendererGpu::rebuild_raygen_buffers()
 {
-  raygen_textures[RG_OUT_RAY_ORIGIN_LOCATION] =
-    Texture::create(width, height, Texture::Format::rgba32f);
+  raygen_textures[RG_OUT_RAY_ORIGIN_LOCATION] = Texture::create(
+    width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32f);
   raygen_textures[RG_OUT_RAY_ORIGIN_LOCATION]->set_debug_name("ray origin");
-  raygen_textures[RG_OUT_RAY_DIRECTION_LOCATION] =
-    Texture::create(width, height, Texture::Format::rgba32f);
+  raygen_textures[RG_OUT_RAY_DIRECTION_LOCATION] = Texture::create(
+    width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32f);
   raygen_textures[RG_OUT_RAY_DIRECTION_LOCATION]->set_debug_name(
     "ray direction");
   raygen_framebuffer =
@@ -165,9 +261,62 @@ RendererGpu::rebuild_raygen_buffers()
 }
 
 void
+RendererGpu::rebuild_scene_traversal()
+{
+  scene_traversal_textures[AH_HIT_RECORD_0_LOCATION] = Texture::create(
+    width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32f);
+  scene_traversal_textures[AH_HIT_RECORD_0_LOCATION]->set_debug_name(
+    "hit record (t, position)");
+  scene_traversal_textures[AH_HIT_RECORD_1_LOCATION] = Texture::create(
+    width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32f);
+  scene_traversal_textures[AH_HIT_RECORD_1_LOCATION]->set_debug_name(
+    "hit record (normal, u)");
+  scene_traversal_textures[AH_HIT_RECORD_2_LOCATION] = Texture::create(
+    width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32f);
+  scene_traversal_textures[AH_HIT_RECORD_2_LOCATION]->set_debug_name(
+    "hit record (tangent, v)");
+  scene_traversal_textures[AH_HIT_RECORD_3_LOCATION] = Texture::create(
+    width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32i);
+  scene_traversal_textures[AH_HIT_RECORD_3_LOCATION]->set_debug_name(
+    "hit record (status, mat_id, bvh_hits)");
+  scene_traversal_textures[AH_INCIDENT_RAY_ORIGIN_LOCATION] = Texture::create(
+    width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32f);
+  scene_traversal_textures[AH_INCIDENT_RAY_ORIGIN_LOCATION]->set_debug_name(
+    "ray origin");
+  scene_traversal_textures[AH_INCIDENT_RAY_DIRECTION_LOCATION] =
+    Texture::create(
+      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32f);
+  scene_traversal_textures[AH_INCIDENT_RAY_DIRECTION_LOCATION]->set_debug_name(
+    "ray direction");
+  scene_traversal_framebuffer = Framebuffer::create(
+    scene_traversal_textures.data(), scene_traversal_textures.size());
+}
+
+void
 RendererGpu::rebuild_backbuffers()
 {
   rebuild_raygen_buffers();
+  rebuild_scene_traversal();
+  {
+    closest_hit_textures[AH_OUT_COLOR_LOCATION] =
+      Texture::create(width,
+                      height,
+                      Texture::MipMapFilter::nearest,
+                      Texture::Format::rgba32f); // TODO could be 8 bit colors
+    closest_hit_framebuffer = Framebuffer::create(
+      closest_hit_textures,
+      sizeof(closest_hit_textures) / sizeof(closest_hit_textures[0]));
+  }
+  {
+    miss_all_textures[AH_OUT_COLOR_LOCATION] =
+      Texture::create(width,
+                      height,
+                      Texture::MipMapFilter::nearest,
+                      Texture::Format::rgba32f); // TODO could be 8 bit colors
+    miss_all_framebuffer = Framebuffer::create(miss_all_textures,
+                                               sizeof(miss_all_textures) /
+                                                 sizeof(miss_all_textures[0]));
+  }
 }
 
 bool
@@ -198,6 +347,30 @@ RendererGpu::create_pipelines()
   info.fragment_shader_entry_point = "main";
   raygen_pipeline = Pipeline::create(Pipeline::Type::RasterOpenGL, info);
   raygen_ray_camera = Buffer::create(sizeof(camera_uniform_t));
+
+  // Scene Traversal
+  info.fragment_shader_binary = gpu_2_scene_traversal_fs;
+  info.fragment_shader_size =
+    sizeof(gpu_2_scene_traversal_fs) / sizeof(gpu_2_scene_traversal_fs[0]);
+  info.fragment_shader_entry_point = "main";
+  scene_traversal_pipeline =
+    Pipeline::create(Pipeline::Type::RasterOpenGL, info);
+
+  // TODO Any hit
+
+  // Closest Hit
+  info.fragment_shader_binary = gpu_3a_closest_hit_fs;
+  info.fragment_shader_size =
+    sizeof(gpu_3a_closest_hit_fs) / sizeof(gpu_3a_closest_hit_fs[0]);
+  info.fragment_shader_entry_point = "main";
+  closest_hit_pipeline = Pipeline::create(Pipeline::Type::RasterOpenGL, info);
+
+  // Miss All
+  info.fragment_shader_binary = gpu_3b_miss_all_fs;
+  info.fragment_shader_size =
+    sizeof(gpu_3b_miss_all_fs) / sizeof(gpu_3b_miss_all_fs[0]);
+  info.fragment_shader_entry_point = "main";
+  miss_all_pipeline = Pipeline::create(Pipeline::Type::RasterOpenGL, info);
 
   // Accumulation
   info.fragment_shader_binary = fullscreen_fs;

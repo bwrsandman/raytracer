@@ -429,7 +429,8 @@ RendererWhitted::rebuild_backbuffers()
   rays.resize(width * height);
 
   if (context) {
-    gpu_buffer = Texture::create(width, height, Texture::Format::rgb32f);
+    gpu_buffer = Texture::create(
+      width, height, Texture::MipMapFilter::linear, Texture::Format::rgb32f);
     gpu_buffer->set_debug_name("CPU-GPU buffer");
 
     glViewport(0, 0, width, height);

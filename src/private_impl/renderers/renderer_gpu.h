@@ -35,11 +35,14 @@ private:
   void upload_uniforms(const Scene& world);
 
   void rebuild_raygen_buffers();
+  void rebuild_scene_traversal();
   void rebuild_backbuffers();
 
   void create_pipelines();
 
   void encode_raygen();
+  void encode_scene_traversal();
+  void encode_any_hit();
   void encode_final_blit();
 
   SDL_GLContext context;
@@ -52,6 +55,18 @@ private:
   std::unique_ptr<Buffer> raygen_ray_camera;
   std::array<std::unique_ptr<Texture>, 2> raygen_textures;
   std::unique_ptr<Framebuffer> raygen_framebuffer;
+
+  std::unique_ptr<Pipeline> scene_traversal_pipeline;
+  std::array<std::unique_ptr<Texture>, 6> scene_traversal_textures;
+  std::unique_ptr<Framebuffer> scene_traversal_framebuffer;
+
+  std::unique_ptr<Pipeline> closest_hit_pipeline;
+  std::unique_ptr<Texture> closest_hit_textures[1];
+  std::unique_ptr<Framebuffer> closest_hit_framebuffer;
+
+  std::unique_ptr<Pipeline> miss_all_pipeline;
+  std::unique_ptr<Texture> miss_all_textures[1];
+  std::unique_ptr<Framebuffer> miss_all_framebuffer;
 
   std::unique_ptr<Pipeline> final_blit_pipeline;
 

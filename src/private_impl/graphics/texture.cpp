@@ -13,9 +13,18 @@ struct TextureFormatLookUp
   const uint32_t type;
 };
 
-std::array<TextureFormatLookUp, 2> TextureFormatLookUpTable = {
+std::array<TextureFormatLookUp, 4> TextureFormatLookUpTable = {
   /* rgb32f  */ TextureFormatLookUp{ GL_RGB, GL_RGB32F, GL_FLOAT },
   /* rgba32f */ TextureFormatLookUp{ GL_RGBA, GL_RGBA32F, GL_FLOAT },
+  /* rgba32u */
+  TextureFormatLookUp{ GL_RGBA_INTEGER, GL_RGBA32UI, GL_UNSIGNED_INT },
+  /* rgba32i */
+  TextureFormatLookUp{ GL_RGBA_INTEGER, GL_RGBA32I, GL_INT },
+};
+
+std::array<uint32_t, 2> TextureFilterLookUpTable = {
+  /* linear  */ GL_LINEAR,
+  /* nearest */ GL_NEAREST,
 };
 
 using namespace Raytracer::Graphics;
@@ -23,6 +32,7 @@ using namespace Raytracer::Graphics;
 std::unique_ptr<Texture>
 Raytracer::Graphics::Texture::create(uint32_t width,
                                      uint32_t height,
+                                     MipMapFilter filter,
                                      Format format)
 {
   uint32_t texture = 0;
@@ -30,12 +40,12 @@ Raytracer::Graphics::Texture::create(uint32_t width,
   glGenTextures(1, &texture);
   glGenSamplers(1, &sampler);
 
-  int32_t linear = GL_LINEAR;
+  int32_t gl_filter = TextureFilterLookUpTable[static_cast<uint32_t>(filter)];
   int32_t clamp_to_edge = GL_CLAMP_TO_EDGE;
   glSamplerParameteriv(sampler, GL_TEXTURE_WRAP_S, &clamp_to_edge);
   glSamplerParameteriv(sampler, GL_TEXTURE_WRAP_T, &clamp_to_edge);
-  glSamplerParameteriv(sampler, GL_TEXTURE_MIN_FILTER, &linear);
-  glSamplerParameteriv(sampler, GL_TEXTURE_MAG_FILTER, &linear);
+  glSamplerParameteriv(sampler, GL_TEXTURE_MIN_FILTER, &gl_filter);
+  glSamplerParameteriv(sampler, GL_TEXTURE_MAG_FILTER, &gl_filter);
 
   auto gl_format = TextureFormatLookUpTable[static_cast<uint32_t>(format)];
 
