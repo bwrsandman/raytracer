@@ -3,9 +3,9 @@
 
 #if __cplusplus
 using namespace Raytracer::Math;
-#define ALIGN16 alignas(16)
 #else
-#define ALIGN16
+#define uint32_t uint
+#define alignas(x)
 #define M_PI 3.14159265358979323846       /* pi */
 #define M_PI_2 1.57079632679489661923     /* pi/2 */
 #define M_PI_4 0.78539816339744830962     /* pi/4 */
@@ -21,12 +21,17 @@ using namespace Raytracer::Math;
 /// c++ code.
 /// The purpose of this header is to avoid double declarations.
 
-struct camera_uniform_t
+struct alignas(64) camera_uniform_t
 {
-  ALIGN16 vec3 origin;
-  ALIGN16 vec3 lower_left_corner;
-  ALIGN16 vec3 horizontal;
-  ALIGN16 vec3 vertical;
+  alignas(16) vec3 origin;
+  alignas(16) vec3 lower_left_corner;
+  alignas(16) vec3 horizontal;
+  alignas(16) vec3 vertical;
+};
+
+struct anyhit_uniform_data_t
+{
+  uint32_t frame_count;
 };
 
 // Vertex shader inputs

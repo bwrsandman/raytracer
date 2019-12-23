@@ -2,6 +2,8 @@
 
 #include "renderer.h"
 
+#include <cstdint>
+
 #include <array>
 
 typedef void* SDL_GLContext;
@@ -32,6 +34,7 @@ public:
 
 private:
   void upload_camera_uniforms(const Camera& camera);
+  void upload_anyhit_uniforms();
   void upload_uniforms(const Scene& world);
 
   void rebuild_raygen_buffers();
@@ -46,6 +49,7 @@ private:
   void encode_final_blit();
 
   SDL_GLContext context;
+  uint32_t frame_count;
   uint16_t width;
   uint16_t height;
 
@@ -60,10 +64,10 @@ private:
   std::array<std::unique_ptr<Texture>, 6> scene_traversal_textures;
   std::unique_ptr<Framebuffer> scene_traversal_framebuffer;
 
+  std::unique_ptr<Buffer> anyhit_uniform;
   std::unique_ptr<Pipeline> closest_hit_pipeline;
   std::unique_ptr<Texture> closest_hit_textures[1];
   std::unique_ptr<Framebuffer> closest_hit_framebuffer;
-
   std::unique_ptr<Pipeline> miss_all_pipeline;
   std::unique_ptr<Texture> miss_all_textures[1];
   std::unique_ptr<Framebuffer> miss_all_framebuffer;

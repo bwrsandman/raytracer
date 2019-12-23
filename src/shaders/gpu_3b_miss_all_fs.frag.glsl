@@ -18,7 +18,7 @@ layout(binding = MA_IN_COLOR_LOCATION) uniform sampler2D ma_color;
 layout(location = AH_OUT_COLOR_LOCATION) out vec4 ah_out_color;
 
 layout (binding = AH_UNIFORM_BINDING, std140) uniform uniform_block_t {
-    uint frame_count;
+    anyhit_uniform_data_t data;
 } uniform_block;
 
 void main() {
@@ -45,5 +45,5 @@ void main() {
     vec4 ray_direction = texelFetch(ah_incident_ray_direction, iid, 0);
 
     ah_out_color = mix(top, bot, 0.5f * (-ray_direction.y + 1.0f));
-    ah_out_color.a = 1.0f / uniform_block.frame_count;
+    ah_out_color.a = 1.0f / uniform_block.data.frame_count;
 }

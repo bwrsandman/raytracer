@@ -17,7 +17,7 @@ layout(binding = AH_INCIDENT_RAY_DIRECTION_LOCATION) uniform sampler2D ah_incide
 layout(location = AH_OUT_COLOR_LOCATION) out vec4 ah_out_color;
 
 layout (binding = AH_UNIFORM_BINDING, std140) uniform uniform_block_t {
-    uint frame_count;
+    anyhit_uniform_data_t data;
 } uniform_block;
 
 void main() {
@@ -36,5 +36,5 @@ void main() {
     }
 
     ah_out_color = vec4(mod(rec.uv.x, 0.1f) > 0.05f ^^ mod(rec.uv.y, 0.1f) > 0.05f);
-    ah_out_color.a = 1.0f / uniform_block.frame_count;
+    ah_out_color.a = 1.0f / uniform_block.data.frame_count;
 }

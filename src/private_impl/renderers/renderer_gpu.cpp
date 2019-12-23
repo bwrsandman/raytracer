@@ -51,6 +51,9 @@ MessageCallback([[maybe_unused]] GLenum /*source*/,
 } // namespace
 
 RendererGpu::RendererGpu(SDL_Window* window)
+  : frame_count(0)
+  , width(0)
+  , height(0)
 {
   // Request opengl 3.2 context.
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
@@ -181,6 +184,7 @@ RendererGpu::encode_any_hit()
     scene_traversal_textures[AH_INCIDENT_RAY_DIRECTION_LOCATION]->bind(
       AH_INCIDENT_RAY_DIRECTION_LOCATION);
     closest_hit_textures[AH_OUT_COLOR_LOCATION]->bind(MA_IN_COLOR_LOCATION);
+    anyhit_uniform->bind(AH_UNIFORM_BINDING);
     framebuffers[i]->bind();
     fullscreen_quad->draw();
     glPopDebugGroup();
@@ -213,15 +217,31 @@ RendererGpu::upload_camera_uniforms(const Camera& camera)
 }
 
 void
+RendererGpu::upload_anyhit_uniforms()
+{
+  anyhit_uniform_data_t anyhit_uniform_data{
+    frame_count,
+  };
+  anyhit_uniform->upload(&anyhit_uniform_data, sizeof(anyhit_uniform_data));
+}
+
+void
 RendererGpu::upload_uniforms(const Scene& world)
 {
   upload_camera_uniforms(world.get_camera());
+  upload_anyhit_uniforms();
 }
 
 void
 RendererGpu::run(const Scene& world)
 {
+  if (world.get_camera().is_dirty()) {
+    frame_count = 0;
+  }
+
   if (context) {
+    ++frame_count;
+
     glViewport(0, 0, width, height);
 
     upload_uniforms(world);
@@ -317,6 +337,8 @@ RendererGpu::rebuild_backbuffers()
                                                sizeof(miss_all_textures) /
                                                  sizeof(miss_all_textures[0]));
   }
+
+  frame_count = 0;
 }
 
 bool
@@ -347,6 +369,7 @@ RendererGpu::create_pipelines()
   info.fragment_shader_entry_point = "main";
   raygen_pipeline = Pipeline::create(Pipeline::Type::RasterOpenGL, info);
   raygen_ray_camera = Buffer::create(sizeof(camera_uniform_t));
+  raygen_ray_camera->set_debug_name("raygen_ray_camera");
 
   // Scene Traversal
   info.fragment_shader_binary = gpu_2_scene_traversal_fs;
@@ -357,6 +380,8 @@ RendererGpu::create_pipelines()
     Pipeline::create(Pipeline::Type::RasterOpenGL, info);
 
   // TODO Any hit
+  anyhit_uniform = Buffer::create(sizeof(anyhit_uniform_data_t));
+  anyhit_uniform->set_debug_name("anyhit_uniform");
 
   // Closest Hit
   info.fragment_shader_binary = gpu_3a_closest_hit_fs;
