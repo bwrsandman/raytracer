@@ -150,3 +150,18 @@ BENCHMARK_F(glTFDamagedHelmet, PrimaryRayTraverse)(benchmark::State& state)
 {
   raygen_test(state);
 }
+
+class glTFSponza : public BaseSceneFixture
+{
+protected:
+  void SetUp(::benchmark::State& state) override
+  {
+    scene = Scene::load_from_gltf("Sponza.gltf");
+    BaseSceneFixture::SetUp(state);
+  }
+};
+
+BENCHMARK_F(glTFSponza, PrimaryRayTraverse)(benchmark::State& state)
+{
+  raygen_test(state);
+}
