@@ -52,6 +52,7 @@ struct anyhit_uniform_data_t
 // Scene Traversal inputs
 #define ST_RAY_ORIGIN_LOCATION 0
 #define ST_RAY_DIRECTION_LOCATION 1
+#define ST_PREVIOUS_HIT_RECORD_0_LOCATION 2
 
 // Any Hit inputs
 #define AH_HIT_RECORD_0_LOCATION 0

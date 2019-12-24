@@ -105,10 +105,14 @@ void
 RendererGpu::encode_scene_traversal()
 {
   constexpr vec4 clear_color = { 0.0f, 0.0f, 0.0f, 1.0f };
+  static const vec4 st_previous_hit_record_0_clear = {
+    std::numeric_limits<float>::max(), 0.0f, 0.0f, 1.0f
+  };
   glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "scene traversal");
   for (uint8_t i = 0; i < 2; ++i) {
+    // set t_max to float max
     scene_traversal_framebuffer[i]->clear({
-      clear_color,
+      st_previous_hit_record_0_clear,
       clear_color,
       clear_color,
       clear_color,
@@ -121,15 +125,20 @@ RendererGpu::encode_scene_traversal()
     GLint st_ray_direction = glGetUniformLocation(
       scene_traversal_pipeline->get_native_handle(), "st_ray_direction");
     glUniform1i(st_ray_direction, ST_RAY_DIRECTION_LOCATION);
-    }
-    raygen_textures[RG_OUT_RAY_ORIGIN_LOCATION]->bind(ST_RAY_ORIGIN_LOCATION);
-    raygen_textures[RG_OUT_RAY_DIRECTION_LOCATION]->bind(
-      ST_RAY_DIRECTION_LOCATION);
-    scene_traversal_framebuffer[1 - scene_traversal_framebuffer_active]->bind();
-    fullscreen_quad->draw();
+    GLint st_previous_hit_record_0 =
+      glGetUniformLocation(scene_traversal_pipeline->get_native_handle(),
+                           "st_previous_hit_record_0");
+    glUniform1i(st_previous_hit_record_0, ST_PREVIOUS_HIT_RECORD_0_LOCATION);
+  }
+  raygen_textures[RG_OUT_RAY_ORIGIN_LOCATION]->bind(ST_RAY_ORIGIN_LOCATION);
+  raygen_textures[ST_RAY_DIRECTION_LOCATION]->bind(ST_RAY_DIRECTION_LOCATION);
+  scene_traversal_textures_ah_hit_record_0[scene_traversal_framebuffer_active]
+    ->bind(ST_PREVIOUS_HIT_RECORD_0_LOCATION);
+  scene_traversal_framebuffer[1 - scene_traversal_framebuffer_active]->bind();
+  fullscreen_quad->draw();
 
-    scene_traversal_framebuffer_active = 1 - scene_traversal_framebuffer_active;
-    glPopDebugGroup(); // scene_traversal_pipeline
+  scene_traversal_framebuffer_active = 1 - scene_traversal_framebuffer_active;
+  glPopDebugGroup(); // scene_traversal_pipeline
 }
 
 void
