@@ -43,6 +43,7 @@ public:
 
   virtual bool get_debug() const = 0;
   virtual void set_debug(bool value) = 0;
+  virtual void set_debug_data(uint32_t data) = 0;
 
 protected:
   Renderer() = default;

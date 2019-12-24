@@ -45,6 +45,7 @@ public:
   void set_backbuffer_size(uint16_t w, uint16_t h) override;
   bool get_debug() const override;
   void set_debug(bool value) override;
+  void set_debug_data(uint32_t data) override;
 
 private:
   void rebuild_backbuffers();
@@ -63,6 +64,7 @@ private:
 
   SDL_GLContext context;
   bool debug_bvh;
+  uint32_t debug_bvh_count;
   uint16_t width;
   uint16_t height;
 

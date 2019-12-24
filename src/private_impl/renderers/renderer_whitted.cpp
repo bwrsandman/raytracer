@@ -118,6 +118,7 @@ RendererWhitted::RendererWhitted(SDL_Window* window)
   : width(0)
   , height(0)
   , debug_bvh(false)
+  , debug_bvh_count(100)
 {
   // Request opengl 3.2 context.
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
@@ -251,14 +252,13 @@ RendererWhitted::raygen(const Ray& primary_ray,
     }
 
     if (debug_bvh) {
-      constexpr uint32_t ray_threshold = 10;
-      float bvh_debug = payload.bvh_hits / static_cast<float>(ray_threshold);
+      float bvh_debug = payload.bvh_hits / static_cast<float>(debug_bvh_count);
       color = vec3(bvh_debug, bvh_debug, bvh_debug);
-      if (payload.bvh_hits > ray_threshold * 3) {
+      if (payload.bvh_hits > debug_bvh_count * 3) {
         color = vec3(1.0f, 0.0f, 0.0f);
-      } else if (payload.bvh_hits > ray_threshold * 2) {
+      } else if (payload.bvh_hits > debug_bvh_count * 2) {
         color = vec3(0.0f, 1.0f, 0.0f);
-      } else if (payload.bvh_hits > ray_threshold) {
+      } else if (payload.bvh_hits > debug_bvh_count) {
         color = vec3(0.0f, 0.0f, 1.0f);
       }
       return payload.bvh_hits;
@@ -491,6 +491,11 @@ void
 RendererWhitted::set_debug(bool value)
 {
   debug_bvh = value;
+}
+void
+RendererWhitted::set_debug_data(uint32_t data)
+{
+  debug_bvh_count = data;
 }
 
 void

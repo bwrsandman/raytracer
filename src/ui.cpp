@@ -69,24 +69,28 @@ Ui::run(std::unique_ptr<Scene>& scene,
     ImGui::Text("Load glTF Scene");
     if (ImGui::Button("BoxTextured.gltf")) {
       scene = Scene::load_from_gltf("BoxTextured.gltf");
+      renderer.set_debug_data(10);
     }
     if (ImGui::IsItemHovered()) {
       ImGui::SetTooltip("12 triangles");
     }
     if (ImGui::Button("Duck.gltf")) {
       scene = Scene::load_from_gltf("Duck.gltf");
+      renderer.set_debug_data(100);
     }
     if (ImGui::IsItemHovered()) {
       ImGui::SetTooltip("4,212 triangles");
     }
     if (ImGui::Button("DamagedHelmet.gltf")) {
       scene = Scene::load_from_gltf("DamagedHelmet.gltf");
+      renderer.set_debug_data(100);
     }
     if (ImGui::IsItemHovered()) {
       ImGui::SetTooltip("15,452 triangles");
     }
     if (ImGui::Button("Sponza.gltf")) {
       scene = Scene::load_from_gltf("Sponza.gltf");
+      renderer.set_debug_data(50000);
     }
     if (ImGui::IsItemHovered()) {
       ImGui::SetTooltip("785,900 triangles");
