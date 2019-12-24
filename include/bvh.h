@@ -18,15 +18,13 @@ struct alignas(32) BvhNode
   };
   /// This is the amount of primitive indices for leaves
   /// If count is 0, then this is an internal node
-  union
-  {
-    uint32_t index_count;
-    bool is_leaf;
-  };
+  uint32_t index_count;
+
+  bool is_leaf() const { return index_count > 0; }
 
   uint32_t right_bvh_offset() const
   {
-    assert(!is_leaf);
+    assert(!is_leaf());
     return left_bvh_offset + 1;
   }
 };
