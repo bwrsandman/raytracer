@@ -54,6 +54,7 @@ RendererGpu::RendererGpu(SDL_Window* window)
   : frame_count(0)
   , width(0)
   , height(0)
+  , scene_traversal_framebuffer_active(0)
 {
   // Request opengl 3.2 context.
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
@@ -103,16 +104,18 @@ RendererGpu::encode_raygen()
 void
 RendererGpu::encode_scene_traversal()
 {
-  constexpr vec4 clear_color = { 1.0f, 1.0f, 0.0f, 1.0f };
+  constexpr vec4 clear_color = { 0.0f, 0.0f, 0.0f, 1.0f };
   glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "scene traversal");
-  scene_traversal_framebuffer->clear({
-    clear_color,
-    clear_color,
-    clear_color,
-    clear_color,
-    clear_color,
-    clear_color,
-  });
+  for (uint8_t i = 0; i < 2; ++i) {
+    scene_traversal_framebuffer[i]->clear({
+      clear_color,
+      clear_color,
+      clear_color,
+      clear_color,
+      clear_color,
+      clear_color,
+    });
+  }
   scene_traversal_pipeline->bind();
   {
     GLint st_ray_direction = glGetUniformLocation(
@@ -122,8 +125,10 @@ RendererGpu::encode_scene_traversal()
     raygen_textures[RG_OUT_RAY_ORIGIN_LOCATION]->bind(ST_RAY_ORIGIN_LOCATION);
     raygen_textures[RG_OUT_RAY_DIRECTION_LOCATION]->bind(
       ST_RAY_DIRECTION_LOCATION);
-    scene_traversal_framebuffer->bind();
+    scene_traversal_framebuffer[1 - scene_traversal_framebuffer_active]->bind();
     fullscreen_quad->draw();
+
+    scene_traversal_framebuffer_active = 1 - scene_traversal_framebuffer_active;
     glPopDebugGroup(); // scene_traversal_pipeline
 }
 
@@ -171,17 +176,17 @@ RendererGpu::encode_any_hit()
         glGetUniformLocation(pipelines[i]->get_native_handle(), "ma_color");
       glUniform1i(ma_color, MA_IN_COLOR_LOCATION);
     }
-    scene_traversal_textures[AH_HIT_RECORD_0_LOCATION]->bind(
-      AH_HIT_RECORD_0_LOCATION);
-    scene_traversal_textures[AH_HIT_RECORD_1_LOCATION]->bind(
+    scene_traversal_textures_ah_hit_record_0[scene_traversal_framebuffer_active]
+      ->bind(AH_HIT_RECORD_0_LOCATION);
+    scene_traversal_textures[AH_HIT_RECORD_1_LOCATION - 1]->bind(
       AH_HIT_RECORD_1_LOCATION);
-    scene_traversal_textures[AH_HIT_RECORD_2_LOCATION]->bind(
+    scene_traversal_textures[AH_HIT_RECORD_2_LOCATION - 1]->bind(
       AH_HIT_RECORD_2_LOCATION);
-    scene_traversal_textures[AH_HIT_RECORD_3_LOCATION]->bind(
+    scene_traversal_textures[AH_HIT_RECORD_3_LOCATION - 1]->bind(
       AH_HIT_RECORD_3_LOCATION);
-    scene_traversal_textures[AH_INCIDENT_RAY_ORIGIN_LOCATION]->bind(
+    scene_traversal_textures[AH_INCIDENT_RAY_ORIGIN_LOCATION - 1]->bind(
       AH_INCIDENT_RAY_ORIGIN_LOCATION);
-    scene_traversal_textures[AH_INCIDENT_RAY_DIRECTION_LOCATION]->bind(
+    scene_traversal_textures[AH_INCIDENT_RAY_DIRECTION_LOCATION - 1]->bind(
       AH_INCIDENT_RAY_DIRECTION_LOCATION);
     closest_hit_textures[AH_OUT_COLOR_LOCATION]->bind(MA_IN_COLOR_LOCATION);
     anyhit_uniform->bind(AH_UNIFORM_BINDING);
@@ -283,33 +288,59 @@ RendererGpu::rebuild_raygen_buffers()
 void
 RendererGpu::rebuild_scene_traversal()
 {
-  scene_traversal_textures[AH_HIT_RECORD_0_LOCATION] = Texture::create(
-    width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32f);
-  scene_traversal_textures[AH_HIT_RECORD_0_LOCATION]->set_debug_name(
-    "hit record (t, position)");
-  scene_traversal_textures[AH_HIT_RECORD_1_LOCATION] = Texture::create(
-    width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32f);
-  scene_traversal_textures[AH_HIT_RECORD_1_LOCATION]->set_debug_name(
-    "hit record (normal, u)");
-  scene_traversal_textures[AH_HIT_RECORD_2_LOCATION] = Texture::create(
-    width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32f);
-  scene_traversal_textures[AH_HIT_RECORD_2_LOCATION]->set_debug_name(
-    "hit record (tangent, v)");
-  scene_traversal_textures[AH_HIT_RECORD_3_LOCATION] = Texture::create(
-    width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32i);
-  scene_traversal_textures[AH_HIT_RECORD_3_LOCATION]->set_debug_name(
-    "hit record (status, mat_id, bvh_hits)");
-  scene_traversal_textures[AH_INCIDENT_RAY_ORIGIN_LOCATION] = Texture::create(
-    width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32f);
-  scene_traversal_textures[AH_INCIDENT_RAY_ORIGIN_LOCATION]->set_debug_name(
-    "ray origin");
-  scene_traversal_textures[AH_INCIDENT_RAY_DIRECTION_LOCATION] =
+  std::unique_ptr<Texture> textures[6] = {
     Texture::create(
-      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32f);
-  scene_traversal_textures[AH_INCIDENT_RAY_DIRECTION_LOCATION]->set_debug_name(
-    "ray direction");
-  scene_traversal_framebuffer = Framebuffer::create(
-    scene_traversal_textures.data(), scene_traversal_textures.size());
+      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32f),
+    Texture::create(
+      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32f),
+    Texture::create(
+      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32f),
+    Texture::create(
+      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32i),
+    Texture::create(
+      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32f),
+    Texture::create(
+      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32f),
+  };
+  scene_traversal_framebuffer[0] =
+    Framebuffer::create(textures, sizeof(textures) / sizeof(textures[0]));
+
+  scene_traversal_textures_ah_hit_record_0[0] =
+    std::move(textures[AH_HIT_RECORD_0_LOCATION]);
+  scene_traversal_textures_ah_hit_record_0[0]->set_debug_name(
+    "hit record (t, position) [0]");
+
+  textures[AH_HIT_RECORD_0_LOCATION] = Texture::create(
+    width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32f);
+
+  scene_traversal_framebuffer[1] =
+    Framebuffer::create(textures, sizeof(textures) / sizeof(textures[0]));
+
+  scene_traversal_textures_ah_hit_record_0[1] =
+    std::move(textures[AH_HIT_RECORD_0_LOCATION]);
+  scene_traversal_textures_ah_hit_record_0[1]->set_debug_name(
+    "hit record (t, position) [1]");
+
+  scene_traversal_textures[AH_HIT_RECORD_1_LOCATION - 1] =
+    std::move(textures[AH_HIT_RECORD_1_LOCATION]);
+  scene_traversal_textures[AH_HIT_RECORD_1_LOCATION - 1]->set_debug_name(
+    "hit record (normal, u)");
+  scene_traversal_textures[AH_HIT_RECORD_2_LOCATION - 1] =
+    std::move(textures[AH_HIT_RECORD_2_LOCATION]);
+  scene_traversal_textures[AH_HIT_RECORD_2_LOCATION - 1]->set_debug_name(
+    "hit record (tangent, v)");
+  scene_traversal_textures[AH_HIT_RECORD_3_LOCATION - 1] =
+    std::move(textures[AH_HIT_RECORD_3_LOCATION]);
+  scene_traversal_textures[AH_HIT_RECORD_3_LOCATION - 1]->set_debug_name(
+    "hit record (status, mat_id, bvh_hits)");
+  scene_traversal_textures[AH_INCIDENT_RAY_ORIGIN_LOCATION - 1] =
+    std::move(textures[AH_INCIDENT_RAY_ORIGIN_LOCATION]);
+  scene_traversal_textures[AH_INCIDENT_RAY_ORIGIN_LOCATION - 1]->set_debug_name(
+    "ray origin");
+  scene_traversal_textures[AH_INCIDENT_RAY_DIRECTION_LOCATION - 1] =
+    std::move(textures[AH_INCIDENT_RAY_DIRECTION_LOCATION]);
+  scene_traversal_textures[AH_INCIDENT_RAY_DIRECTION_LOCATION - 1]
+    ->set_debug_name("ray direction");
 }
 
 void

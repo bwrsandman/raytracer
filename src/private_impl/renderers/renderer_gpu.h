@@ -61,8 +61,10 @@ private:
   std::unique_ptr<Framebuffer> raygen_framebuffer;
 
   std::unique_ptr<Pipeline> scene_traversal_pipeline;
-  std::array<std::unique_ptr<Texture>, 6> scene_traversal_textures;
-  std::unique_ptr<Framebuffer> scene_traversal_framebuffer;
+  std::unique_ptr<Texture> scene_traversal_textures_ah_hit_record_0[2];
+  std::array<std::unique_ptr<Texture>, 5> scene_traversal_textures;
+  std::unique_ptr<Framebuffer> scene_traversal_framebuffer[2];
+  uint8_t scene_traversal_framebuffer_active;
 
   std::unique_ptr<Buffer> anyhit_uniform;
   std::unique_ptr<Pipeline> closest_hit_pipeline;
