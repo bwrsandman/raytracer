@@ -15,7 +15,23 @@ using namespace Raytracer::Math;
 #define M_2_SQRTPI 1.12837916709551257390 /* 2/sqrt(pi) */
 #define M_SQRT2 1.41421356237309504880    /* sqrt(2) */
 #define M_SQRT1_2 0.70710678118654752440  /* 1/sqrt(2) */
+
+// From cmath
+#ifndef _HUGE_ENUF
+#define _HUGE_ENUF 1e+300 // _HUGE_ENUF*_HUGE_ENUF must overflow
 #endif
+#define INFINITY (float(_HUGE_ENUF * _HUGE_ENUF))
+#define HUGE_VAL (double(INFINITY))
+#define HUGE_VALF (float(INFINITY))
+#define NAN (float(INFINITY * 0.0F))
+#define FLT_EPSILON (float(5.96e-08))
+
+#define T_MIN (10e2 * FLT_EPSILON)
+
+#define static
+#endif
+
+#include "sphere_t.h"
 
 /// This is a header which is read by both the gpu shader code and the cpu
 /// c++ code.
@@ -27,6 +43,15 @@ struct alignas(64) camera_uniform_t
   alignas(16) vec3 lower_left_corner;
   alignas(16) vec3 horizontal;
   alignas(16) vec3 vertical;
+};
+
+#define MAX_NUM_SPHERES 4
+
+struct alignas(64) scene_traversal_sphere_uniform_t
+{
+  // x, y, z, radius
+  vec4 spheres[MAX_NUM_SPHERES];
+  uint32_t count;
 };
 
 struct anyhit_uniform_data_t
@@ -50,6 +75,7 @@ struct anyhit_uniform_data_t
 #define RG_OUT_RAY_DIRECTION_LOCATION 1
 
 // Scene Traversal inputs
+#define ST_OBJECT_BINDING 0
 #define ST_RAY_ORIGIN_LOCATION 0
 #define ST_RAY_DIRECTION_LOCATION 1
 #define ST_PREVIOUS_HIT_RECORD_0_LOCATION 2

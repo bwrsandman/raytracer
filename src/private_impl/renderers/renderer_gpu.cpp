@@ -6,19 +6,19 @@
 #include "math/vec3.h"
 #include "math/vec4.h"
 
-#include "camera.h"
-#include "scene.h"
-
 #include "../graphics/buffer.h"
 #include "../graphics/framebuffer.h"
 #include "../graphics/indexed_mesh.h"
 #include "../graphics/texture.h"
+#include "camera.h"
+#include "hittable/sphere.h"
 #include "pipeline.h"
+#include "scene.h"
 
 #include "../../shaders/bridging_header.h"
 #include "shaders/fullscreen_fs.h"
 #include "shaders/gpu_1_raygen_fs.h"
-#include "shaders/gpu_2_scene_traversal_fs.h"
+#include "shaders/gpu_2a_scene_traversal_sphere_fs.h"
 #include "shaders/gpu_3a_closest_hit_fs.h"
 #include "shaders/gpu_3b_miss_all_fs.h"
 #include "shaders/passthrough_vs.h"
@@ -105,14 +105,16 @@ void
 RendererGpu::encode_scene_traversal()
 {
   constexpr vec4 clear_color = { 0.0f, 0.0f, 0.0f, 1.0f };
-  static const vec4 st_previous_hit_record_0_clear = {
+  // set t_max to float max
+  static const vec4 previous_hit_record_clear = {
     std::numeric_limits<float>::max(), 0.0f, 0.0f, 1.0f
   };
   glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "scene traversal");
+
+  // Clear the double buffer
   for (uint8_t i = 0; i < 2; ++i) {
-    // set t_max to float max
     scene_traversal_framebuffer[i]->clear({
-      st_previous_hit_record_0_clear,
+      previous_hit_record_clear,
       clear_color,
       clear_color,
       clear_color,
@@ -120,25 +122,48 @@ RendererGpu::encode_scene_traversal()
       clear_color,
     });
   }
-  scene_traversal_pipeline->bind();
-  {
-    GLint st_ray_direction = glGetUniformLocation(
-      scene_traversal_pipeline->get_native_handle(), "st_ray_direction");
-    glUniform1i(st_ray_direction, ST_RAY_DIRECTION_LOCATION);
-    GLint st_previous_hit_record_0 =
-      glGetUniformLocation(scene_traversal_pipeline->get_native_handle(),
-                           "st_previous_hit_record_0");
-    glUniform1i(st_previous_hit_record_0, ST_PREVIOUS_HIT_RECORD_0_LOCATION);
-  }
-  raygen_textures[RG_OUT_RAY_ORIGIN_LOCATION]->bind(ST_RAY_ORIGIN_LOCATION);
-  raygen_textures[ST_RAY_DIRECTION_LOCATION]->bind(ST_RAY_DIRECTION_LOCATION);
-  scene_traversal_textures_ah_hit_record_0[scene_traversal_framebuffer_active]
-    ->bind(ST_PREVIOUS_HIT_RECORD_0_LOCATION);
-  scene_traversal_framebuffer[1 - scene_traversal_framebuffer_active]->bind();
-  fullscreen_quad->draw();
 
-  scene_traversal_framebuffer_active = 1 - scene_traversal_framebuffer_active;
-  glPopDebugGroup(); // scene_traversal_pipeline
+  enum primitives_t
+  {
+    sphere,
+
+    count
+  };
+
+  constexpr std::string_view debug_strs[primitives_t::count] = {
+    "sphere",
+  };
+  Pipeline* pipelines[primitives_t::count] = {
+    scene_traversal_sphere_pipeline.get(),
+  };
+  Buffer* primitive_buffers[primitives_t::count] = {
+    scene_traversal_spheres.get(),
+  };
+
+  for (uint8_t i = 0; i < primitives_t::count; ++i) {
+    glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, debug_strs[i].data());
+    pipelines[i]->bind();
+    {
+      GLint st_ray_direction = glGetUniformLocation(
+        pipelines[i]->get_native_handle(), "st_ray_direction");
+      glUniform1i(st_ray_direction, ST_RAY_DIRECTION_LOCATION);
+      GLint st_previous_hit_record_0 = glGetUniformLocation(
+        pipelines[i]->get_native_handle(), "st_previous_hit_record_0");
+      glUniform1i(st_previous_hit_record_0, ST_PREVIOUS_HIT_RECORD_0_LOCATION);
+    }
+    raygen_textures[RG_OUT_RAY_ORIGIN_LOCATION]->bind(ST_RAY_ORIGIN_LOCATION);
+    raygen_textures[RG_OUT_RAY_DIRECTION_LOCATION]->bind(
+      ST_RAY_DIRECTION_LOCATION);
+    scene_traversal_textures_ah_hit_record_0[scene_traversal_framebuffer_active]
+      ->bind(ST_PREVIOUS_HIT_RECORD_0_LOCATION);
+    scene_traversal_framebuffer[1 - scene_traversal_framebuffer_active]->bind();
+    primitive_buffers[i]->bind(ST_OBJECT_BINDING);
+    fullscreen_quad->draw();
+    scene_traversal_framebuffer_active = 1 - scene_traversal_framebuffer_active;
+    glPopDebugGroup(); // debug_strs[i]
+  }
+
+  glPopDebugGroup(); // scene traversal
 }
 
 void
@@ -231,6 +256,27 @@ RendererGpu::upload_camera_uniforms(const Camera& camera)
 }
 
 void
+RendererGpu::upload_scene(const std::vector<std::unique_ptr<Object>>& objects)
+{
+  scene_traversal_sphere_uniform_t spheres;
+  spheres.count = 0;
+  for (const auto& obj : objects) {
+    auto sphere = dynamic_cast<const Sphere*>(obj.get());
+    if (sphere != nullptr) {
+      sphere_t shader_sphere;
+      shader_sphere.radius = sphere->radius;
+      shader_sphere.center = vec4(
+        sphere->center.e[0], sphere->center.e[1], sphere->center.e[2], 1.0f);
+      shader_sphere.mat_id = sphere->mat_id;
+      sphere_serialize(shader_sphere, spheres.spheres[spheres.count]);
+      spheres.count++;
+    }
+  }
+  scene_traversal_spheres->upload(&spheres,
+                                  sizeof(scene_traversal_sphere_uniform_t));
+}
+
+void
 RendererGpu::upload_anyhit_uniforms()
 {
   anyhit_uniform_data_t anyhit_uniform_data{
@@ -243,6 +289,7 @@ void
 RendererGpu::upload_uniforms(const Scene& world)
 {
   upload_camera_uniforms(world.get_camera());
+  upload_scene(world.get_world());
   upload_anyhit_uniforms();
 }
 
@@ -411,13 +458,16 @@ RendererGpu::create_pipelines()
   raygen_ray_camera = Buffer::create(sizeof(camera_uniform_t));
   raygen_ray_camera->set_debug_name("raygen_ray_camera");
 
-  // Scene Traversal
-  info.fragment_shader_binary = gpu_2_scene_traversal_fs;
-  info.fragment_shader_size =
-    sizeof(gpu_2_scene_traversal_fs) / sizeof(gpu_2_scene_traversal_fs[0]);
+  // Scene Traversal (sphere)
+  info.fragment_shader_binary = gpu_2a_scene_traversal_sphere_fs;
+  info.fragment_shader_size = sizeof(gpu_2a_scene_traversal_sphere_fs) /
+                              sizeof(gpu_2a_scene_traversal_sphere_fs[0]);
   info.fragment_shader_entry_point = "main";
-  scene_traversal_pipeline =
+  scene_traversal_sphere_pipeline =
     Pipeline::create(Pipeline::Type::RasterOpenGL, info);
+  scene_traversal_spheres =
+    Buffer::create(sizeof(scene_traversal_sphere_uniform_t));
+  scene_traversal_spheres->set_debug_name("scene_traversal_spheres");
 
   // TODO Any hit
   anyhit_uniform = Buffer::create(sizeof(anyhit_uniform_data_t));

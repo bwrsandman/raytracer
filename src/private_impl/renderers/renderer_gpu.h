@@ -5,11 +5,15 @@
 #include <cstdint>
 
 #include <array>
+#include <vector>
 
 typedef void* SDL_GLContext;
 
 namespace Raytracer {
 class Camera;
+namespace Hittable {
+struct Object;
+}
 }
 
 namespace Raytracer::Graphics {
@@ -18,6 +22,8 @@ struct IndexedMesh;
 struct Texture;
 struct Framebuffer;
 class Pipeline;
+
+using Raytracer::Hittable::Object;
 
 class RendererGpu : public Renderer
 {
@@ -34,6 +40,7 @@ public:
 
 private:
   void upload_camera_uniforms(const Camera& camera);
+  void upload_scene(const std::vector<std::unique_ptr<Object>>& objects);
   void upload_anyhit_uniforms();
   void upload_uniforms(const Scene& world);
 
@@ -60,11 +67,12 @@ private:
   std::array<std::unique_ptr<Texture>, 2> raygen_textures;
   std::unique_ptr<Framebuffer> raygen_framebuffer;
 
-  std::unique_ptr<Pipeline> scene_traversal_pipeline;
   std::unique_ptr<Texture> scene_traversal_textures_ah_hit_record_0[2];
   std::array<std::unique_ptr<Texture>, 5> scene_traversal_textures;
   std::unique_ptr<Framebuffer> scene_traversal_framebuffer[2];
   uint8_t scene_traversal_framebuffer_active;
+  std::unique_ptr<Pipeline> scene_traversal_sphere_pipeline;
+  std::unique_ptr<Buffer> scene_traversal_spheres;
 
   std::unique_ptr<Buffer> anyhit_uniform;
   std::unique_ptr<Pipeline> closest_hit_pipeline;

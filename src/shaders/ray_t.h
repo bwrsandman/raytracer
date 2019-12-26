@@ -7,10 +7,10 @@ struct ray_t
   vec4 direction;
 };
 
-vec4
+static vec4
 ray_point_at(ray_t ray, float t)
 {
-  return ray.origin + t * ray.direction;
+  return ray.origin + ray.direction * t;
 }
 
 #endif // RAYTRACER_RAY_T_H

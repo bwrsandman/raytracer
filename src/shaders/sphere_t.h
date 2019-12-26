@@ -10,6 +10,29 @@ struct sphere_t
   int mat_id;
 };
 
+#ifdef __cplusplus
+static void
+sphere_serialize(const sphere_t& sphere, vec4& data)
+{
+  // TODO mat_id
+  data.e[0] = sphere.center.e[0];
+  data.e[1] = sphere.center.e[1];
+  data.e[2] = sphere.center.e[2];
+  data.e[3] = sphere.radius;
+}
+
+#else
+#include "hit_record_t.h"
+
+void
+sphere_deserialize(vec4 data, out sphere_t sphere)
+{
+  // TODO mat_id
+  sphere.center.xyz = data.xyz;
+  sphere.center.w = 1.0f;
+  sphere.radius = data.w;
+}
+
 void
 sphere_hit(ray_t ray,
            sphere_t sphere,
@@ -43,5 +66,6 @@ sphere_hit(ray_t ray,
   }
   rec.status = HIT_RECORD_STATUS_MISS;
 }
+#endif // __cplusplus
 
 #endif // RAYTRACER_SPHERE_T_H

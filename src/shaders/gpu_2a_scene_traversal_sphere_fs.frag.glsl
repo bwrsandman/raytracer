@@ -19,6 +19,10 @@ layout(location = AH_HIT_RECORD_3_LOCATION) out uvec4 ah_hit_record_3;  // statu
 layout(location = AH_INCIDENT_RAY_ORIGIN_LOCATION) out vec4 ah_incident_ray_origin;
 layout(location = AH_INCIDENT_RAY_DIRECTION_LOCATION) out vec4 ah_incident_ray_direction;
 
+layout (binding = ST_OBJECT_BINDING, std140) uniform uniform_block_t {
+    scene_traversal_sphere_uniform_t objects;
+} uniform_block;
+
 void main() {
     ivec2 iid = ivec2(gl_FragCoord.xy);
 
@@ -28,13 +32,28 @@ void main() {
 
     float t_max = texelFetch(st_previous_hit_record_0, iid, 0).x;
 
-    sphere_t sphere;
-    sphere.center = vec4(0, 0, -1, 1);
-    sphere.radius = 0.5f;
-
     hit_record_t rec;
+    rec.status = HIT_RECORD_STATUS_MISS;
+    rec.t = t_max;
 
-    sphere_hit(ray, sphere, 0, t_max, rec);
+    for (uint i = 0; i < uniform_block.objects.count; ++i)
+    {
+        sphere_t sphere;
+        sphere_deserialize(uniform_block.objects.spheres[i], sphere);
+
+        hit_record_t temp_rec;
+
+        sphere_hit(ray, sphere, T_MIN, rec.t - FLT_EPSILON, temp_rec);
+        if (temp_rec.status == HIT_RECORD_STATUS_HIT && rec.t > temp_rec.t) {
+            rec = temp_rec;
+        }
+    }
+
+    if (rec.status == HIT_RECORD_STATUS_MISS)
+    {
+        discard;
+    }
+
     hit_record_serialize(rec, ah_hit_record_0, ah_hit_record_1, ah_hit_record_2, ah_hit_record_3);
 
     ah_incident_ray_origin = ray.origin;
