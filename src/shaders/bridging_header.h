@@ -31,6 +31,7 @@ using namespace Raytracer::Math;
 #define static
 #endif
 
+#include "plane_t.h"
 #include "sphere_t.h"
 
 /// This is a header which is read by both the gpu shader code and the cpu
@@ -51,6 +52,16 @@ struct alignas(64) scene_traversal_sphere_uniform_t
 {
   // x, y, z, radius
   vec4 spheres[MAX_NUM_SPHERES];
+  uint32_t count;
+};
+
+#define MAX_NUM_PLANES 4
+
+struct alignas(64) scene_traversal_plane_uniform_t
+{
+  vec4 min[MAX_NUM_PLANES];
+  vec4 max[MAX_NUM_PLANES];
+  vec4 normal[MAX_NUM_PLANES];
   uint32_t count;
 };
 

@@ -73,6 +73,8 @@ private:
   uint8_t scene_traversal_framebuffer_active;
   std::unique_ptr<Pipeline> scene_traversal_sphere_pipeline;
   std::unique_ptr<Buffer> scene_traversal_spheres;
+  std::unique_ptr<Pipeline> scene_traversal_plane_pipeline;
+  std::unique_ptr<Buffer> scene_traversal_planes;
 
   std::unique_ptr<Buffer> anyhit_uniform;
   std::unique_ptr<Pipeline> closest_hit_pipeline;

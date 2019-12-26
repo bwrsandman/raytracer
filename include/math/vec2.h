@@ -21,6 +21,10 @@ struct vec2
   {
     return vec2(e[0] - rhs.e[0], e[1] - rhs.e[1]);
   }
+  inline vec2 operator/(const vec2& rhs) const
+  {
+    return vec2(e[0] / rhs.e[0], e[1] / rhs.e[1]);
+  }
   inline vec2 operator*(float rhs) const
   {
     return vec2(e[0] * rhs, e[1] * rhs);

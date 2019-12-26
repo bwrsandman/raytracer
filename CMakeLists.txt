@@ -8,6 +8,7 @@ file(GLOB_RECURSE headers CONFIGURE_DEPENDS include/*.h)
 file(GLOB_RECURSE private_impl_sources CONFIGURE_DEPENDS src/private_impl/*)
 
 file(GLOB shaders CONFIGURE_DEPENDS src/shaders/*.glsl)
+file(GLOB shader_headers CONFIGURE_DEPENDS src/shaders/*.h)
 
 file(GLOB_RECURSE textures CONFIGURE_DEPENDS assets/*.jpg assets/*.png assets/*.tga assets/*.gltf)
 
@@ -27,7 +28,7 @@ foreach(shader ${shaders})
             --vn ${shader_name}
             "$<$<CONFIG:debug>:-g -Od>$<$<CONFIG:relwithdebinfo>:-g>$<$<CONFIG:minsizerel>:-Os>"
             ${shader}
-        DEPENDS ${shader}
+        DEPENDS ${shader} ${shader_headers}
     )
     list(APPEND sources ${compiled_shader})
 endforeach()

@@ -22,7 +22,6 @@ public:
            hit_record& rec) const override;
   bool bounding_box(Aabb& box);
 
-private:
   const vec3 min, max, n;
   const uint16_t mat_id;
   Aabb aabb;

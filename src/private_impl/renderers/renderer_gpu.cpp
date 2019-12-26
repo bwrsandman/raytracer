@@ -1,6 +1,7 @@
 #include "renderer_gpu.h"
 
 #include <SDL_video.h>
+#include <cassert>
 #include <glad/glad.h>
 
 #include "math/vec3.h"
@@ -11,6 +12,7 @@
 #include "../graphics/indexed_mesh.h"
 #include "../graphics/texture.h"
 #include "camera.h"
+#include "hittable/plane.h"
 #include "hittable/sphere.h"
 #include "pipeline.h"
 #include "scene.h"
@@ -19,6 +21,7 @@
 #include "shaders/fullscreen_fs.h"
 #include "shaders/gpu_1_raygen_fs.h"
 #include "shaders/gpu_2a_scene_traversal_sphere_fs.h"
+#include "shaders/gpu_2b_scene_traversal_plane_fs.h"
 #include "shaders/gpu_3a_closest_hit_fs.h"
 #include "shaders/gpu_3b_miss_all_fs.h"
 #include "shaders/passthrough_vs.h"
@@ -126,18 +129,22 @@ RendererGpu::encode_scene_traversal()
   enum primitives_t
   {
     sphere,
+    plane,
 
     count
   };
 
   constexpr std::string_view debug_strs[primitives_t::count] = {
     "sphere",
+    "plane",
   };
   Pipeline* pipelines[primitives_t::count] = {
     scene_traversal_sphere_pipeline.get(),
+    scene_traversal_plane_pipeline.get(),
   };
   Buffer* primitive_buffers[primitives_t::count] = {
     scene_traversal_spheres.get(),
+    scene_traversal_planes.get(),
   };
 
   for (uint8_t i = 0; i < primitives_t::count; ++i) {
@@ -260,9 +267,13 @@ RendererGpu::upload_scene(const std::vector<std::unique_ptr<Object>>& objects)
 {
   scene_traversal_sphere_uniform_t spheres;
   spheres.count = 0;
+  scene_traversal_plane_uniform_t planes;
+  planes.count = 0;
   for (const auto& obj : objects) {
     auto sphere = dynamic_cast<const Sphere*>(obj.get());
+    auto plane = dynamic_cast<const Plane*>(obj.get());
     if (sphere != nullptr) {
+      assert(spheres.count < MAX_NUM_SPHERES);
       sphere_t shader_sphere;
       shader_sphere.radius = sphere->radius;
       shader_sphere.center = vec4(
@@ -270,10 +281,22 @@ RendererGpu::upload_scene(const std::vector<std::unique_ptr<Object>>& objects)
       shader_sphere.mat_id = sphere->mat_id;
       sphere_serialize(shader_sphere, spheres.spheres[spheres.count]);
       spheres.count++;
+    } else if (plane != nullptr) {
+      assert(spheres.count < MAX_NUM_PLANES);
+      plane_t shader_plane;
+      shader_plane.min = plane->min;
+      shader_plane.max = plane->max;
+      shader_plane.normal = plane->n;
+      shader_plane.mat_id = plane->mat_id;
+      plane_serialize(shader_plane,
+                      planes.min[planes.count],
+                      planes.max[planes.count],
+                      planes.normal[planes.count]);
+      planes.count++;
     }
   }
-  scene_traversal_spheres->upload(&spheres,
-                                  sizeof(scene_traversal_sphere_uniform_t));
+  scene_traversal_spheres->upload(&spheres, sizeof(spheres));
+  scene_traversal_planes->upload(&planes, sizeof(planes));
 }
 
 void
@@ -468,6 +491,17 @@ RendererGpu::create_pipelines()
   scene_traversal_spheres =
     Buffer::create(sizeof(scene_traversal_sphere_uniform_t));
   scene_traversal_spheres->set_debug_name("scene_traversal_spheres");
+
+  // Scene Traversal (plane)
+  info.fragment_shader_binary = gpu_2b_scene_traversal_plane_fs;
+  info.fragment_shader_size = sizeof(gpu_2b_scene_traversal_plane_fs) /
+                              sizeof(gpu_2b_scene_traversal_plane_fs[0]);
+  info.fragment_shader_entry_point = "main";
+  scene_traversal_plane_pipeline =
+    Pipeline::create(Pipeline::Type::RasterOpenGL, info);
+  scene_traversal_planes =
+    Buffer::create(sizeof(scene_traversal_plane_uniform_t));
+  scene_traversal_planes->set_debug_name("scene_traversal_planes");
 
   // TODO Any hit
   anyhit_uniform = Buffer::create(sizeof(anyhit_uniform_data_t));
