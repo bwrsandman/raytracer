@@ -40,9 +40,9 @@ Rotate_y::Rotate_y(Object* _p, float _angle)
   , sin_theta(0.f)
   , cos_theta(0.f)
 {
-  float radians = (M_PI / 180.f) * _angle;
-  sin_theta = sin(radians);
-  cos_theta = cos(radians);
+  float radians = static_cast<float>(M_PI) / 180.f * _angle;
+  sin_theta = std::sin(radians);
+  cos_theta = std::cos(radians);
 }
 
 bool
@@ -64,16 +64,16 @@ Rotate_y::hit(const Ray& r,
   Ray rotated_r(origin, direction);
 
   if (p->hit(rotated_r, early_out, t_min, t_max, rec)) {
-    vec3 p = rec.p;
+    vec3 point = rec.p;
     vec3 n = rec.normal;
 
-	p[0] = cos_theta * rec.p.x() + sin_theta * rec.p.z();
-    p[2] = -sin_theta * rec.p.x() + cos_theta * rec.p.z();
+    point[0] = cos_theta * rec.p.x() + sin_theta * rec.p.z();
+    point[2] = -sin_theta * rec.p.x() + cos_theta * rec.p.z();
 
-	n[0] = cos_theta * rec.normal.x() + sin_theta * rec.normal.z();
+    n[0] = cos_theta * rec.normal.x() + sin_theta * rec.normal.z();
     n[2] = -sin_theta * rec.normal.x() + cos_theta * rec.normal.z();
 
-	rec.p = p;
+    rec.p = point;
     rec.normal = n;
 
     return true;

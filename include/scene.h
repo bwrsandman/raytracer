@@ -56,8 +56,8 @@ private:
 
   std::vector<SceneNode> nodes;
   uint32_t camera_index;
-  std::vector<std::unique_ptr<Material>> materials;
   std::vector<std::unique_ptr<Texture>> textures;
+  std::vector<std::unique_ptr<Material>> materials;
   std::vector<std::unique_ptr<Object>> world_objects;
   std::vector<std::unique_ptr<Object>> lights;
 };

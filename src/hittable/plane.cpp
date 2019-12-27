@@ -21,7 +21,7 @@ Plane::Plane(vec3 _min, vec3 _max, vec3 _n, uint16_t _m)
 
 bool
 Plane::hit(const Ray& r,
-           bool early_out,
+           [[maybe_unused]] bool early_out,
            float t_min,
            float t_max,
            hit_record& rec) const

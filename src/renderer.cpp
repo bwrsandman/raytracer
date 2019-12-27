@@ -11,4 +11,5 @@ Renderer::create(Type type, SDL_Window* window)
     case Renderer::Type::Whitted:
       return std::make_unique<RendererWhitted>(window);
   }
+  return nullptr;
 }

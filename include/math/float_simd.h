@@ -323,7 +323,9 @@ using Raytracer::Math::float_simd_t;
 inline float_simd_t<4>
 abs(float_simd_t<4> value)
 {
-  return float_simd_t<4>{ _mm_and_ps(value._raw, _mm_set1_epi32(0x7FFFFFFFU)) };
+  thread_local __m128i sign_mask_epi32 = _mm_set1_epi32(0x7FFFFFFFU);
+  thread_local __m128 sign_mask = *reinterpret_cast<__m128*>(&sign_mask_epi32);
+  return float_simd_t<4>{ _mm_and_ps(value._raw, sign_mask) };
 }
 inline float_simd_t<4>
 min(float_simd_t<4> lhs, float_simd_t<4> rhs)

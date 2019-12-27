@@ -12,4 +12,5 @@ Pipeline::create(Type type, const PipelineCreateInfo& info)
     case Pipeline::Type::RaterOpenGL:
       return PipelineRasterOpenGL::create(info);
   }
+  return nullptr;
 }

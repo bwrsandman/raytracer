@@ -35,13 +35,13 @@ using namespace Raytracer;
 
 namespace {
 void GLAPIENTRY
-MessageCallback(GLenum source,
+MessageCallback([[maybe_unused]] GLenum source,
                 GLenum type,
-                GLuint id,
+                [[maybe_unused]] GLuint id,
                 GLenum severity,
-                GLsizei length,
+                [[maybe_unused]] GLsizei length,
                 const GLchar* message,
-                const void* userParam)
+                [[maybe_unused]] const void* userParam)
 {
   fprintf(stderr,
           "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
@@ -179,7 +179,7 @@ RendererWhitted::trace(RayPayload& payload,
   hit_record rec;
   hit_record temp_rec;
   bool hit_anything = false;
-  double closest_so_far = t_max;
+  auto closest_so_far = t_max;
 
   for (auto& object : object_list) {
     if (object->hit(r, early_out, t_min, closest_so_far, temp_rec) &&
@@ -213,7 +213,7 @@ RendererWhitted::trace(RayPayload& payload,
 uint32_t
 RendererWhitted::raygen(const Ray& primary_ray,
                         const Scene& scene,
-                        bool debug_bvh,
+                        bool _debug_bvh,
                         vec3& color) const
 {
   struct AttenuatedRay
@@ -251,7 +251,7 @@ RendererWhitted::raygen(const Ray& primary_ray,
       trace(payload, scene, secondary_rays[i].ray, false, t_min, t_max);
     }
 
-    if (debug_bvh) {
+    if (_debug_bvh) {
       float bvh_debug = payload.bvh_hits / static_cast<float>(debug_bvh_count);
       color = vec3(bvh_debug, bvh_debug, bvh_debug);
       if (payload.bvh_hits > debug_bvh_count * 3) {
@@ -273,7 +273,6 @@ RendererWhitted::raygen(const Ray& primary_ray,
       return next_secondary;
     } else if (payload.type == RayPayload::Type::Lambert) {
       // Add ray to shadow rays
-      auto& geometry_list = scene.get_world();
       for (auto& light : scene.get_lights()) {
         auto point_light = dynamic_cast<const Point*>(light.get());
         if (point_light == nullptr) {
@@ -361,8 +360,8 @@ RendererWhitted::raygen(const Ray& primary_ray,
       // No hit or hit light, add sky
       vec3 unit_direction = normalize(secondary_rays[i].ray.direction);
       float t = 0.5f * (unit_direction.y() + 1.0f);
-      static constexpr vec3 top = vec3(0.5, 0.7, 1.0);
-      static constexpr vec3 bot = vec3(1.0, 1.0, 1.0);
+      static constexpr vec3 top = vec3(0.5f, 0.7f, 1.0f);
+      static constexpr vec3 bot = vec3(1.0f, 1.0f, 1.0f);
       color += lerp(top, bot, t) * secondary_rays[i].attenuation;
       if (payload.type == RayPayload::Type::Emissive) {
         // Hit a light, this should happen very rarely
@@ -387,7 +386,7 @@ RendererWhitted::raygen(const Ray& primary_ray,
     }
   }
 
-  return next_secondary + shadow_rays.size();
+  return next_secondary + static_cast<uint32_t>(shadow_rays.size());
 }
 
 void
@@ -421,11 +420,12 @@ RendererWhitted::run(const Scene& scene)
     block_height++;
   }
   for (uint32_t i = 0; i < num_cores; ++i) {
-    auto offset = i * block_height * width;
-    auto length = block_height * width;
+    uint32_t offset = i * block_height * width;
+    uint32_t length = block_height * width;
 
     threads.emplace_back([this, offset, length, &scene]() {
-      for (uint32_t i = offset; i < offset + length && i < width * height;
+      for (uint32_t i = offset;
+           i < offset + length && static_cast<int>(i) < width * height;
            ++i) {
         vec3 color = vec3(0, 0, 0);
         raygen(rays[i], scene, debug_bvh, color);

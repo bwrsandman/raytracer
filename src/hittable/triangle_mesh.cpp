@@ -52,7 +52,7 @@ TriangleMesh::hit(const Ray& r,
     // Traverse bvh and find indices
     std::queue<uint32_t> nodes_to_visit;
     nodes_to_visit.emplace(0);
-    double closest_so_far = t_max;
+    float closest_so_far = t_max;
     bool hit_anything = false;
     while (!nodes_to_visit.empty()) {
       auto& node = bvh[nodes_to_visit.front()];
@@ -139,7 +139,7 @@ TriangleMesh::ray_triangles_intersect(const Ray& r,
                                       const uint16_t* index_buffer,
                                       uint32_t index_count,
                                       bool early_out,
-                                      float t_min,
+                                      [[maybe_unused]] float t_min,
                                       float t_max,
                                       hit_record& rec) const
 {
@@ -202,9 +202,8 @@ bool
 TriangleMesh::bounding_box(Aabb& box)
 {
   vec3 min = positions[0], max = positions[0];
-  float min_x, min_y, min_z;
 
-  for (int i = 1; i < positions.size(); i++) {
+  for (size_t i = 1; i < positions.size(); i++) {
     for (int j = 0; j < 3; j++) {
       if (min.e[j] > positions[i].e[j])
         min.e[j] = positions[i].e[j];
@@ -264,8 +263,8 @@ split_binned_sah(const std::vector<uint16_t>& indices,
     for (uint16_t i : indices) {
       float bin_id_f32 = k1 * centroids[i].e[major_axis] - k2;
       // float-to-int conversion
-      uint8_t bin_id =
-        std::clamp(bin_id_f32, 0.0f, static_cast<float>(num_bins) - 1);
+      uint8_t bin_id = static_cast<uint8_t>(
+        std::clamp(bin_id_f32, 0.0f, static_cast<float>(num_bins) - 1));
       bins[bin_id].push_back(i);
       bin_aabbs[bin_id].min =
         std::min(bin_aabbs[bin_id].min, bounding_boxes[i].min);
@@ -279,7 +278,7 @@ split_binned_sah(const std::vector<uint16_t>& indices,
   thread_local std::array<float, num_bins> bin_areas;
   float total_bin_area = 0.0f;
   for (uint32_t i = 0; i < num_bins; ++i) {
-    bin_sizes[i] = bins[i].size();
+    bin_sizes[i] = static_cast<uint32_t>(bins[i].size());
     auto bin_size = bin_aabbs[i].max - bin_aabbs[i].min;
     // TODO: the times 2 can probably be removed
     if (bin_sizes[i] == 0) {
@@ -298,7 +297,7 @@ split_binned_sah(const std::vector<uint16_t>& indices,
     // TODO: can we pre-multiply area and count?
     // TODO: can we quick-select? 4 steps for 16 bins
     uint32_t left_count = 0;
-    uint32_t right_count = indices.size();
+    auto right_count = static_cast<uint32_t>(indices.size());
     float left_area = 0.0f;
     float right_area = total_bin_area;
     float best_cost = indices.size() * total_bin_area;
@@ -359,7 +358,7 @@ Raytracer::Hittable::TriangleMesh::build_bvh()
   std::queue<workload_params_t> workload;
 
   // Compute each object/triangle bounding box as well as the centroid.
-  const uint16_t triangle_count = indices.size() / 3;
+  const auto triangle_count = static_cast<uint16_t>(indices.size() / 3);
   std::vector<vec3> centroids(triangle_count);
   std::vector<Aabb> triangle_bbs(triangle_count);
   std::vector<uint16_t> root_triangle_indices(triangle_count);
@@ -419,7 +418,7 @@ Raytracer::Hittable::TriangleMesh::build_bvh()
       // emplace internal node with child id not yet resolved.
       // when loop gets to child, it must set the child id to its own index
       bvh.emplace_back(
-        BvhNode{ params.mesh_bb, std::numeric_limits<uint32_t>::max(), 0 });
+        BvhNode{ params.mesh_bb, { std::numeric_limits<uint32_t>::max() }, 0 });
       workload.emplace(
         workload_params_t{ left_children,
                            left_bb,
@@ -429,7 +428,7 @@ Raytracer::Hittable::TriangleMesh::build_bvh()
     } else {
       bvh.emplace_back(
         BvhNode{ params.mesh_bb,
-                 static_cast<uint32_t>(bvh_optimized_indices.size()),
+                 { static_cast<uint32_t>(bvh_optimized_indices.size()) },
                  static_cast<uint32_t>(params.indices.size() * 3) });
       for (uint32_t i : params.indices) {
         bvh_optimized_indices.emplace_back(indices[i * 3]);
@@ -440,7 +439,8 @@ Raytracer::Hittable::TriangleMesh::build_bvh()
 
     // Set id to parent if requested (only for left children)
     if (params.parent_index != std::numeric_limits<uint32_t>::max()) {
-      bvh[params.parent_index].left_bvh_offset = bvh.size() - 1;
+      bvh[params.parent_index].left_bvh_offset =
+        static_cast<uint32_t>(bvh.size()) - 1;
     }
 
     workload.pop();

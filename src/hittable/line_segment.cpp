@@ -16,9 +16,9 @@ LineSegment::LineSegment(const vec3 pos[2], uint16_t m)
 
 bool
 LineSegment::hit(const Ray& r,
-                 bool early_out,
-                 float t_min,
-                 float t_max,
+                 [[maybe_unused]] bool early_out,
+                 [[maybe_unused]] float t_min,
+                 [[maybe_unused]] float t_max,
                  hit_record& rec) const
 {
   vec3 db = position[1] - position[0];
@@ -29,7 +29,7 @@ LineSegment::hit(const Ray& r,
     return false;
   }
 
-  double s = dot(cross(dc, db), db) / cross(r.direction, db).squared_length();
+  float s = dot(cross(dc, db), db) / cross(r.direction, db).squared_length();
 
   // Means we have an intersection
   if (s >= 0.0 && s <= 1.0) {

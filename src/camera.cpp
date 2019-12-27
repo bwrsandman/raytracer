@@ -43,7 +43,7 @@ void
 Camera::calculate_camera()
 {
   vec3 u, v, w;
-  float theta = v_fov * M_PI / 180;
+  float theta = v_fov * static_cast<float>(M_PI) / 180.0f;
   float half_height = tan(theta / 2);
   float half_width = screen_aspect * half_height;
 

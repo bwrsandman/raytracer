@@ -12,8 +12,8 @@ struct Dielectric : public Material
                       RayPayload& payload,
                       const vec3& texture_coordinates) const override;
 
+  const vec3 albedo;
   float ref_idx;
   float ni;
-  vec3 albedo;
 };
 } // namespace Raytracer::Materials

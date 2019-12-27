@@ -63,10 +63,10 @@ private:
                   vec3& color) const override;
 
   SDL_GLContext context;
-  bool debug_bvh;
-  uint32_t debug_bvh_count;
   uint16_t width;
   uint16_t height;
+  bool debug_bvh;
+  uint32_t debug_bvh_count;
 
   std::vector<Ray> rays;
   std::vector<vec3> cpu_buffer;

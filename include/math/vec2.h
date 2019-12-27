@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-#include "math.h"
+#include <math.h>
 
 namespace Raytracer::Math {
 struct vec2
@@ -33,7 +33,7 @@ struct vec2
 inline void
 vec2::make_unit_vector()
 {
-  float k = 1.0f / sqrt(e[0] * e[0] + e[1] * e[1]);
+  auto k = static_cast<float>(1.0 / sqrt(e[0] * e[0] + e[1] * e[1]));
   e[0] *= k;
   e[1] *= k;
 }
