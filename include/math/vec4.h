@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cassert>
+
 namespace Raytracer::Math {
 struct vec4
 {
@@ -21,6 +23,12 @@ struct vec4
                 e[1] + other.e[1],
                 e[2] + other.e[2],
                 e[3] + other.e[3]);
+  }
+
+  inline float& operator[](uint8_t index)
+  {
+    assert(index < 4);
+    return e[index];
   }
 
   float e[4];

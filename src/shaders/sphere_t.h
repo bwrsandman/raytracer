@@ -41,9 +41,9 @@ sphere_hit(ray_t ray,
            float t_max,
            out hit_record_t rec)
 {
-  vec4 oc = ray.origin - sphere.center;
-  float a = dot(ray.direction, ray.direction);
-  float b = dot(oc, ray.direction);
+  vec3 oc = ray.origin.xyz - sphere.center.xyz;
+  float a = dot(ray.direction.xyz, ray.direction.xyz);
+  float b = dot(oc, ray.direction.xyz);
   float c = dot(oc, oc) - sphere.radius * sphere.radius;
   float discriminant = b * b - a * c;
   if (discriminant > 0) {

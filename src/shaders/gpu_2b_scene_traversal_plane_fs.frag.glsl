@@ -8,9 +8,9 @@
 #include "hit_record_t.h"
 #include "plane_t.h"
 
-layout(binding = ST_RAY_ORIGIN_LOCATION) uniform sampler2D st_ray_origin;
-layout(binding = ST_RAY_DIRECTION_LOCATION) uniform sampler2D st_ray_direction;
-layout(binding = ST_PREVIOUS_HIT_RECORD_0_LOCATION) uniform sampler2D st_previous_hit_record_0; // t, position
+layout(binding = ST_IN_RAY_ORIGIN_LOCATION) uniform sampler2D st_in_ray_origin;
+layout(binding = ST_IN_RAY_DIRECTION_LOCATION) uniform sampler2D st_in_ray_direction;
+layout(binding = ST_IN_PREVIOUS_HIT_RECORD_0_LOCATION) uniform sampler2D st_in_previous_hit_record_0; // t, position
 
 layout(location = AH_HIT_RECORD_0_LOCATION) out vec4 ah_hit_record_0;  // t, position
 layout(location = AH_HIT_RECORD_1_LOCATION) out vec4 ah_hit_record_1;  // normal, u
@@ -27,10 +27,15 @@ void main() {
     ivec2 iid = ivec2(gl_FragCoord.xy);
 
     ray_t ray;
-    ray.origin = texelFetch(st_ray_origin, iid, 0);
-    ray.direction = texelFetch(st_ray_direction, iid, 0);
+    ray.origin = texelFetch(st_in_ray_origin, iid, 0);
+    ray.direction = texelFetch(st_in_ray_direction, iid, 0);
 
-    float t_max = texelFetch(st_previous_hit_record_0, iid, 0).x;
+    if (ray.direction.w == RAY_STATUS_DEAD)
+    {
+        discard;
+    }
+
+    float t_max = texelFetch(st_in_previous_hit_record_0, iid, 0).x;
 
     hit_record_t rec;
     rec.status = HIT_RECORD_STATUS_MISS;

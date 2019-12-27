@@ -13,8 +13,11 @@ layout(binding = AH_HIT_RECORD_2_LOCATION) uniform sampler2D ah_hit_record_2;  /
 layout(binding = AH_HIT_RECORD_3_LOCATION) uniform usampler2D ah_hit_record_3;  // status, mat_id, bvh_hits
 layout(binding = AH_INCIDENT_RAY_ORIGIN_LOCATION) uniform sampler2D ah_incident_ray_origin;
 layout(binding = AH_INCIDENT_RAY_DIRECTION_LOCATION) uniform sampler2D ah_incident_ray_direction;
+layout(binding = AH_IN_ENERGY_ACCUMULATION_LOCATION) uniform sampler2D ah_in_energy_accumulation;
 
-layout(location = AH_OUT_COLOR_LOCATION) out vec4 ah_out_color;
+layout(location = RG_OUT_RAY_ORIGIN_LOCATION) out vec4 rg_out_ray_origin;
+layout(location = RG_OUT_RAY_DIRECTION_LOCATION) out vec4 rg_out_ray_direction;
+layout(location = RG_OUT_ENERGY_ACCUMULATION_LOCATION) out vec4 rg_out_energy_accumulation;
 
 layout (binding = AH_UNIFORM_BINDING, std140) uniform uniform_block_t {
     anyhit_uniform_data_t data;
@@ -35,20 +38,28 @@ void main() {
         discard;
     }
 
-    if (rec.mat_id == 0) {
-        ah_out_color.xyz = vec3(1, 0, 0);
-    } else if (rec.mat_id == 1) {
-        ah_out_color.xyz = vec3(0, 1, 0);
-    } else if (rec.mat_id == 7) {
-        ah_out_color.xyz = vec3(0, 0, 1);
-    } else if (rec.mat_id == 8) {
-        ah_out_color.xyz = vec3(0, 1, 1);
-    } else if (rec.mat_id == 9) {
-        ah_out_color.xyz = vec3(1, 1, 0);
-    } else if (rec.mat_id == 10) {
-        ah_out_color.xyz = vec3(1, 0, 1);
-    } else {
-        ah_out_color = vec4(mod(rec.uv.x, 0.1f) > 0.05f ^^ mod(rec.uv.y, 0.1f) > 0.05f);
+    vec4 ray_direction = texelFetch(ah_incident_ray_direction, iid, 0);
+    vec4 energy_accumulation = texelFetch(ah_in_energy_accumulation, iid, 0);
+
+    if (ray_direction.w == RAY_STATUS_DEAD)
+    {
+        rg_out_energy_accumulation = energy_accumulation;
+        return;
     }
-    ah_out_color.a = 1.0f / uniform_block.data.frame_count;
+    if (rec.mat_id == 0) {
+        rg_out_energy_accumulation.xyz = energy_accumulation.xyz * vec3(1, 0, 0);
+    } else if (rec.mat_id == 1) {
+        rg_out_energy_accumulation.xyz = energy_accumulation.xyz * vec3(0, 1, 0);
+    } else if (rec.mat_id == 7) {
+        rg_out_energy_accumulation.xyz = energy_accumulation.xyz * vec3(0, 0, 1);
+    } else if (rec.mat_id == 8) {
+        rg_out_energy_accumulation.xyz = energy_accumulation.xyz * vec3(0, 1, 1);
+    } else if (rec.mat_id == 9) {
+        rg_out_energy_accumulation.xyz = energy_accumulation.xyz * vec3(1, 1, 0);
+    } else if (rec.mat_id == 10) {
+        rg_out_energy_accumulation.xyz = energy_accumulation.xyz * vec3(1, 0, 1);
+    } else {
+        rg_out_energy_accumulation = energy_accumulation * vec4(mod(rec.uv.x, 0.1f) > 0.05f ^^ mod(rec.uv.y, 0.1f) > 0.05f);
+    }
+    rg_out_energy_accumulation.a = 1.0f / uniform_block.data.frame_count;
 }

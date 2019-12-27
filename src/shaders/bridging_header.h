@@ -3,9 +3,10 @@
 
 #if __cplusplus
 using namespace Raytracer::Math;
+typedef uint32_t uint;
 struct uvec4
 {
-  uint e[4];
+  uint32_t e[4];
 };
 #else
 #define uint32_t uint
@@ -92,12 +93,13 @@ struct anyhit_uniform_data_t
 // Ray Generation outputs
 #define RG_OUT_RAY_ORIGIN_LOCATION 0
 #define RG_OUT_RAY_DIRECTION_LOCATION 1
+#define RG_OUT_ENERGY_ACCUMULATION_LOCATION 2
 
 // Scene Traversal inputs
 #define ST_OBJECT_BINDING 0
-#define ST_RAY_ORIGIN_LOCATION 0
-#define ST_RAY_DIRECTION_LOCATION 1
-#define ST_PREVIOUS_HIT_RECORD_0_LOCATION 2
+#define ST_IN_RAY_ORIGIN_LOCATION 0
+#define ST_IN_RAY_DIRECTION_LOCATION 1
+#define ST_IN_PREVIOUS_HIT_RECORD_0_LOCATION 2
 
 // Any Hit inputs
 #define AH_HIT_RECORD_0_LOCATION 0
@@ -106,14 +108,10 @@ struct anyhit_uniform_data_t
 #define AH_HIT_RECORD_3_LOCATION 3
 #define AH_INCIDENT_RAY_ORIGIN_LOCATION 4
 #define AH_INCIDENT_RAY_DIRECTION_LOCATION 5
+#define AH_IN_ENERGY_ACCUMULATION_LOCATION 6
 #define AH_UNIFORM_BINDING 0
-// Any Hit outputs
-#define AH_OUT_COLOR_LOCATION 0
-
-// Miss All inputs
-#define MA_IN_COLOR_LOCATION 7
 
 // Energy Accumulation input
-#define EA_COLOR_LOCATION 0
+#define EA_IN_COLOR_LOCATION 0
 
 #endif // WHITTED_RAYTRACING_BRIDGING_HEADER_H

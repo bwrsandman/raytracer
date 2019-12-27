@@ -64,11 +64,12 @@ private:
 
   std::unique_ptr<Pipeline> raygen_pipeline;
   std::unique_ptr<Buffer> raygen_ray_camera;
-  std::array<std::unique_ptr<Texture>, 2> raygen_textures;
-  std::unique_ptr<Framebuffer> raygen_framebuffer;
+  std::array<std::unique_ptr<Texture>, 3> raygen_textures[2];
+  std::unique_ptr<Framebuffer> raygen_framebuffer[2];
+  uint8_t raygen_framebuffer_active;
 
   std::unique_ptr<Texture> scene_traversal_textures_ah_hit_record_0[2];
-  std::array<std::unique_ptr<Texture>, 5> scene_traversal_textures;
+  std::array<std::unique_ptr<Texture>, 3> scene_traversal_textures;
   std::unique_ptr<Framebuffer> scene_traversal_framebuffer[2];
   uint8_t scene_traversal_framebuffer_active;
   std::unique_ptr<Pipeline> scene_traversal_sphere_pipeline;
@@ -78,11 +79,7 @@ private:
 
   std::unique_ptr<Buffer> anyhit_uniform;
   std::unique_ptr<Pipeline> closest_hit_pipeline;
-  std::unique_ptr<Texture> closest_hit_textures[1];
-  std::unique_ptr<Framebuffer> closest_hit_framebuffer;
   std::unique_ptr<Pipeline> miss_all_pipeline;
-  std::unique_ptr<Texture> miss_all_textures[1];
-  std::unique_ptr<Framebuffer> miss_all_framebuffer;
 
   std::unique_ptr<Pipeline> final_blit_pipeline;
 
