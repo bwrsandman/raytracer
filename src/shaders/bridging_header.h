@@ -3,6 +3,10 @@
 
 #if __cplusplus
 using namespace Raytracer::Math;
+struct uvec4
+{
+  uint e[4];
+};
 #else
 #define uint32_t uint
 #define alignas(x)
@@ -52,6 +56,8 @@ struct alignas(64) scene_traversal_sphere_uniform_t
 {
   // x, y, z, radius
   vec4 spheres[MAX_NUM_SPHERES];
+  // material_id, unused x3
+  uvec4 materials[MAX_NUM_SPHERES];
   uint32_t count;
 };
 
@@ -62,6 +68,8 @@ struct alignas(64) scene_traversal_plane_uniform_t
   vec4 min[MAX_NUM_PLANES];
   vec4 max[MAX_NUM_PLANES];
   vec4 normal[MAX_NUM_PLANES];
+  // material_id, unused x3
+  uvec4 materials[MAX_NUM_PLANES];
   uint32_t count;
 };
 

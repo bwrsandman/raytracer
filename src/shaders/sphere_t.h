@@ -7,30 +7,31 @@ struct sphere_t
 {
   vec4 center;
   float radius;
-  int mat_id;
+  uint mat_id;
 };
 
 #ifdef __cplusplus
 static void
-sphere_serialize(const sphere_t& sphere, vec4& data)
+sphere_serialize(const sphere_t& sphere, vec4& data0, uvec4& data1)
 {
-  // TODO mat_id
-  data.e[0] = sphere.center.e[0];
-  data.e[1] = sphere.center.e[1];
-  data.e[2] = sphere.center.e[2];
-  data.e[3] = sphere.radius;
+  data0.e[0] = sphere.center.e[0];
+  data0.e[1] = sphere.center.e[1];
+  data0.e[2] = sphere.center.e[2];
+  data0.e[3] = sphere.radius;
+  data1.e[0] = sphere.mat_id;
 }
 
 #else
 #include "hit_record_t.h"
 
 void
-sphere_deserialize(vec4 data, out sphere_t sphere)
+sphere_deserialize(vec4 data0, uvec4 data1, out sphere_t sphere)
 {
   // TODO mat_id
-  sphere.center.xyz = data.xyz;
+  sphere.center.xyz = data0.xyz;
   sphere.center.w = 1.0f;
-  sphere.radius = data.w;
+  sphere.radius = data0.w;
+  sphere.mat_id = data1.x;
 }
 
 void

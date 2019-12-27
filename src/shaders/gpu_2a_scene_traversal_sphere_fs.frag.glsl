@@ -39,7 +39,7 @@ void main() {
     for (uint i = 0; i < uniform_block.objects.count; ++i)
     {
         sphere_t sphere;
-        sphere_deserialize(uniform_block.objects.spheres[i], sphere);
+        sphere_deserialize(uniform_block.objects.spheres[i], uniform_block.objects.materials[i], sphere);
 
         hit_record_t temp_rec;
 

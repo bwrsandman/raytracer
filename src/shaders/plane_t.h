@@ -8,12 +8,16 @@ struct plane_t
   vec3 min;
   vec3 max;
   vec3 normal;
-  int mat_id;
+  uint mat_id;
 };
 
 #ifdef __cplusplus
 static void
-plane_serialize(const plane_t& plane, vec4& data0, vec4& data1, vec4& data2)
+plane_serialize(const plane_t& plane,
+                vec4& data0,
+                vec4& data1,
+                vec4& data2,
+                uvec4& data3)
 {
   // TODO mat_id
   data0.e[0] = plane.min.e[0];
@@ -25,18 +29,23 @@ plane_serialize(const plane_t& plane, vec4& data0, vec4& data1, vec4& data2)
   data2.e[0] = plane.normal.e[0];
   data2.e[1] = plane.normal.e[1];
   data2.e[2] = plane.normal.e[2];
+  data3.e[0] = plane.mat_id;
 }
 
 #else
 #include "hit_record_t.h"
 
 void
-plane_deserialize(vec4 data0, vec4 data1, vec4 data2, out plane_t plane)
+plane_deserialize(vec4 data0,
+                  vec4 data1,
+                  vec4 data2,
+                  uvec4 data3,
+                  out plane_t plane)
 {
-  // TODO mat_id
   plane.min = data0.xyz;
   plane.max = data1.xyz;
   plane.normal = data2.xyz;
+  plane.mat_id = data3.x;
 }
 
 void

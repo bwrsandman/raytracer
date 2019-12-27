@@ -39,7 +39,11 @@ void main() {
     for (uint i = 0; i < uniform_block.objects.count; ++i)
     {
         plane_t plane;
-        plane_deserialize(uniform_block.objects.min[i], uniform_block.objects.max[i], uniform_block.objects.normal[i], plane);
+        plane_deserialize(uniform_block.objects.min[i],
+                          uniform_block.objects.max[i],
+                          uniform_block.objects.normal[i],
+                          uniform_block.objects.materials[i],
+                          plane);
 
         hit_record_t temp_rec;
 

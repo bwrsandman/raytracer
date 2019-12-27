@@ -35,6 +35,20 @@ void main() {
         discard;
     }
 
-    ah_out_color = vec4(mod(rec.uv.x, 0.1f) > 0.05f ^^ mod(rec.uv.y, 0.1f) > 0.05f);
+    if (rec.mat_id == 0) {
+        ah_out_color.xyz = vec3(1, 0, 0);
+    } else if (rec.mat_id == 1) {
+        ah_out_color.xyz = vec3(0, 1, 0);
+    } else if (rec.mat_id == 7) {
+        ah_out_color.xyz = vec3(0, 0, 1);
+    } else if (rec.mat_id == 8) {
+        ah_out_color.xyz = vec3(0, 1, 1);
+    } else if (rec.mat_id == 9) {
+        ah_out_color.xyz = vec3(1, 1, 0);
+    } else if (rec.mat_id == 10) {
+        ah_out_color.xyz = vec3(1, 0, 1);
+    } else {
+        ah_out_color = vec4(mod(rec.uv.x, 0.1f) > 0.05f ^^ mod(rec.uv.y, 0.1f) > 0.05f);
+    }
     ah_out_color.a = 1.0f / uniform_block.data.frame_count;
 }

@@ -279,7 +279,9 @@ RendererGpu::upload_scene(const std::vector<std::unique_ptr<Object>>& objects)
       shader_sphere.center = vec4(
         sphere->center.e[0], sphere->center.e[1], sphere->center.e[2], 1.0f);
       shader_sphere.mat_id = sphere->mat_id;
-      sphere_serialize(shader_sphere, spheres.spheres[spheres.count]);
+      sphere_serialize(shader_sphere,
+                       spheres.spheres[spheres.count],
+                       spheres.materials[spheres.count]);
       spheres.count++;
     } else if (plane != nullptr) {
       assert(spheres.count < MAX_NUM_PLANES);
@@ -291,7 +293,8 @@ RendererGpu::upload_scene(const std::vector<std::unique_ptr<Object>>& objects)
       plane_serialize(shader_plane,
                       planes.min[planes.count],
                       planes.max[planes.count],
-                      planes.normal[planes.count]);
+                      planes.normal[planes.count],
+                      planes.materials[planes.count]);
       planes.count++;
     }
   }
