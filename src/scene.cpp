@@ -832,6 +832,12 @@ Scene::get_material(uint16_t id) const
   return *materials[id];
 }
 
+const std::vector<std::unique_ptr<Material>>&
+Scene::get_material_list() const
+{
+  return materials;
+}
+
 std::vector<std::unique_ptr<Material>>&
 Scene::get_material_list()
 {

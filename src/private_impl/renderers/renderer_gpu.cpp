@@ -14,6 +14,9 @@
 #include "camera.h"
 #include "hittable/plane.h"
 #include "hittable/sphere.h"
+#include "materials/dielectric.h"
+#include "materials/lambert.h"
+#include "materials/metal.h"
 #include "pipeline.h"
 #include "scene.h"
 
@@ -341,12 +344,50 @@ RendererGpu::upload_scene(const std::vector<std::unique_ptr<Object>>& objects)
 }
 
 void
-RendererGpu::upload_anyhit_uniforms()
+RendererGpu::upload_anyhit_uniforms(const Scene& world)
 {
   anyhit_uniform_data_t anyhit_uniform_data{
+    {},
+    0,
     frame_count,
     width,
   };
+  for (const auto& mat : world.get_material_list()) {
+    auto lambert = dynamic_cast<const Lambert*>(mat.get());
+    auto metal = dynamic_cast<const Metal*>(mat.get());
+    auto dielectric = dynamic_cast<const Dielectric*>(mat.get());
+    assert(anyhit_uniform_data.material_count < MAX_NUM_MATERIALS);
+    if (lambert) {
+      anyhit_uniform_data.material_data[anyhit_uniform_data.material_count]
+        .e[0] = lambert->albedo.e[0];
+      anyhit_uniform_data.material_data[anyhit_uniform_data.material_count]
+        .e[1] = lambert->albedo.e[1];
+      anyhit_uniform_data.material_data[anyhit_uniform_data.material_count]
+        .e[2] = lambert->albedo.e[2];
+      anyhit_uniform_data.material_data[anyhit_uniform_data.material_count]
+        .e[3] = MATERIAL_TYPE_LAMBERT;
+    } else if (metal) {
+      anyhit_uniform_data.material_data[anyhit_uniform_data.material_count]
+        .e[0] = metal->albedo.e[0];
+      anyhit_uniform_data.material_data[anyhit_uniform_data.material_count]
+        .e[1] = metal->albedo.e[1];
+      anyhit_uniform_data.material_data[anyhit_uniform_data.material_count]
+        .e[2] = metal->albedo.e[2];
+      anyhit_uniform_data.material_data[anyhit_uniform_data.material_count]
+        .e[3] = MATERIAL_TYPE_METAL;
+    } else if (dielectric) {
+      anyhit_uniform_data.material_data[anyhit_uniform_data.material_count]
+        .e[0] = dielectric->ref_idx;
+      anyhit_uniform_data.material_data[anyhit_uniform_data.material_count]
+        .e[1] = dielectric->ni;
+      anyhit_uniform_data.material_data[anyhit_uniform_data.material_count]
+        .e[3] = MATERIAL_TYPE_DIELECTRIC;
+    } else {
+      anyhit_uniform_data.material_data[anyhit_uniform_data.material_count]
+        .e[3] = MATERIAL_TYPE_UNKNOWN;
+    }
+    anyhit_uniform_data.material_count++;
+  }
   anyhit_uniform->upload(&anyhit_uniform_data, sizeof(anyhit_uniform_data));
 }
 
@@ -355,7 +396,7 @@ RendererGpu::upload_uniforms(const Scene& world)
 {
   upload_camera_uniforms(world.get_camera());
   upload_scene(world.get_world());
-  upload_anyhit_uniforms();
+  upload_anyhit_uniforms(world);
 }
 
 void

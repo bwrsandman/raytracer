@@ -53,24 +53,25 @@ void main() {
         return;
     }
 
-    if (rec.mat_id == 0) {
-        rg_out_energy_accumulation.xyz = energy_accumulation.xyz;
+    vec4 material_data = uniform_block.data.material_data[rec.mat_id];
+    uint material_type = uint(material_data.a);
+
+    if (material_type == MATERIAL_TYPE_METAL) {
+        rg_out_energy_accumulation.xyz = material_data.xyz * energy_accumulation.xyz;
         rg_out_ray_origin.xyz = rec.position + FLT_EPSILON * rec.normal;
         rg_out_ray_direction.xyz = reflect(ray_direction.xyz, rec.normal);
         rg_out_ray_direction.w = RAY_STATUS_ACTIVE;
-    } else if (rec.mat_id == 1) {
-        rg_out_energy_accumulation.xyz = energy_accumulation.xyz * vec3(0.9, 0.9, 0.9);
+    } else if (material_type == MATERIAL_TYPE_LAMBERT) {
+        rg_out_energy_accumulation.xyz = material_data.xyz * energy_accumulation.xyz;
         rg_out_ray_origin.xyz = rec.position + FLT_EPSILON * rec.normal;
         rg_out_ray_direction.xyz = random_point_on_unit_hemisphere_wang_hash(seed, rec.normal);
         rg_out_ray_direction.w = RAY_STATUS_ACTIVE;
-    } else if (rec.mat_id == 7) {
-        const float ref_idx = 1.5f; // TODO: Store in material
+    } else if (material_type == MATERIAL_TYPE_DIELECTRIC) {
+        float ref_idx = material_data.r;
         rg_out_energy_accumulation.xyz = energy_accumulation.xyz;
         rg_out_ray_direction.xyz = material_dielectric_scatter(seed, ray_direction.xyz, rec.normal, ref_idx);
         rg_out_ray_origin.xyz = rec.position + FLT_EPSILON * rg_out_ray_direction.xyz;
         rg_out_ray_direction.w = RAY_STATUS_ACTIVE;
-    } else if (rec.mat_id == 8) {
-        rg_out_energy_accumulation.xyz = energy_accumulation.xyz * vec3(0, 1, 1);
     } else {
         rg_out_energy_accumulation = energy_accumulation * vec4(mod(rec.uv.x, 0.1f) > 0.05f ^^ mod(rec.uv.y, 0.1f) > 0.05f);
         rg_out_ray_origin.xyz = rec.position + FLT_EPSILON * rec.normal;

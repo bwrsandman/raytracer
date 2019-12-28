@@ -90,8 +90,18 @@ struct alignas(64) scene_traversal_plane_uniform_t
   uint32_t count;
 };
 
+// TODO: Remove concept of material types and use single PBR material
+#define MATERIAL_TYPE_UNKNOWN 0
+#define MATERIAL_TYPE_LAMBERT 1
+#define MATERIAL_TYPE_METAL 2
+#define MATERIAL_TYPE_DIELECTRIC 3
+
+#define MAX_NUM_MATERIALS 16
 struct anyhit_uniform_data_t
 {
+  /// color (rgb) / refraction index+ni, type (a)
+  vec4 material_data[MAX_NUM_MATERIALS];
+  uint32_t material_count;
   uint32_t frame_count;
   uint32_t width;
 };

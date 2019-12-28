@@ -43,7 +43,7 @@ public:
 private:
   void upload_camera_uniforms(const Camera& camera);
   void upload_scene(const std::vector<std::unique_ptr<Object>>& objects);
-  void upload_anyhit_uniforms();
+  void upload_anyhit_uniforms(const Scene& world);
   void upload_uniforms(const Scene& world);
 
   void rebuild_raygen_buffers();

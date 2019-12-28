@@ -40,6 +40,7 @@ public:
   std::vector<std::unique_ptr<Object>>& get_lights();
   const Material& get_material(uint16_t id) const;
   const Texture& get_texture(uint16_t id) const;
+  const std::vector<std::unique_ptr<Material>>& get_material_list() const;
   std::vector<std::unique_ptr<Material>>& get_material_list();
   const float min_attenuation_magnitude;
   const uint8_t max_secondary_rays;
