@@ -64,7 +64,11 @@ void main() {
         rg_out_ray_direction.xyz = random_point_on_unit_hemisphere_wang_hash(seed, rec.normal);
         rg_out_ray_direction.w = RAY_STATUS_ACTIVE;
     } else if (rec.mat_id == 7) {
-        rg_out_energy_accumulation.xyz = energy_accumulation.xyz * vec3(0, 0, 1);
+        const float ref_idx = 1.5f; // TODO: Store in material
+        rg_out_energy_accumulation.xyz = energy_accumulation.xyz;
+        rg_out_ray_direction.xyz = material_dielectric_scatter(seed, ray_direction.xyz, rec.normal, ref_idx);
+        rg_out_ray_origin.xyz = rec.position + FLT_EPSILON * rg_out_ray_direction.xyz;
+        rg_out_ray_direction.w = RAY_STATUS_ACTIVE;
     } else if (rec.mat_id == 8) {
         rg_out_energy_accumulation.xyz = energy_accumulation.xyz * vec3(0, 1, 1);
     } else {

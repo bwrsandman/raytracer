@@ -2,6 +2,7 @@
 #define WHITTED_RAYTRACING_BRIDGING_HEADER_H
 
 #if __cplusplus
+#define out
 #define inout
 #define REF &
 #define mix(a, b, t) lerp((a), (b), (t))
@@ -163,6 +164,57 @@ random_point_in_unit_sphere_wang_hash(inout uint REF seed)
     point = 2.0f * random_point_in_unit_cube_wang_hash(seed) - vec3(1, 1, 1);
   } while (dot(point, point) >= 1.0f);
   return point;
+}
+
+static float
+schlick(float cosine, float refraction_index)
+{
+  float r0 = (1.0f - refraction_index) / (1.0f + refraction_index);
+  r0 = r0 * r0;
+  return r0 + (1.0f - r0) * pow((1.0f - cosine), 5.0f);
+}
+
+static bool
+refract(vec3 incident, vec3 normal, float ni_over_nt, out vec3 REF refracted)
+{
+  float cosine = dot(incident, normal);
+  float discriminant =
+    1.0f - ni_over_nt * ni_over_nt * (1.0f - cosine * cosine);
+  if (discriminant > 0.0f) {
+    refracted =
+      ni_over_nt * (incident - normal * cosine) - normal * sqrt(discriminant);
+    return true;
+  }
+  return false;
+}
+
+static vec3
+material_dielectric_scatter(inout uint seed, vec3 direction, vec3 normal, float refraction_index) {
+    vec3 outward_normal;
+    vec3 reflected = reflect(direction, normal);
+    float ni_over_nt;
+    vec3 refracted;
+    float reflect_probability;
+    float cosine = dot(direction, normal);
+    if (cosine > 0.0f) {
+        outward_normal = -normal;
+        ni_over_nt = refraction_index;
+        cosine = sqrt(1 - refraction_index * refraction_index * (1.0f - cosine * cosine));
+    } else {
+        outward_normal = normal;
+        ni_over_nt = 1.0f / refraction_index;
+        cosine = -cosine;
+    }
+    if (refract(direction, outward_normal, ni_over_nt, refracted)) {
+        reflect_probability = schlick(cosine, refraction_index);
+    } else {
+        reflect_probability = 1.0f;
+    }
+    if (rand_wang_hash(seed) < reflect_probability) {
+        return reflected;
+    } else {
+        return refracted;
+    }
 }
 
 #ifndef __cplusplus
