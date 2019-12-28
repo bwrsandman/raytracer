@@ -18,12 +18,13 @@
 #include "scene.h"
 
 #include "../../shaders/bridging_header.h"
-#include "shaders/fullscreen_fs.h"
 #include "shaders/gpu_1_raygen_fs.h"
 #include "shaders/gpu_2a_scene_traversal_sphere_fs.h"
 #include "shaders/gpu_2b_scene_traversal_plane_fs.h"
 #include "shaders/gpu_3a_closest_hit_fs.h"
 #include "shaders/gpu_3b_miss_all_fs.h"
+#include "shaders/gpu_4_energy_accumulation_fs.h"
+#include "shaders/gpu_5_postprocess_fs.h"
 #include "shaders/passthrough_vs.h"
 
 using namespace Raytracer::Graphics;
@@ -59,6 +60,7 @@ RendererGpu::RendererGpu(SDL_Window* window)
   , height(0)
   , raygen_framebuffer_active(0)
   , scene_traversal_framebuffer_active(0)
+  , accumulation_framebuffer_active(0)
 {
   // Request opengl 3.2 context.
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
@@ -250,17 +252,39 @@ RendererGpu::encode_any_hit()
 }
 
 void
+RendererGpu::encode_accumulation()
+{
+  constexpr vec4 clear_color = { 0.0f, 0.0f, 0.0f, 1.0f };
+  glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "accumulation");
+  accumulation_framebuffer[accumulation_framebuffer_active]->clear(
+    { clear_color });
+  accumulation_pipeline->bind();
+  GLint ea_in_previous_energy = glGetUniformLocation(
+    accumulation_pipeline->get_native_handle(), "ea_in_previous_energy");
+  glUniform1i(ea_in_previous_energy, EA_IN_PREVIOUS_ENERGY_LOCATION);
+  accumulation_framebuffer[accumulation_framebuffer_active]->bind();
+  raygen_textures[raygen_framebuffer_active]
+                 [RG_OUT_ENERGY_ACCUMULATION_LOCATION]
+                   ->bind(EA_IN_CURRENT_ENERGY_LOCATION);
+  accumulation_texture[1 - accumulation_framebuffer_active]->bind(
+    EA_IN_PREVIOUS_ENERGY_LOCATION);
+  fullscreen_quad->draw();
+  glPopDebugGroup();
+
+  accumulation_framebuffer_active = 1 - accumulation_framebuffer_active;
+}
+
+void
 RendererGpu::encode_final_blit()
 {
   constexpr vec4 clear_color = { 1.0f, 1.0f, 0.0f, 1.0f };
   glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "final blit");
   backbuffer->clear({ clear_color });
-  backbuffer->bind();
   final_blit_pipeline->bind();
-  raygen_textures[raygen_framebuffer_active]
-                 [RG_OUT_ENERGY_ACCUMULATION_LOCATION]
-                   ->bind(EA_IN_COLOR_LOCATION);
+  accumulation_texture[raygen_framebuffer_active]->bind(
+    F_IMAGE_SAMPLER_LOCATION);
   fullscreen_quad->draw();
+  backbuffer->bind();
   glPopDebugGroup();
 }
 
@@ -350,7 +374,6 @@ RendererGpu::run(const Scene& world)
     encode_raygen();
 
     glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "intersections");
-    constexpr uint8_t max_recursion_depth = 5;
     for (uint8_t j = 0; j < max_recursion_depth; ++j) {
       auto debug_str = (std::string("pass #") + std::to_string(j));
 
@@ -367,7 +390,7 @@ RendererGpu::run(const Scene& world)
     }
     glPopDebugGroup(); // intersections
 
-    // TODO: Accumulate in framebuffer and sample it as second texture
+    encode_accumulation();
     encode_final_blit();
 
     glFinish();
@@ -400,7 +423,7 @@ RendererGpu::rebuild_raygen_buffers()
     raygen_textures[i][RG_OUT_ENERGY_ACCUMULATION_LOCATION] = Texture::create(
       width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32f);
     raygen_textures[i][RG_OUT_ENERGY_ACCUMULATION_LOCATION]->set_debug_name(
-      "energy accumulation " + std::to_string(i));
+      "frame energy accumulation " + std::to_string(i));
     raygen_framebuffer[i] =
       Framebuffer::create(raygen_textures[i].data(), raygen_textures[i].size());
   }
@@ -476,6 +499,17 @@ RendererGpu::rebuild_backbuffers()
   rebuild_raygen_buffers();
   rebuild_scene_traversal();
 
+  for (uint8_t i = 0; i < 2; ++i) {
+    accumulation_texture[i] = Texture::create(
+      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32f);
+    accumulation_texture[i]->set_debug_name("accumulated energy " +
+                                            std::to_string(i));
+    accumulation_framebuffer[i] =
+      Framebuffer::create(&accumulation_texture[i], 1);
+    constexpr vec4 clear_color = { 0.0f, 0.0f, 0.0f, 0.0f };
+    accumulation_framebuffer[i]->clear({ clear_color });
+  }
+
   frame_count = 0;
 }
 
@@ -550,8 +584,16 @@ RendererGpu::create_pipelines()
   miss_all_pipeline = Pipeline::create(Pipeline::Type::RasterOpenGL, info);
 
   // Accumulation
-  info.fragment_shader_binary = fullscreen_fs;
-  info.fragment_shader_size = sizeof(fullscreen_fs) / sizeof(fullscreen_fs[0]);
+  info.fragment_shader_binary = gpu_4_energy_accumulation_fs;
+  info.fragment_shader_size = sizeof(gpu_4_energy_accumulation_fs) /
+                              sizeof(gpu_4_energy_accumulation_fs[0]);
+  info.fragment_shader_entry_point = "main";
+  accumulation_pipeline = Pipeline::create(Pipeline::Type::RasterOpenGL, info);
+
+  // Final Blit
+  info.fragment_shader_binary = gpu_5_postprocess_fs;
+  info.fragment_shader_size =
+    sizeof(gpu_5_postprocess_fs) / sizeof(gpu_5_postprocess_fs[0]);
   info.fragment_shader_entry_point = "main";
   final_blit_pipeline = Pipeline::create(Pipeline::Type::RasterOpenGL, info);
 }

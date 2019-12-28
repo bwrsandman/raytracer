@@ -225,6 +225,7 @@ random_point_on_unit_hemisphere_wang_hash(inout uint REF seed, vec3 REF normal)
 #define AH_UNIFORM_BINDING 0
 
 // Energy Accumulation input
-#define EA_IN_COLOR_LOCATION 0
+#define EA_IN_CURRENT_ENERGY_LOCATION 0
+#define EA_IN_PREVIOUS_ENERGY_LOCATION 1
 
 #endif // WHITTED_RAYTRACING_BRIDGING_HEADER_H

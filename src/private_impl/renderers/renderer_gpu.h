@@ -27,6 +27,8 @@ using Raytracer::Hittable::Object;
 
 class RendererGpu : public Renderer
 {
+  static constexpr uint8_t max_recursion_depth = 16;
+
 public:
   explicit RendererGpu(SDL_Window* window);
   ~RendererGpu() override;
@@ -53,6 +55,7 @@ private:
   void encode_raygen();
   void encode_scene_traversal();
   void encode_any_hit();
+  void encode_accumulation();
   void encode_final_blit();
 
   SDL_GLContext context;
@@ -80,6 +83,11 @@ private:
   std::unique_ptr<Buffer> anyhit_uniform;
   std::unique_ptr<Pipeline> closest_hit_pipeline;
   std::unique_ptr<Pipeline> miss_all_pipeline;
+
+  std::unique_ptr<Texture> accumulation_texture[2];         ///< Double-buffered
+  std::unique_ptr<Framebuffer> accumulation_framebuffer[2]; ///< Double-buffered
+  uint8_t accumulation_framebuffer_active;
+  std::unique_ptr<Pipeline> accumulation_pipeline;
 
   std::unique_ptr<Pipeline> final_blit_pipeline;
 
