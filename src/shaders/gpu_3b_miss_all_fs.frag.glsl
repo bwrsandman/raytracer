@@ -7,10 +7,12 @@
 #include "bridging_header.h"
 #include "hit_record_t.h"
 
-layout(binding = AH_HIT_RECORD_0_LOCATION) uniform sampler2D ah_hit_record_0;  // t, position
-layout(binding = AH_HIT_RECORD_1_LOCATION) uniform sampler2D ah_hit_record_1;  // normal, u
-layout(binding = AH_HIT_RECORD_2_LOCATION) uniform sampler2D ah_hit_record_2;  // tangent, v
-layout(binding = AH_HIT_RECORD_3_LOCATION) uniform usampler2D ah_hit_record_3;  // status, mat_id, bvh_hits
+layout(binding = AH_HIT_RECORD_0_LOCATION) uniform sampler2D ah_hit_record_0;  // t (x)
+layout(binding = AH_HIT_RECORD_1_LOCATION) uniform sampler2D ah_hit_record_1;  // position (xyz)
+layout(binding = AH_HIT_RECORD_2_LOCATION) uniform sampler2D ah_hit_record_2;  // uv (xy)
+layout(binding = AH_HIT_RECORD_3_LOCATION) uniform sampler2D ah_hit_record_3;  // normal (xyz)
+layout(binding = AH_HIT_RECORD_4_LOCATION) uniform sampler2D ah_hit_record_4;  // tangent (xyz)
+layout(binding = AH_HIT_RECORD_5_LOCATION) uniform usampler2D ah_hit_record_5;  // status (x), mat_id (y), bvh_hits (z) // TODO: Maybe move bvh_hits to hit_record 0
 layout(binding = AH_INCIDENT_RAY_ORIGIN_LOCATION) uniform sampler2D ah_incident_ray_origin;
 layout(binding = AH_INCIDENT_RAY_DIRECTION_LOCATION) uniform sampler2D ah_incident_ray_direction;
 layout(binding = AH_IN_ENERGY_ACCUMULATION_LOCATION) uniform sampler2D ah_in_energy_accumulation;
@@ -31,7 +33,9 @@ void main() {
                            texelFetch(ah_hit_record_0, iid, 0),
                            texelFetch(ah_hit_record_1, iid, 0),
                            texelFetch(ah_hit_record_2, iid, 0),
-                           texelFetch(ah_hit_record_3, iid, 0));
+                           texelFetch(ah_hit_record_3, iid, 0),
+                           texelFetch(ah_hit_record_4, iid, 0),
+                           texelFetch(ah_hit_record_5, iid, 0));
 
     // Ray is inactive
     if (rec.status != HIT_RECORD_STATUS_MISS)

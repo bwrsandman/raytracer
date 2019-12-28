@@ -56,8 +56,8 @@ sphere_hit(ray_t ray,
       }
     }
     rec.t = temp;
-    rec.p = ray_point_at(ray, rec.t).xyz;
-    rec.normal = (rec.p - sphere.center.xyz) / sphere.radius;
+    rec.position = ray_point_at(ray, rec.t).xyz;
+    rec.normal = (rec.position - sphere.center.xyz) / sphere.radius;
     rec.tangent = normalize(cross(rec.normal, vec3(0, 1, 0)));
     rec.uv.x = 0.5f + atan(-rec.normal.z, rec.normal.x) * M_1_2PI;
     rec.uv.y = 0.5f - asin(-rec.normal.y) * M_1_PI;

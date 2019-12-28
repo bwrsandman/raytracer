@@ -99,7 +99,7 @@ plane_hit(ray_t ray,
   rec.t = t;
   rec.uv = uv;
   rec.mat_id = plane.mat_id;
-  rec.p = ray_point_at(ray, t).xyz;
+  rec.position = ray_point_at(ray, t).xyz;
   rec.normal = plane.normal;
   rec.status = HIT_RECORD_STATUS_HIT;
 }

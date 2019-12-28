@@ -12,10 +12,12 @@ layout(binding = ST_IN_RAY_ORIGIN_LOCATION) uniform sampler2D st_in_ray_origin;
 layout(binding = ST_IN_RAY_DIRECTION_LOCATION) uniform sampler2D st_in_ray_direction;
 layout(binding = ST_IN_PREVIOUS_HIT_RECORD_0_LOCATION) uniform sampler2D st_in_previous_hit_record_0; // t, position
 
-layout(location = AH_HIT_RECORD_0_LOCATION) out vec4 ah_hit_record_0;  // t, position
-layout(location = AH_HIT_RECORD_1_LOCATION) out vec4 ah_hit_record_1;  // normal, u
-layout(location = AH_HIT_RECORD_2_LOCATION) out vec4 ah_hit_record_2;  // tangent, v
-layout(location = AH_HIT_RECORD_3_LOCATION) out uvec4 ah_hit_record_3;  // status, mat_id, bvh_hits
+layout(location = AH_HIT_RECORD_0_LOCATION) out vec4 ah_hit_record_0;  // t (x)
+layout(location = AH_HIT_RECORD_1_LOCATION) out vec4 ah_hit_record_1;  // position (xyz)
+layout(location = AH_HIT_RECORD_2_LOCATION) out vec4 ah_hit_record_2;  // uv (xy)
+layout(location = AH_HIT_RECORD_3_LOCATION) out vec4 ah_hit_record_3;  // normal (xyz)
+layout(location = AH_HIT_RECORD_4_LOCATION) out vec4 ah_hit_record_4;  // tangent (xyz)
+layout(location = AH_HIT_RECORD_5_LOCATION) out uvec4 ah_hit_record_5;  // status (x), mat_id (y), bvh_hits (z) // TODO: Maybe move bvh_hits to hit_record 0
 layout(location = AH_INCIDENT_RAY_ORIGIN_LOCATION) out vec4 ah_incident_ray_origin;
 layout(location = AH_INCIDENT_RAY_DIRECTION_LOCATION) out vec4 ah_incident_ray_direction;
 
@@ -63,7 +65,13 @@ void main() {
         discard;
     }
 
-    hit_record_serialize(rec, ah_hit_record_0, ah_hit_record_1, ah_hit_record_2, ah_hit_record_3);
+    hit_record_serialize(rec,
+                         ah_hit_record_0,
+                         ah_hit_record_1,
+                         ah_hit_record_2,
+                         ah_hit_record_3,
+                         ah_hit_record_4,
+                         ah_hit_record_5);
 
     ah_incident_ray_origin = ray.origin;
     ah_incident_ray_direction = ray.direction;
