@@ -53,8 +53,9 @@ private:
   void create_pipelines();
 
   void encode_raygen();
-  void encode_scene_traversal();
+  void encode_scene_traversal(Texture& ray_direction);
   void encode_any_hit();
+  void encode_shadow_ray_light_hit();
   void encode_accumulation();
   void encode_final_blit();
 
@@ -67,7 +68,7 @@ private:
 
   std::unique_ptr<Pipeline> raygen_pipeline;
   std::unique_ptr<Buffer> raygen_ray_camera;
-  std::array<std::unique_ptr<Texture>, 3> raygen_textures[2];
+  std::array<std::unique_ptr<Texture>, 5> raygen_textures[2];
   std::unique_ptr<Framebuffer> raygen_framebuffer[2];
   uint8_t raygen_framebuffer_active;
 
@@ -81,8 +82,10 @@ private:
   std::unique_ptr<Buffer> scene_traversal_planes;
 
   std::unique_ptr<Buffer> anyhit_uniform;
+  std::unique_ptr<Buffer> shadow_ray_light_hit_uniform;
   std::unique_ptr<Pipeline> closest_hit_pipeline;
   std::unique_ptr<Pipeline> miss_all_pipeline;
+  std::unique_ptr<Pipeline> shadow_ray_light_hit_pipeline;
 
   std::unique_ptr<Texture> accumulation_texture[2];         ///< Double-buffered
   std::unique_ptr<Framebuffer> accumulation_framebuffer[2]; ///< Double-buffered

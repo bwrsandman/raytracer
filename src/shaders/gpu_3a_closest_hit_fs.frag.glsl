@@ -20,6 +20,8 @@ layout(binding = AH_IN_ENERGY_ACCUMULATION_LOCATION) uniform sampler2D ah_in_ene
 layout(location = RG_OUT_RAY_ORIGIN_LOCATION) out vec4 rg_out_ray_origin;
 layout(location = RG_OUT_RAY_DIRECTION_LOCATION) out vec4 rg_out_ray_direction;
 layout(location = RG_OUT_ENERGY_ACCUMULATION_LOCATION) out vec4 rg_out_energy_accumulation;
+layout(location = RG_OUT_SHADOW_RAY_DIRECTION_LOCATION) out vec4 rg_out_shadow_ray_direction;
+layout(location = RG_OUT_SHADOW_RAY_DATA_LOCATION) out vec4 rg_out_shadow_ray_data;
 
 layout (binding = AH_UNIFORM_BINDING, std140) uniform uniform_block_t {
     anyhit_uniform_data_t data;
@@ -66,6 +68,14 @@ void main() {
         rg_out_ray_origin.xyz = rec.position + FLT_EPSILON * rec.normal;
         rg_out_ray_direction.xyz = random_point_on_unit_hemisphere_wang_hash(seed, rec.normal);
         rg_out_ray_direction.w = RAY_STATUS_ACTIVE;
+        if (uniform_block.data.light_count > 0) {
+            uint light_index = uint(uniform_block.data.light_count * rand_wang_hash(seed));
+            vec4 position = uniform_block.data.light_position_data[light_index];
+            rg_out_shadow_ray_direction.xyz = position.xyz;
+            rg_out_shadow_ray_direction.w = RAY_STATUS_ACTIVE;
+            rg_out_shadow_ray_data.x = length(position.xyz - rec.position) - 2 * FLT_EPSILON;
+            rg_out_shadow_ray_data.y = uint(light_index);
+        }
     } else if (material_type == MATERIAL_TYPE_DIELECTRIC) {
         float ref_idx = material_data.r;
         rg_out_energy_accumulation.xyz = energy_accumulation.xyz;

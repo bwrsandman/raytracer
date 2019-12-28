@@ -97,13 +97,21 @@ struct alignas(64) scene_traversal_plane_uniform_t
 #define MATERIAL_TYPE_DIELECTRIC 3
 
 #define MAX_NUM_MATERIALS 16
+#define MAX_NUM_LIGHTS 16
 struct anyhit_uniform_data_t
 {
   /// color (rgb) / refraction index+ni, type (a)
   vec4 material_data[MAX_NUM_MATERIALS];
+  vec4 light_position_data[MAX_NUM_LIGHTS];
   uint32_t material_count;
+  uint32_t light_count;
   uint32_t frame_count;
   uint32_t width;
+};
+
+struct shadow_ray_light_hit_uniform_data_t
+{
+  vec4 light_color_data[MAX_NUM_LIGHTS];
 };
 
 /// Construct a float with half-open range [0:1] using low 23 bits.
@@ -267,6 +275,8 @@ random_point_on_unit_hemisphere_wang_hash(inout uint REF seed, vec3 REF normal)
 #define RG_OUT_RAY_ORIGIN_LOCATION 0
 #define RG_OUT_RAY_DIRECTION_LOCATION 1
 #define RG_OUT_ENERGY_ACCUMULATION_LOCATION 2
+#define RG_OUT_SHADOW_RAY_DIRECTION_LOCATION 3
+#define RG_OUT_SHADOW_RAY_DATA_LOCATION 4
 
 // Scene Traversal inputs
 #define ST_OBJECT_BINDING 0
@@ -285,6 +295,15 @@ random_point_on_unit_hemisphere_wang_hash(inout uint REF seed, vec3 REF normal)
 #define AH_INCIDENT_RAY_DIRECTION_LOCATION 7
 #define AH_IN_ENERGY_ACCUMULATION_LOCATION 8
 #define AH_UNIFORM_BINDING 0
+
+// Shadow Ray inputs
+#define SR_HIT_RECORD_5_LOCATION 0
+#define SR_INCIDENT_RAY_ORIGIN_LOCATION 1
+#define SR_INCIDENT_RAY_DIRECTION_LOCATION 2
+#define SR_NEXT_RAY_DIRECTION_LOCATION 3
+#define SR_IN_ENERGY_ACCUMULATION_LOCATION 4
+#define SR_IN_DATA_LOCATION 5
+#define SR_UNIFORM_BINDING 0
 
 // Energy Accumulation input
 #define EA_IN_CURRENT_ENERGY_LOCATION 0
