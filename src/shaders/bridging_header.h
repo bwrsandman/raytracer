@@ -4,6 +4,7 @@
 #if __cplusplus
 #define inout
 #define REF &
+#define mix(a, b, t) lerp((a), (b), (t))
 using namespace Raytracer::Math;
 struct uvec4
 {
@@ -147,6 +148,47 @@ rand_wang_hash(inout uint REF seed)
   seed = seed ^ (seed >> 15);
   return uint_to_normalized_float(seed);
 }
+
+static vec3
+random_point_in_unit_cube_wang_hash(inout uint REF seed)
+{
+  return vec3(rand_wang_hash(seed), rand_wang_hash(seed), rand_wang_hash(seed));
+}
+
+static vec3
+random_point_in_unit_sphere_wang_hash(inout uint REF seed)
+{
+  vec3 point;
+  do {
+    point = 2.0f * random_point_in_unit_cube_wang_hash(seed) - vec3(1, 1, 1);
+  } while (dot(point, point) >= 1.0f);
+  return point;
+}
+
+#ifndef __cplusplus
+static vec3
+random_point_on_unit_hemisphere_wang_hash(inout uint REF seed, vec3 REF normal)
+{
+  vec3 point = random_point_in_unit_sphere_wang_hash(seed);
+  point[1] = abs(point[1]); // transform into point on up vector hemisphere
+
+  // Create rotation matrix from up vector to normal
+  float c = normal[1]; // cos of the angle
+  if (abs(c + 1) < FLT_EPSILON) {
+    point = -point;
+  } else {
+    mat3 skew_cross_mat =
+      mat3(0, -normal[0], 0, normal[0], 0, normal[2], 0, -normal[2], 0);
+    mat3 skew_cross_mat2 = skew_cross_mat * skew_cross_mat;
+    const mat3 identity = mat3(1, 0, 0, 0, 1, 0, 0, 0, 1);
+    mat3 rotation =
+      identity + skew_cross_mat + skew_cross_mat2 * (1.0f / (1 + c));
+    point = rotation * point;
+  }
+
+  return normalize(point); // project onto surface
+}
+#endif
 
 // Vertex shader inputs
 #define V_SCREEN_COORD_LOCATION 0

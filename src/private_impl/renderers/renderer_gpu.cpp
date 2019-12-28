@@ -350,11 +350,14 @@ RendererGpu::run(const Scene& world)
     encode_raygen();
 
     glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "intersections");
-    constexpr uint8_t max_recursion_depth = 1;
+    constexpr uint8_t max_recursion_depth = 5;
     for (uint8_t j = 0; j < max_recursion_depth; ++j) {
       auto debug_str = (std::string("pass #") + std::to_string(j));
 
       glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, debug_str.c_str());
+      constexpr vec4 clear_color = { 0.0f, 0.0f, 0.0f, 0.0f };
+      raygen_framebuffer[1 - raygen_framebuffer_active]->clear(
+        { clear_color, clear_color, clear_color });
       encode_scene_traversal();
       encode_any_hit();
       glPopDebugGroup(); // pass #

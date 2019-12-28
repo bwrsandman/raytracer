@@ -45,17 +45,21 @@ void main() {
     }
 
     vec4 ray_direction = texelFetch(ah_incident_ray_direction, iid, 0);
-    vec4 energy_accumulation = rand_wang_hash(seed) * texelFetch(ah_in_energy_accumulation, iid, 0);
+    vec4 energy_accumulation = texelFetch(ah_in_energy_accumulation, iid, 0);
 
     if (ray_direction.w == RAY_STATUS_DEAD)
     {
         rg_out_energy_accumulation = energy_accumulation;
         return;
     }
+
     if (rec.mat_id == 0) {
         rg_out_energy_accumulation.xyz = energy_accumulation.xyz * vec3(1, 0, 0);
     } else if (rec.mat_id == 1) {
-        rg_out_energy_accumulation.xyz = energy_accumulation.xyz * vec3(0, 1, 0);
+        rg_out_energy_accumulation.xyz = energy_accumulation.xyz * vec3(0.9, 0.9, 0.9);
+        rg_out_ray_origin.xyz = rec.position + FLT_EPSILON * rec.normal;
+        rg_out_ray_direction.xyz = random_point_on_unit_hemisphere_wang_hash(seed, rec.normal);
+        rg_out_ray_direction.w = RAY_STATUS_ACTIVE;
     } else if (rec.mat_id == 7) {
         rg_out_energy_accumulation.xyz = energy_accumulation.xyz * vec3(0, 0, 1);
     } else if (rec.mat_id == 8) {
@@ -66,6 +70,9 @@ void main() {
         rg_out_energy_accumulation.xyz = energy_accumulation.xyz * vec3(1, 0, 1);
     } else {
         rg_out_energy_accumulation = energy_accumulation * vec4(mod(rec.uv.x, 0.1f) > 0.05f ^^ mod(rec.uv.y, 0.1f) > 0.05f);
+        rg_out_ray_origin.xyz = rec.position + FLT_EPSILON * rec.normal;
+        rg_out_ray_direction.xyz = random_point_on_unit_hemisphere_wang_hash(seed, rec.normal);
+        rg_out_ray_direction.w = RAY_STATUS_ACTIVE;
     }
     rg_out_energy_accumulation.a = 1.0f / uniform_block.data.frame_count;
 }
