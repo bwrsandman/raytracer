@@ -27,6 +27,8 @@ layout (binding = AH_UNIFORM_BINDING, std140) uniform uniform_block_t {
 
 void main() {
     ivec2 iid = ivec2(gl_FragCoord.xy);
+    uint seed = rand_seed(iid.x + iid.y * uniform_block.data.width,
+                          uniform_block.data.frame_count);
 
     hit_record_t rec;
     hit_record_deserialize(rec,
@@ -43,7 +45,7 @@ void main() {
     }
 
     vec4 ray_direction = texelFetch(ah_incident_ray_direction, iid, 0);
-    vec4 energy_accumulation = texelFetch(ah_in_energy_accumulation, iid, 0);
+    vec4 energy_accumulation = rand_wang_hash(seed) * texelFetch(ah_in_energy_accumulation, iid, 0);
 
     if (ray_direction.w == RAY_STATUS_DEAD)
     {

@@ -321,6 +321,7 @@ RendererGpu::upload_anyhit_uniforms()
 {
   anyhit_uniform_data_t anyhit_uniform_data{
     frame_count,
+    width,
   };
   anyhit_uniform->upload(&anyhit_uniform_data, sizeof(anyhit_uniform_data));
 }

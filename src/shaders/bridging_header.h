@@ -2,12 +2,25 @@
 #define WHITTED_RAYTRACING_BRIDGING_HEADER_H
 
 #if __cplusplus
+#define inout
+#define REF &
 using namespace Raytracer::Math;
-typedef uint32_t uint;
 struct uvec4
 {
   uint32_t e[4];
 };
+
+static float
+uintBitsToFloat(uint32_t u)
+{
+  union
+  {
+    uint32_t uint32;
+    float float32;
+  } u_to_f;
+  u_to_f.uint32 = u;
+  return u_to_f.float32;
+}
 #else
 #define uint32_t uint
 #define alignas(x)
@@ -34,6 +47,7 @@ struct uvec4
 #define T_MIN (10e2 * FLT_EPSILON)
 
 #define static
+#define REF
 #endif
 
 #include "plane_t.h"
@@ -77,7 +91,62 @@ struct alignas(64) scene_traversal_plane_uniform_t
 struct anyhit_uniform_data_t
 {
   uint32_t frame_count;
+  uint32_t width;
 };
+
+/// Construct a float with half-open range [0:1] using low 23 bits.
+/// All zeroes yields 0.0, all ones yields the next smallest representable value
+/// below 1.0.
+/// https://stackoverflow.com/a/17479300/10604387
+static float
+uint_to_normalized_float(uint32_t u)
+{
+  const uint32_t ieee_mantissa_mask = 0x007FFFFFu;
+  const uint32_t ieee_one_bits = 0x3F800000u; // 1.0 in IEEE binary32
+
+  u &= ieee_mantissa_mask; // Keep only mantissa bits (fractional part)
+  u |= ieee_one_bits;      // Add fractional part to 1.0
+
+  float f = uintBitsToFloat(u); // Range [1:2]
+  return f - 1.0;               // Range [0:1]
+}
+
+static uint32_t
+rand_seed(uint32_t thread_id, uint32_t frame_id)
+{
+  // For a list of 9-digit primes (will fit in 32-bit)
+  // see: http://www.rsok.com/~jrm/9_digit_palindromic_primes.html
+  const uint large_prime_0 = 119010911; // chosen by fair die roll.
+  const uint large_prime_1 = 125292521; // guaranteed to be random.
+  //                                       https://www.xkcd.com/221/
+
+  return (thread_id + frame_id * large_prime_0) * large_prime_1;
+}
+
+/// Xorshift by George Marsaglia
+/// Less instructions but visible patterns
+static float
+rand_xor32(inout uint REF seed)
+{
+  seed ^= seed << 13;
+  seed ^= seed >> 17;
+  seed ^= seed << 5;
+  return uint_to_normalized_float(seed);
+}
+
+/// Wang Hash by Thomas Wang
+/// A few more instructions but less patterns
+/// http://www.burtleburtle.net/bob/hash/integer.html
+static float
+rand_wang_hash(inout uint REF seed)
+{
+  seed = (seed ^ 61) ^ (seed >> 16);
+  seed *= 9;
+  seed = seed ^ (seed >> 4);
+  seed *= 0x27d4eb2d;
+  seed = seed ^ (seed >> 15);
+  return uint_to_normalized_float(seed);
+}
 
 // Vertex shader inputs
 #define V_SCREEN_COORD_LOCATION 0
