@@ -359,7 +359,7 @@ RendererWhitted::raygen(const Ray& primary_ray,
       }
     } else {
       // No hit or hit light, add sky
-      vec3 unit_direction = unit_vector(secondary_rays[i].ray.direction);
+      vec3 unit_direction = normalize(secondary_rays[i].ray.direction);
       float t = 0.5f * (unit_direction.y() + 1.0f);
       static constexpr vec3 top = vec3(0.5, 0.7, 1.0);
       static constexpr vec3 bot = vec3(1.0, 1.0, 1.0);

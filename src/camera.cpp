@@ -47,8 +47,8 @@ Camera::calculate_camera()
   float half_height = tan(theta / 2);
   float half_width = screen_aspect * half_height;
 
-  w = unit_vector(look_from - look_at);
-  u = unit_vector(cross(v_up, w));
+  w = normalize(look_from - look_at);
+  u = normalize(cross(v_up, w));
   v = -cross(w, u);
 
   lower_left_corner = origin - half_width * u - half_height * v - w;

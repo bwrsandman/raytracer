@@ -204,7 +204,7 @@ vec3::operator/=(const float t)
 }
 
 inline vec3
-unit_vector(vec3 v)
+normalize(const vec3& v)
 {
   return v / v.length();
 }
@@ -393,7 +393,7 @@ refract(const vec3& v,
         vec3& refracted,
         bool& inside)
 {
-  vec3 uv = unit_vector(v);
+  vec3 uv = normalize(v);
   float cosi = dot(uv, n); // cosi()
 
   if (cosi < 0) {
@@ -431,8 +431,8 @@ fresnel_rate(const vec3& v, const vec3& n, float ni, float nt)
   // cost =	  / 1 - | -- * sini |
   //		\/		\ nt		/
   float ni_over_nt = (ni / nt);
-  vec3 uv = unit_vector(v);
-  vec3 un = unit_vector(n);
+  vec3 uv = normalize(v);
+  vec3 un = normalize(n);
   float cosi = std::clamp(dot(uv, un), -1.0f, 1.0f);
 
   if (cosi >= 0) {
