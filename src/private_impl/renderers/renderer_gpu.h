@@ -67,7 +67,7 @@ private:
   std::unique_ptr<Framebuffer> backbuffer;
 
   std::unique_ptr<Pipeline> raygen_pipeline;
-  std::unique_ptr<Buffer> raygen_ray_camera;
+  std::unique_ptr<Buffer> raygen_ray_uniform;
   std::array<std::unique_ptr<Texture>, 5> raygen_textures[2];
   std::unique_ptr<Framebuffer> raygen_framebuffer[2];
   uint8_t raygen_framebuffer_active;

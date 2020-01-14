@@ -113,7 +113,7 @@ RendererGpu::encode_raygen()
   }
   raygen_framebuffer[raygen_framebuffer_active]->bind();
   raygen_pipeline->bind();
-  raygen_ray_camera->bind(RG_RAY_CAMERA_BINDING);
+  raygen_ray_uniform->bind(RG_RAY_CAMERA_BINDING);
   fullscreen_quad->draw();
   glPopDebugGroup();
 }
@@ -348,13 +348,17 @@ RendererGpu::encode_final_blit()
 void
 RendererGpu::upload_camera_uniforms(const Camera& camera)
 {
-  camera_uniform_t camera_uniform{
-    camera.origin,
-    camera.lower_left_corner,
-    camera.horizontal,
-    camera.vertical,
+  raygen_uniform_t uniform{
+    {
+      camera.origin,
+      camera.lower_left_corner,
+      camera.horizontal,
+      camera.vertical,
+    },
+    frame_count,
+    width,
   };
-  raygen_ray_camera->upload(&camera_uniform, sizeof(camera_uniform));
+  raygen_ray_uniform->upload(&uniform, sizeof(uniform));
 }
 
 void
@@ -685,8 +689,8 @@ RendererGpu::create_pipelines()
     sizeof(gpu_1_raygen_fs) / sizeof(gpu_1_raygen_fs[0]);
   info.fragment_shader_entry_point = "main";
   raygen_pipeline = Pipeline::create(Pipeline::Type::RasterOpenGL, info);
-  raygen_ray_camera = Buffer::create(sizeof(camera_uniform_t));
-  raygen_ray_camera->set_debug_name("raygen_ray_camera");
+  raygen_ray_uniform = Buffer::create(sizeof(raygen_uniform_t));
+  raygen_ray_uniform->set_debug_name("raygen_ray_uniform");
 
   // Scene Traversal (sphere)
   info.fragment_shader_binary = gpu_2a_scene_traversal_sphere_fs;

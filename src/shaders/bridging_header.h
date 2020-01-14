@@ -59,12 +59,19 @@ uintBitsToFloat(uint32_t u)
 /// c++ code.
 /// The purpose of this header is to avoid double declarations.
 
-struct alignas(64) camera_uniform_t
+struct camera_uniform_t
 {
   alignas(16) vec3 origin;
   alignas(16) vec3 lower_left_corner;
   alignas(16) vec3 horizontal;
   alignas(16) vec3 vertical;
+};
+
+struct raygen_uniform_t
+{
+  camera_uniform_t camera;
+  uint32_t frame_count;
+  uint32_t width;
 };
 
 #define MAX_NUM_SPHERES 4
