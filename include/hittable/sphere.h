@@ -19,7 +19,6 @@ struct Sphere : public Object
            float t_max,
            hit_record& rec) const override;
   bool bounding_box(Aabb& box);
-  void build_bvh() {};
 
   vec3 center;
   float radius;

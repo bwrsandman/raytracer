@@ -341,7 +341,7 @@ split_binned_sah(const std::vector<uint16_t>& indices,
 }
 
 void
-TriangleMesh::build_bvh() 
+Raytracer::Hittable::TriangleMesh::build_bvh()
 {
   bvh_optimized_indices.clear();
   bvh_optimized_indices.reserve(indices.size());
