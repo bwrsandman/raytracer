@@ -251,6 +251,9 @@ bool DecodeDataURI(std::vector<unsigned char> *out, std::string &mime_type,
 // https://stackoverflow.com/questions/15708411/how-to-deal-with-global-constructor-warning-in-clang
 #pragma clang diagnostic ignored "-Wexit-time-destructors"
 #pragma clang diagnostic ignored "-Wpadded"
+#elif _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4267) // possible loss of data
 #endif
 
 // Simple class to represent JSON object
@@ -7415,6 +7418,8 @@ bool TinyGLTF::WriteGltfSceneToFile(Model *model, const std::string &filename,
 
 #ifdef __clang__
 #pragma clang diagnostic pop
+#elif _MSC_VER
+#pragma warning(pop)
 #endif
 
 #endif  // TINYGLTF_IMPLEMENTATION

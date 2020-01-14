@@ -8,6 +8,7 @@ file(GLOB_RECURSE headers CONFIGURE_DEPENDS include/*.h)
 file(GLOB_RECURSE private_impl_sources CONFIGURE_DEPENDS src/private_impl/*)
 
 file(GLOB shaders CONFIGURE_DEPENDS src/shaders/*.glsl)
+file(GLOB shader_headers CONFIGURE_DEPENDS src/shaders/*.h)
 
 file(GLOB_RECURSE textures CONFIGURE_DEPENDS assets/*.jpg assets/*.png assets/*.tga assets/*.gltf)
 
@@ -27,7 +28,7 @@ foreach(shader ${shaders})
             --vn ${shader_name}
             "$<$<CONFIG:debug>:-g -Od>$<$<CONFIG:relwithdebinfo>:-g>$<$<CONFIG:minsizerel>:-Os>"
             ${shader}
-        DEPENDS ${shader}
+        DEPENDS ${shader} ${shader_headers}
     )
     list(APPEND sources ${compiled_shader})
 endforeach()
@@ -107,9 +108,79 @@ target_include_directories(RaytracerLib
 target_link_libraries(RaytracerLib PRIVATE ${LIBRARIES})
 target_compile_definitions(RaytracerLib PRIVATE SDL_MAIN_HANDLED)
 if (MSVC)
-    target_compile_options(RaytracerLib PUBLIC /arch:AVX2)
+  target_compile_options(RaytracerLib
+    PUBLIC
+      /arch:AVX2
+    PRIVATE
+      /W4
+      /wd4505 # disable unused function
+      /wd4324 # structure padded due to alignment specifer
+      /WX  # Warning are errors
+  )
 else()
-    target_compile_options(RaytracerLib PUBLIC -march=haswell)
+  target_compile_options(RaytracerLib
+    PUBLIC
+      -march=haswell
+    PRIVATE
+      -Wall
+      -Wextra
+      -Wno-unused-function
+      -Werror
+      -pedantic
+      -pedantic-errors
+
+      -Wcomment
+      -Wformat
+      -Wformat=2
+      -Wformat-nonliteral
+      -Wformat-security
+      -Wformat-y2k
+      -Wimplicit
+      -Wimport
+      -Winline
+      -Wparentheses
+      -Wreturn-type
+      -Wstack-protector
+      -Wstrict-aliasing
+      -Wstrict-aliasing=2
+      -Wswitch
+      -Wswitch-default
+      -Wswitch-enum
+      -Wuninitialized
+      -Wmissing-braces
+      -Wmissing-field-initializers
+      -Wmissing-format-attribute
+      -Wmissing-include-dirs
+      -Wmissing-noreturn
+      -Wpointer-arith
+      -Wredundant-decls
+      -Wsequence-point
+      -Wshadow
+      -Wsign-compare
+      -Wtrigraphs
+      -Wunknown-pragmas
+      -Wunreachable-code
+      -Wunused-label
+      -Wunused-parameter
+      -Wunused-value
+      -Wunused-variable
+      -Wvariadic-macros
+      -Wvolatile-register-var
+      -Wwrite-strings
+      -Wdisabled-optimization
+      -Winit-self
+      -Winvalid-pch
+      -Wlong-long
+      -Weffc++
+      -Waggregate-return
+      -Wchar-subscripts
+
+      # -Wcast-align
+      # -Wconversion
+      # -Wpacked
+      # -Wpadded
+      # -Wcast-qual
+  )
 endif()
 set_property(TARGET RaytracerLib PROPERTY CXX_STANDARD 17)
 

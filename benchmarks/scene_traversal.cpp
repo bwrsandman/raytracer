@@ -4,13 +4,14 @@
 
 #include <camera.h>
 #include <ray.h>
-#include <renderer.h>
 #include <scene.h>
+
+#include "../src/private_impl/renderers/renderer_whitted.h"
 
 using Raytracer::Camera;
 using Raytracer::Ray;
 using Raytracer::Scene;
-using Raytracer::Graphics::Renderer;
+using Raytracer::Graphics::RendererWhitted;
 using Raytracer::Math::random_double;
 using Raytracer::Math::vec3;
 
@@ -25,7 +26,7 @@ protected:
     ray_index = 0;
     total_rays = 0;
 
-    renderer = Renderer::create(Renderer::Type::Whitted, nullptr);
+    renderer = std::make_unique<RendererWhitted>(nullptr);
     for (auto& r : rays) {
       r = scene->get_camera().get_ray(random_double(), random_double());
     }
@@ -54,7 +55,7 @@ protected:
     }
   }
 
-  std::unique_ptr<Renderer> renderer;
+  std::unique_ptr<RendererWhitted> renderer;
   std::unique_ptr<Scene> scene;
   Ray rays[ray_count];
   uint32_t ray_index;

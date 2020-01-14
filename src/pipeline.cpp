@@ -9,7 +9,8 @@ std::unique_ptr<Pipeline>
 Pipeline::create(Type type, const PipelineCreateInfo& info)
 {
   switch (type) {
-    case Pipeline::Type::RaterOpenGL:
+    case Pipeline::Type::RasterOpenGL:
       return PipelineRasterOpenGL::create(info);
   }
+  return nullptr;
 }

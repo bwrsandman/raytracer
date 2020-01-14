@@ -16,15 +16,14 @@ using Raytracer::Math::vec3;
 FunctionalGeometry::FunctionalGeometry(const vec3& center,
                                        uint8_t max_steps,
                                        signed_distance_function_t sdf,
-                                       uint16_t m,
-                                       Aabb _aabb)
+                                       uint16_t m)
   : sdf(std::move(sdf))
   , max_steps(max_steps)
   , center(center)
   , mat_id(m)
-  , aabb(_aabb)
+  , aabb()
 {
-  // bounding_box(aabb);
+  bounding_box(aabb);
 }
 
 // From
@@ -34,8 +33,7 @@ FunctionalGeometry::mandrelbulb(const vec3& center,
                                 uint8_t max_iterations,
                                 float max_radius,
                                 float power,
-                                uint16_t m,
-                                Aabb _aabb)
+                                uint16_t m)
 {
   auto signed_distance_function =
     [center, max_iterations, max_radius, power](const vec3& position) {
@@ -66,12 +64,12 @@ FunctionalGeometry::mandrelbulb(const vec3& center,
       return 0.5f * std::log(radius) * radius / dr;
     };
   return std::make_unique<FunctionalGeometry>(
-    center, 100, signed_distance_function, m, _aabb);
+    center, static_cast<uint8_t>(100), signed_distance_function, m);
 }
 
 bool
 FunctionalGeometry::hit(const Ray& r,
-                        bool early_out,
+                        [[maybe_unused]] bool early_out,
                         float t_min,
                         float t_max,
                         hit_record& rec) const
@@ -80,8 +78,8 @@ FunctionalGeometry::hit(const Ray& r,
     return false;
   }
 
-  static constexpr float f32_1_2PI = 0.5f / M_PI;
-  static constexpr float f32_1_PI = 1.0f / M_PI;
+  static constexpr float f32_1_PI = static_cast<float>(M_1_PI);
+  static constexpr float f32_1_2PI = 0.5f * f32_1_PI;
   static constexpr float grad_step = 0.05f;
 
   Ray ray{ r.origin - center, r.direction };

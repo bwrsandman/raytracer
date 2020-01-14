@@ -15,9 +15,10 @@ Dielectric::Dielectric(const vec3& a, float ri, float ni)
 {}
 
 void
-Dielectric::fill_type_data(const Scene& scene,
-                           RayPayload& payload,
-                           const vec3& texture_coordinates) const
+Dielectric::fill_type_data(
+  [[maybe_unused]] const Scene& scene,
+  RayPayload& payload,
+  [[maybe_unused]] const vec3& texture_coordinates) const
 {
   payload.type = RayPayload::Type::Dielectric;
   payload.attenuation = albedo;

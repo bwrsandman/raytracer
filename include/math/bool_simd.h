@@ -1,6 +1,9 @@
 #pragma once
 
 #include <cstdint>
+
+#include <array>
+
 #include <immintrin.h>
 
 namespace Raytracer::Math {
@@ -33,7 +36,7 @@ struct bool_simd_t
   inline explicit bool_simd_t(const bool values[]);
 
   template<uint8_t index>
-  inline bool get_scalar() const
+  inline constexpr static bool get_scalar(const bool_simd_t& vector)
   {
     static_assert(index < D, "scalar index out of bounds");
     union scalar_getter_t
@@ -41,8 +44,10 @@ struct bool_simd_t
       bool scalar[D];
       raw_type_t vector;
     };
-    return ((scalar_getter_t*)(&_raw))->scalar[index];
+    return ((scalar_getter_t*)(&vector._raw))->scalar[index];
   }
+  inline constexpr static std::array<bool, D> get_scalars(
+    const bool_simd_t& vector);
 
   inline bool_simd_t operator&&(bool_simd_t rhs) const;
   inline bool_simd_t operator||(bool_simd_t rhs) const;
@@ -113,6 +118,18 @@ inline bool
 bool_simd_t<4>::all() const
 {
   return _mm_movemask_ps(_raw) == 0xF;
+}
+
+template<>
+constexpr std::array<bool, 4>
+bool_simd_t<4>::get_scalars(const bool_simd_t<4>& vector)
+{
+  return {
+    get_scalar<0>(vector),
+    get_scalar<1>(vector),
+    get_scalar<2>(vector),
+    get_scalar<3>(vector),
+  };
 }
 
 // Oct bool
@@ -190,6 +207,17 @@ inline bool
 bool_simd_t<8>::all() const
 {
   return _mm256_movemask_ps(_raw) == 0xFF;
+}
+
+template<>
+constexpr std::array<bool, 8>
+bool_simd_t<8>::get_scalars(const bool_simd_t<8>& vector)
+{
+  return {
+    get_scalar<0>(vector), get_scalar<1>(vector), get_scalar<2>(vector),
+    get_scalar<3>(vector), get_scalar<4>(vector), get_scalar<5>(vector),
+    get_scalar<6>(vector), get_scalar<7>(vector),
+  };
 }
 
 } // namespace Raytracer::Math

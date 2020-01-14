@@ -7,6 +7,7 @@ using Raytracer::Aabb;
 using Raytracer::hit_record;
 using Raytracer::Ray;
 using Raytracer::Hittable::Plane;
+using Raytracer::Math::vec2;
 using Raytracer::Math::vec3;
 
 Plane::Plane(vec3 _min, vec3 _max, vec3 _n, uint16_t _m)
@@ -21,7 +22,7 @@ Plane::Plane(vec3 _min, vec3 _max, vec3 _n, uint16_t _m)
 
 bool
 Plane::hit(const Ray& r,
-           bool early_out,
+           [[maybe_unused]] bool early_out,
            float t_min,
            float t_max,
            hit_record& rec) const
@@ -53,35 +54,31 @@ Plane::hit(const Ray& r,
   }
   t = (min.e[axis] - r.origin.e[axis]) / r.direction.e[axis];
 
-  float one = r.origin.e[index_one] + t * r.direction.e[index_one];
-  float two = r.origin.e[index_two] + t * r.direction.e[index_two];
+  auto point = r.point_at_parameter(t);
+  vec2 point2 = vec2(point[index_one], point[index_two]);
+  vec2 min2 = vec2(min[index_one], min[index_two]);
+  vec2 max2 = vec2(max[index_one], max[index_two]);
 
-  if (t < t_min || t > t_max)
+  if (t < t_min || t > t_max || point2.e[0] < min2.e[0] ||
+      point2.e[0] > max2.e[0] || point2.e[1] < min2.e[1] ||
+      point2.e[1] > max2.e[1]) {
     return false;
-  if (one < min.e[index_one] || one > max.e[index_one] ||
-      two < min.e[index_two] || two > max.e[index_two])
-    return false;
+  }
 
-  vec3 tang(0.f, 0.f, 0.f);
+  vec2 uv = (point2 - min2) / (max2 - min2);
 
-  float u = (one - min.e[index_one]) / (max.e[index_one] - min.e[index_one]);
-  float v = (two - min.e[index_two]) / (max.e[index_two] - min.e[index_two]);
-
-  tang.e[index_one] = u;
-  tang.e[index_two] = v;
-
-  rec.uv = vec3(u, v, 0.0f);
-  rec.uv.make_unit_vector();
-  rec.tangent = tang;
+  rec.tangent[axis] = 0.0f;
+  rec.tangent[index_one] = uv.e[0];
+  rec.tangent[index_two] = uv.e[1];
   rec.tangent.make_unit_vector();
 
   rec.t = t;
   rec.uv.e[0] =
-    (one - min.e[index_one]) / (max.e[index_one] - min.e[index_one]);
+    (point2.e[0] - min.e[index_one]) / (max.e[index_one] - min.e[index_one]);
   rec.uv.e[1] =
-    (two - min.e[index_two]) / (max.e[index_two] - min.e[index_two]);
+    (point2.e[1] - min.e[index_two]) / (max.e[index_two] - min.e[index_two]);
   rec.mat_id = mat_id;
-  rec.p = r.point_at_parameter(t);
+  rec.p = point;
   rec.normal = n;
   return true;
 }

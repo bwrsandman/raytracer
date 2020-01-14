@@ -9,7 +9,7 @@ namespace Raytracer::Math {
 class vec3
 {
 public:
-  vec3()
+  constexpr vec3() noexcept
     : e{ 0.0f, 0.0f, 0.0f }
   {}
   constexpr vec3(float e0, float e1, float e2) noexcept
@@ -82,7 +82,7 @@ operator<<(std::ostream& os, const vec3& t)
 inline void
 vec3::make_unit_vector()
 {
-  float k = 1.0 / sqrt(e[0] * e[0] + e[1] * e[1] + e[2] * e[2]);
+  float k = 1.0f / std::sqrt(e[0] * e[0] + e[1] * e[1] + e[2] * e[2]);
   e[0] *= k;
   e[1] *= k;
   e[2] *= k;
@@ -195,7 +195,7 @@ vec3::operator/=(const vec3& v)
 inline vec3&
 vec3::operator/=(const float t)
 {
-  float k = 1.0 / t;
+  float k = 1.0f / t;
 
   e[0] *= k;
   e[1] *= k;
@@ -204,7 +204,7 @@ vec3::operator/=(const float t)
 }
 
 inline vec3
-unit_vector(vec3 v)
+normalize(const vec3& v)
 {
   return v / v.length();
 }
@@ -215,12 +215,18 @@ random_double()
   return rand() / (RAND_MAX + 1.0);
 }
 
+inline float
+random_float()
+{
+  return static_cast<float>(random_double());
+}
+
 inline vec3
 random_in_unit_sphere()
 {
   vec3 p;
   do {
-    p = 2.0 * vec3(random_double(), random_double(), random_double()) -
+    p = 2.0f * vec3(random_float(), random_float(), random_float()) -
         vec3(1, 1, 1);
   } while (p.squared_length() >= 1.0);
   return p;
@@ -230,12 +236,6 @@ inline vec3
 reflect(const vec3& v, const vec3& n)
 {
   return v - 2 * dot(v, n) * n;
-}
-
-inline vec3
-reciprocal(const vec3& v)
-{
-  return vec3(1.0 / v.e[0], 1.0 / v.e[1], 1.0 / v.e[2]);
 }
 
 static vec3
@@ -378,12 +378,6 @@ public:
 } // namespace std
 
 namespace Raytracer::Math {
-static vec3
-saturate(const vec3& val)
-{
-  return std::clamp(val, vec3(0.0f, 0.0f, 0.0f), vec3(1.0f, 1.0f, 1.0f));
-}
-
 // Snells law
 inline bool
 refract(const vec3& v,
@@ -393,7 +387,7 @@ refract(const vec3& v,
         vec3& refracted,
         bool& inside)
 {
-  vec3 uv = unit_vector(v);
+  vec3 uv = normalize(v);
   float cosi = dot(uv, n); // cosi()
 
   if (cosi < 0) {
@@ -408,13 +402,14 @@ refract(const vec3& v,
   float ni_over_nt = ni / nt;
 
   // Refraction
-  float cost2 = 1.0 - ni_over_nt * ni_over_nt * (1 - cosi * cosi);
+  float cost2 = 1.0f - ni_over_nt * ni_over_nt * (1 - cosi * cosi);
   if (cost2 <= 0) {
     refracted = vec3(1.f, 1.f, 1.f);
     return false;
   }
 
-  refracted = ni_over_nt * uv + (ni_over_nt * cosi - sqrt(cost2)) * n;
+  refracted =
+    ni_over_nt * uv + (ni_over_nt * cosi - static_cast<float>(sqrt(cost2))) * n;
   return true;
 }
 
@@ -431,8 +426,8 @@ fresnel_rate(const vec3& v, const vec3& n, float ni, float nt)
   // cost =	  / 1 - | -- * sini |
   //		\/		\ nt		/
   float ni_over_nt = (ni / nt);
-  vec3 uv = unit_vector(v);
-  vec3 un = unit_vector(n);
+  vec3 uv = normalize(v);
+  vec3 un = normalize(n);
   float cosi = std::clamp(dot(uv, un), -1.0f, 1.0f);
 
   if (cosi >= 0) {

@@ -45,6 +45,6 @@ Window::get_dimensions(uint16_t& width, uint16_t& height)
 #else
   SDL_GetWindowSize(handle, &w, &h);
 #endif
-  width = w;
-  height = h;
+  width = static_cast<uint16_t>(w);
+  height = static_cast<uint16_t>(h);
 }

@@ -20,8 +20,8 @@ Texture::load_from_file(const std::string& filename)
   }
   std::vector<vec3> color;
   color.resize(width * height);
-  for (uint32_t y = 0; y < height; ++y) {
-    for (uint32_t x = 0; x < width; ++x) {
+  for (uint32_t y = 0; y < static_cast<uint32_t>(height); ++y) {
+    for (uint32_t x = 0; x < static_cast<uint32_t>(width); ++x) {
       color[x + y * width].e[0] = data[(x + y * width) * channels];
       if (channels > 2) {
         color[x + y * width].e[1] = data[(x + y * width) * channels + 1];
@@ -44,8 +44,8 @@ Texture::load_from_gltf_image(const tinygltf::Image& image)
   assert(image.bits == 8);
   std::vector<vec3> color;
   color.resize(image.width * image.height);
-  for (uint32_t y = 0; y < image.height; ++y) {
-    for (uint32_t x = 0; x < image.width; ++x) {
+  for (uint32_t y = 0; y < static_cast<uint32_t>(image.height); ++y) {
+    for (uint32_t x = 0; x < static_cast<uint32_t>(image.width); ++x) {
       color[x + y * image.width].e[0] =
         image.image[(x + y * image.width) * image.component] / 255.0f;
       if (image.component > 2) {

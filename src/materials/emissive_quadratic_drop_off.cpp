@@ -15,9 +15,10 @@ EmissiveQuadraticDropOff::EmissiveQuadraticDropOff(const vec3& a, float factor)
 {}
 
 void
-EmissiveQuadraticDropOff::fill_type_data(const Scene& scene,
-                                         RayPayload& payload,
-                                         const vec3& texture_coordinates) const
+EmissiveQuadraticDropOff::fill_type_data(
+  [[maybe_unused]] const Scene& scene,
+  RayPayload& payload,
+  [[maybe_unused]] const vec3& texture_coordinates) const
 {
   payload.type = RayPayload::Type::Emissive;
   payload.emission =

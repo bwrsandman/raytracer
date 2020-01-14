@@ -1,6 +1,5 @@
 #include "renderer_whitted.h"
 
-#include <array>
 #include <thread>
 #include <vector>
 
@@ -20,28 +19,31 @@
 #include "pipeline.h"
 #include "ray.h"
 #include "scene.h"
-#include "window.h"
-
-#include "shaders/fullscreen_fs.h"
-#include "shaders/passthrough_vs.h"
 
 #include "../../shaders/bridging_header.h"
+#include "shaders/fullscreen_fs.h"
+#include "shaders/passthrough_flip_y_vs.h"
+
+#include "../graphics/indexed_mesh.h"
+#include "../graphics/texture.h"
+#include "../graphics/framebuffer.h"
 
 using Raytracer::Graphics::IndexedMesh;
 using Raytracer::Graphics::RendererWhitted;
+using Raytracer::Graphics::Framebuffer;
 using Raytracer::Hittable::Point;
 using namespace Raytracer::Math;
 using namespace Raytracer;
 
 namespace {
 void GLAPIENTRY
-MessageCallback(GLenum source,
+MessageCallback([[maybe_unused]] GLenum source,
                 GLenum type,
-                GLuint id,
+                [[maybe_unused]] GLuint id,
                 GLenum severity,
-                GLsizei length,
+                [[maybe_unused]] GLsizei length,
                 const GLchar* message,
-                const void* userParam)
+                [[maybe_unused]] const void* userParam)
 {
   fprintf(stderr,
           "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
@@ -50,69 +52,7 @@ MessageCallback(GLenum source,
           severity,
           message);
 }
-
-static const float fullscreen_quad_vertices[8] = {
-  // Top left
-  0.0f,
-  0.0f,
-  // Top right
-  1.0f,
-  0.0f,
-  // Bottom left
-  1.0f,
-  1.0f,
-  // Bottom right
-  0.0f,
-  1.0f,
-};
-static const uint16_t fullscreen_quad_indices[6] = { 0, 1, 2, 2, 3, 0 };
-}
-
-IndexedMesh::IndexedMesh(uint32_t vertex_buffer,
-                         uint32_t index_buffer,
-                         uint32_t vao,
-                         std::vector<MeshAttributes> attributes)
-  : vertex_buffer(vertex_buffer)
-  , index_buffer(index_buffer)
-  , vao(vao)
-  , attributes(std::move(attributes))
-{}
-
-IndexedMesh::~IndexedMesh()
-{
-  glDeleteBuffers(2, reinterpret_cast<uint32_t*>(this));
-  glDeleteVertexArrays(1, &vao);
-}
-
-void
-IndexedMesh::bind() const
-{
-  glBindVertexArray(vao);
-  glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
-  uint32_t attr_index = 0;
-  uintptr_t attr_offset = 0;
-  for (auto& attr : attributes) {
-    auto size = attr.count;
-    switch (attr.type) {
-      case GL_FLOAT:
-        size *= sizeof(float);
-        break;
-      default:
-        printf("unsupported type\n");
-        return;
-    }
-    glEnableVertexAttribArray(attr_index);
-    glVertexAttribPointer(attr_index,
-                          attr.count,
-                          attr.type,
-                          GL_FALSE,
-                          size,
-                          reinterpret_cast<const void*>(attr_offset));
-    attr_index++;
-    attr_offset += size;
-  }
-}
+} // namespace
 
 RendererWhitted::RendererWhitted(SDL_Window* window)
   : width(0)
@@ -140,31 +80,15 @@ RendererWhitted::RendererWhitted(SDL_Window* window)
     glEnable(GL_DEBUG_OUTPUT);
     glDebugMessageCallback(MessageCallback, this);
 #endif
-
-  glGenTextures(1, &gpu_buffer);
-
-  glGenSamplers(1, &linear_sampler);
-  int32_t linear = GL_LINEAR;
-  int32_t clamp_to_edge = GL_CLAMP_TO_EDGE;
-  glSamplerParameteriv(linear_sampler, GL_TEXTURE_WRAP_S, &clamp_to_edge);
-  glSamplerParameteriv(linear_sampler, GL_TEXTURE_WRAP_T, &clamp_to_edge);
-  glSamplerParameteriv(linear_sampler, GL_TEXTURE_MIN_FILTER, &linear);
-  glSamplerParameteriv(linear_sampler, GL_TEXTURE_MAG_FILTER, &linear);
-#if !__EMSCRIPTEN__
-  glObjectLabel(GL_SAMPLER, linear_sampler, -1, "Linear Sampler");
-#endif
-
-  create_geometry();
-  create_pipeline();
+    backbuffer = Framebuffer::default_framebuffer();
+    create_geometry();
+    create_pipeline();
   }
 }
 
 RendererWhitted::~RendererWhitted()
 {
-  if (context) {
-    glDeleteTextures(1, &gpu_buffer);
-    glDeleteSamplers(1, &linear_sampler);
-  }
+  SDL_GL_DeleteContext(context);
 }
 
 bool
@@ -179,7 +103,7 @@ RendererWhitted::trace(RayPayload& payload,
   hit_record rec;
   hit_record temp_rec;
   bool hit_anything = false;
-  double closest_so_far = t_max;
+  auto closest_so_far = t_max;
 
   for (auto& object : object_list) {
     if (object->hit(r, early_out, t_min, closest_so_far, temp_rec) &&
@@ -213,7 +137,7 @@ RendererWhitted::trace(RayPayload& payload,
 uint32_t
 RendererWhitted::raygen(const Ray& primary_ray,
                         const Scene& scene,
-                        bool debug_bvh,
+                        bool _debug_bvh,
                         vec3& color) const
 {
   struct AttenuatedRay
@@ -251,7 +175,7 @@ RendererWhitted::raygen(const Ray& primary_ray,
       trace(payload, scene, secondary_rays[i].ray, false, t_min, t_max);
     }
 
-    if (debug_bvh) {
+    if (_debug_bvh) {
       float bvh_debug = payload.bvh_hits / static_cast<float>(debug_bvh_count);
       color = vec3(bvh_debug, bvh_debug, bvh_debug);
       if (payload.bvh_hits > debug_bvh_count * 3) {
@@ -273,7 +197,6 @@ RendererWhitted::raygen(const Ray& primary_ray,
       return next_secondary;
     } else if (payload.type == RayPayload::Type::Lambert) {
       // Add ray to shadow rays
-      auto& geometry_list = scene.get_world();
       for (auto& light : scene.get_lights()) {
         auto point_light = dynamic_cast<const Point*>(light.get());
         if (point_light == nullptr) {
@@ -359,10 +282,10 @@ RendererWhitted::raygen(const Ray& primary_ray,
       }
     } else {
       // No hit or hit light, add sky
-      vec3 unit_direction = unit_vector(secondary_rays[i].ray.direction);
+      vec3 unit_direction = normalize(secondary_rays[i].ray.direction);
       float t = 0.5f * (unit_direction.y() + 1.0f);
-      static constexpr vec3 top = vec3(0.5, 0.7, 1.0);
-      static constexpr vec3 bot = vec3(1.0, 1.0, 1.0);
+      static constexpr vec3 top = vec3(0.5f, 0.7f, 1.0f);
+      static constexpr vec3 bot = vec3(1.0f, 1.0f, 1.0f);
       color += lerp(top, bot, t) * secondary_rays[i].attenuation;
       if (payload.type == RayPayload::Type::Emissive) {
         // Hit a light, this should happen very rarely
@@ -387,7 +310,7 @@ RendererWhitted::raygen(const Ray& primary_ray,
     }
   }
 
-  return next_secondary + shadow_rays.size();
+  return next_secondary + static_cast<uint32_t>(shadow_rays.size());
 }
 
 void
@@ -405,7 +328,7 @@ RendererWhitted::compute_primary_rays(const Camera& camera)
 void
 RendererWhitted::run(const Scene& scene)
 {
-  static const float clear_color[4] = { 1.0f, 1.0f, 0.0f, 1.0f };
+  static const vec4 clear_color = { 1.0f, 1.0f, 0.0f, 1.0f };
 
   auto& cam = scene.get_camera();
 
@@ -421,11 +344,12 @@ RendererWhitted::run(const Scene& scene)
     block_height++;
   }
   for (uint32_t i = 0; i < num_cores; ++i) {
-    auto offset = i * block_height * width;
-    auto length = block_height * width;
+    uint32_t offset = i * block_height * width;
+    uint32_t length = block_height * width;
 
     threads.emplace_back([this, offset, length, &scene]() {
-      for (uint32_t i = offset; i < offset + length && i < width * height;
+      for (uint32_t i = offset;
+           i < offset + length && static_cast<int>(i) < width * height;
            ++i) {
         vec3 color = vec3(0, 0, 0);
         raygen(rays[i], scene, debug_bvh, color);
@@ -440,32 +364,21 @@ RendererWhitted::run(const Scene& scene)
 
   // binding texture
   if (context) {
-    glBindTexture(GL_TEXTURE_2D, gpu_buffer);
-    glTexSubImage2D(GL_TEXTURE_2D,
-                    0,
-                    0,
-                    0,
-                    width,
-                    height,
-                    GL_RGB,
-                    GL_FLOAT,
-                    cpu_buffer.data());
+    if (gpu_buffer) {
+      gpu_buffer->upload(
+        cpu_buffer.data(),
+        static_cast<uint32_t>(cpu_buffer.size() * sizeof(cpu_buffer[0])));
+    }
 
     // clearing screen
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glClearBufferfv(GL_COLOR, 0, clear_color);
+    backbuffer->clear({ clear_color });
 
     // Actually putting it to the screen?
     screen_space_pipeline->bind();
-    fullscreen_quad->bind();
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, gpu_buffer);
-    glBindSampler(0, linear_sampler);
-    glDrawElements(GL_TRIANGLES,
-                   sizeof(fullscreen_quad_indices) /
-                     sizeof(fullscreen_quad_indices[0]),
-                   GL_UNSIGNED_SHORT,
-                   nullptr);
+    if (gpu_buffer) {
+      gpu_buffer->bind(0);
+    }
+    fullscreen_quad->draw();
 
     glFinish();
   }
@@ -516,19 +429,9 @@ RendererWhitted::rebuild_backbuffers()
   rays.resize(width * height);
 
   if (context) {
-    glBindTexture(GL_TEXTURE_2D, gpu_buffer);
-    glTexImage2D(GL_TEXTURE_2D,
-                 0,
-                 GL_RGB32F,
-                 width,
-                 height,
-                 0,
-                 GL_RGB,
-                 GL_FLOAT,
-                 cpu_buffer.data());
-#if !__EMSCRIPTEN__
-    glObjectLabel(GL_TEXTURE, gpu_buffer, -1, "CPU-GPU buffer");
-#endif
+    gpu_buffer = Texture::create(
+      width, height, Texture::MipMapFilter::linear, Texture::Format::rgb32f);
+    gpu_buffer->set_debug_name("CPU-GPU buffer");
 
     glViewport(0, 0, width, height);
   }
@@ -537,36 +440,19 @@ RendererWhitted::rebuild_backbuffers()
 void
 RendererWhitted::create_geometry()
 {
-  uint32_t buffers[2];
-  uint32_t vao;
-  glGenBuffers(2, buffers);
-  glGenVertexArrays(1, &vao);
-  fullscreen_quad = std::make_unique<IndexedMesh>(
-    buffers[0],
-    buffers[1],
-    vao,
-    std::vector<IndexedMesh::MeshAttributes>{
-      IndexedMesh::MeshAttributes{ GL_FLOAT, 2 } });
-  fullscreen_quad->bind();
-  glBufferData(GL_ARRAY_BUFFER,
-               sizeof(fullscreen_quad_vertices),
-               fullscreen_quad_vertices,
-               GL_STATIC_DRAW);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-               sizeof(fullscreen_quad_indices),
-               fullscreen_quad_indices,
-               GL_STATIC_DRAW);
+  fullscreen_quad = IndexedMesh::create_fullscreen_quad();
 }
 
 void
 RendererWhitted::create_pipeline()
 {
   PipelineCreateInfo info;
-  info.vertex_shader_binary = passthrough_vs;
-  info.vertex_shader_size = sizeof(passthrough_vs) / sizeof(passthrough_vs[0]);
+  info.vertex_shader_binary = passthrough_flip_y_vs;
+  info.vertex_shader_size =
+    sizeof(passthrough_flip_y_vs) / sizeof(passthrough_flip_y_vs[0]);
   info.vertex_shader_entry_point = "main";
   info.fragment_shader_binary = fullscreen_fs;
   info.fragment_shader_size = sizeof(fullscreen_fs) / sizeof(fullscreen_fs[0]);
   info.fragment_shader_entry_point = "main";
-  screen_space_pipeline = Pipeline::create(Pipeline::Type::RaterOpenGL, info);
+  screen_space_pipeline = Pipeline::create(Pipeline::Type::RasterOpenGL, info);
 }

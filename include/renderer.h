@@ -29,14 +29,11 @@ public:
   enum class Type
   {
     Whitted,
+    Gpu,
   };
   virtual ~Renderer() = default;
   virtual void run(const Scene& world) = 0;
   virtual void set_backbuffer_size(uint16_t width, uint16_t height) = 0;
-  virtual uint32_t raygen(const Ray& ray,
-                          const Scene& scene,
-                          bool debug_bvh,
-                          vec3& color) const = 0;
 
   /// Factory function from which all types of renderers can be created
   static std::unique_ptr<Renderer> create(Type type, SDL_Window* window);

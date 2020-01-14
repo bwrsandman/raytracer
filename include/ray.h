@@ -1,5 +1,7 @@
 #pragma once
 
+#include <array>
+
 #include "math/vec3.h"
 #include "math/vec3_simd.h"
 
@@ -10,11 +12,11 @@ using Raytracer::Math::vec3_simd;
 
 struct Ray
 {
-  Ray()
+  constexpr Ray() noexcept
     : origin()
     , direction()
   {}
-  Ray(const vec3& a, const vec3& b)
+  constexpr Ray(const vec3& a, const vec3& b) noexcept
     : origin(a)
     , direction(b)
   {}
@@ -35,6 +37,25 @@ struct RaySimd
   inline vec3_simd<D> point_at_parameter(float_simd_t<D> t) const
   {
     return origin + t * direction;
+  }
+
+  template<uint8_t index>
+  inline constexpr static Ray get_scalar(const RaySimd& vector)
+  {
+    static_assert(index < D, "scalar index out of bounds");
+    return { vec3_simd<D>::get_scalar<index>(vector.origin),
+             vec3_simd<D>::get_scalar<index>(vector.direction) };
+  }
+  inline constexpr static std::array<Ray, D> get_scalars(const RaySimd& vector)
+  {
+    auto origins = vec3_simd<D>::get_scalars(vector.origin);
+    auto directions = vec3_simd<D>::get_scalars(vector.direction);
+    std::array<Ray, D> result;
+    for (uint8_t i = 0; i < D; ++i) {
+      result[i].origin = origins[i];
+      result[i].direction = directions[i];
+    }
+    return result;
   }
 
   vec3_simd<D> origin;

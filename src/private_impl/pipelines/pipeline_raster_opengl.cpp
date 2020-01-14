@@ -21,6 +21,12 @@ PipelineRasterOpenGL::bind()
   glUseProgram(program);
 }
 
+uint32_t
+PipelineRasterOpenGL::get_native_handle() const
+{
+  return program;
+}
+
 std::unique_ptr<Pipeline>
 PipelineRasterOpenGL::create(const PipelineCreateInfo& info)
 {

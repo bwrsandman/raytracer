@@ -132,34 +132,36 @@ Ui::run(std::unique_ptr<Scene>& scene,
         auto& light = *itr;
         if (light) {
           ImGui::PushID(i);
-          if (auto mat = dynamic_cast<Dielectric*>(light.get())) {
+          if (dynamic_cast<Dielectric*>(light.get())) {
             ImGui::Text("%u. Dielectric", i);
-          } else if (auto mat = dynamic_cast<Emissive*>(light.get())) {
+          } else if (auto emissive = dynamic_cast<Emissive*>(light.get())) {
             ImGui::Text("%u. Emissive (No Drop Off)", i);
             ImGui::InputFloat3("albedo",
-                               reinterpret_cast<float*>(&mat->albedo));
-          } else if (auto mat =
+                               reinterpret_cast<float*>(&emissive->albedo));
+          } else if (auto linear =
                        dynamic_cast<EmissiveLinearDropOff*>(light.get())) {
             ImGui::Text("%u. Emissive (Linear Drop Off)", i);
             ImGui::InputFloat3("albedo",
-                               reinterpret_cast<float*>(&mat->albedo));
-            ImGui::InputFloat("drop-off factor",
-                              reinterpret_cast<float*>(&mat->drop_off_factor));
-          } else if (auto mat =
+                               reinterpret_cast<float*>(&linear->albedo));
+            ImGui::InputFloat(
+              "drop-off factor",
+              reinterpret_cast<float*>(&linear->drop_off_factor));
+          } else if (auto quadratic =
                        dynamic_cast<EmissiveQuadraticDropOff*>(light.get())) {
             ImGui::Text("%u. Emissive (Quadratic Drop Off)", i);
             ImGui::InputFloat3("albedo",
-                               reinterpret_cast<float*>(&mat->albedo));
-            ImGui::InputFloat("drop-off factor",
-                              reinterpret_cast<float*>(&mat->drop_off_factor));
-          } else if (auto mat = dynamic_cast<Lambert*>(light.get())) {
+                               reinterpret_cast<float*>(&quadratic->albedo));
+            ImGui::InputFloat(
+              "drop-off factor",
+              reinterpret_cast<float*>(&quadratic->drop_off_factor));
+          } else if (auto lambert = dynamic_cast<Lambert*>(light.get())) {
             ImGui::Text("%u. Lambert (Shadow Ray)", i);
             ImGui::InputFloat3("albedo",
-                               reinterpret_cast<float*>(&mat->albedo));
-          } else if (auto mat = dynamic_cast<Metal*>(light.get())) {
+                               reinterpret_cast<float*>(&lambert->albedo));
+          } else if (auto metal = dynamic_cast<Metal*>(light.get())) {
             ImGui::Text("%u. Metal", i);
             ImGui::InputFloat3("albedo",
-                               reinterpret_cast<float*>(&mat->albedo));
+                               reinterpret_cast<float*>(&metal->albedo));
           } else {
             ImGui::Text("%u. Material", i);
           }
@@ -229,7 +231,7 @@ Ui::run(std::unique_ptr<Scene>& scene,
                               reinterpret_cast<float*>(&sphere->radius));
             ImGui::InputScalar("mat_id", ImGuiDataType_U16, &sphere->mat_id);
           } else {
-            ImGui::Text("%u. %s", i + 1, typeid(*light).name());
+            ImGui::Text("%u. unsupported", i + 1);
           }
           ++i;
           if (ImGui::Button("Remove##geometry")) {
@@ -292,7 +294,7 @@ Ui::run(std::unique_ptr<Scene>& scene,
             ImGui::InputScalar(
               "mat_id##light", ImGuiDataType_U16, &sphere->mat_id);
           } else {
-            ImGui::Text("%u. Light(%s)", i + 1, typeid(*light).name());
+            ImGui::Text("%u. Light(unsupported)", i + 1);
           }
           ++i;
           if (ImGui::Button("Remove##light")) {
