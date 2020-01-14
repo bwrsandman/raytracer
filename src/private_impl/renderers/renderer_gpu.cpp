@@ -48,8 +48,7 @@ MessageCallback([[maybe_unused]] GLenum /*source*/,
                 const GLchar* message,
                 [[maybe_unused]] const void* /*userParam*/)
 {
-  if (type == GL_DEBUG_TYPE_OTHER ||
-      type == GL_DEBUG_TYPE_PUSH_GROUP ||
+  if (type == GL_DEBUG_TYPE_OTHER || type == GL_DEBUG_TYPE_PUSH_GROUP ||
       type == GL_DEBUG_TYPE_POP_GROUP) {
     return;
   }
@@ -346,7 +345,7 @@ RendererGpu::encode_final_blit()
 }
 
 void
-RendererGpu::upload_camera_uniforms(const Camera& camera)
+RendererGpu::upload_raygen_uniforms(const Camera& camera)
 {
   raygen_uniform_t uniform{
     {
@@ -357,6 +356,7 @@ RendererGpu::upload_camera_uniforms(const Camera& camera)
     },
     frame_count,
     width,
+    height,
   };
   raygen_ray_uniform->upload(&uniform, sizeof(uniform));
 }
@@ -481,7 +481,7 @@ RendererGpu::upload_anyhit_uniforms(const Scene& world)
 void
 RendererGpu::upload_uniforms(const Scene& world)
 {
-  upload_camera_uniforms(world.get_camera());
+  upload_raygen_uniforms(world.get_camera());
   upload_scene(world.get_world());
   upload_anyhit_uniforms(world);
 }
@@ -573,8 +573,8 @@ RendererGpu::rebuild_raygen_buffers()
       width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32f);
     raygen_textures[i][RG_OUT_SHADOW_RAY_DATA_LOCATION]->set_debug_name(
       "shadow ray (x: t, y: mat_id, zw: unused) " + std::to_string(i));
-    raygen_framebuffer[i] =
-      Framebuffer::create(raygen_textures[i].data(), raygen_textures[i].size());
+    raygen_framebuffer[i] = Framebuffer::create(
+      raygen_textures[i].data(), (uint8_t)raygen_textures[i].size());
   }
 }
 

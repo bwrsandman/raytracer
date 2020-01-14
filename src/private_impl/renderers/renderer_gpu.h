@@ -41,7 +41,7 @@ public:
   void set_debug_data(uint32_t data) override;
 
 private:
-  void upload_camera_uniforms(const Camera& camera);
+  void upload_raygen_uniforms(const Camera& camera);
   void upload_scene(const std::vector<std::unique_ptr<Object>>& objects);
   void upload_anyhit_uniforms(const Scene& world);
   void upload_uniforms(const Scene& world);

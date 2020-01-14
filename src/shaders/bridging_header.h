@@ -61,10 +61,10 @@ uintBitsToFloat(uint32_t u)
 
 struct camera_uniform_t
 {
-  alignas(16) vec3 origin;
-  alignas(16) vec3 lower_left_corner;
-  alignas(16) vec3 horizontal;
-  alignas(16) vec3 vertical;
+  alignas(4 * sizeof(float))  vec3 origin;
+  alignas(4 * sizeof(float)) vec3 lower_left_corner;
+  alignas(4 * sizeof(float)) vec3 horizontal;
+  alignas(4 * sizeof(float)) vec3 vertical;
 };
 
 struct raygen_uniform_t
@@ -72,6 +72,7 @@ struct raygen_uniform_t
   camera_uniform_t camera;
   uint32_t frame_count;
   uint32_t width;
+  uint32_t height;
 };
 
 #define MAX_NUM_SPHERES 4
@@ -135,7 +136,7 @@ uint_to_normalized_float(uint32_t u)
   u |= ieee_one_bits;      // Add fractional part to 1.0
 
   float f = uintBitsToFloat(u); // Range [1:2]
-  return f - 1.0f;               // Range [0:1]
+  return f - 1.0f;              // Range [0:1]
 }
 
 static uint32_t
