@@ -2,6 +2,9 @@
 
 #include <chrono>
 #include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 
 struct SDL_Window;
 
@@ -41,6 +44,8 @@ public:
   virtual bool get_debug() const = 0;
   virtual void set_debug(bool value) = 0;
   virtual void set_debug_data(uint32_t data) = 0;
+
+  virtual std::vector<std::pair<std::string, float>> evaluate_metrics() = 0;
 
 protected:
   Renderer() = default;

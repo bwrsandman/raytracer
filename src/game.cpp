@@ -34,11 +34,12 @@ Game::main_loop()
   window->get_dimensions(width, height);
   renderer->set_backbuffer_size(width, height);
   input->run(*ui, *scene, delta_time);
-  ui->run(scene, *renderer, delta_time);
+  ui->run(scene, *renderer, renderer_metrics, delta_time);
   renderer->run(*scene);
   ui->draw();
   scene->run(width, height);
   window->swap();
+  renderer_metrics = renderer->evaluate_metrics();
 
   return !input->should_quit();
 }

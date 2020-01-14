@@ -125,16 +125,12 @@ else()
       -Wall
       -Wextra
       -Wno-unused-function
+      -Wno-format-nonliteral
       -Werror
       -pedantic
       -pedantic-errors
 
       -Wcomment
-      -Wformat
-      -Wformat=2
-      -Wformat-nonliteral
-      -Wformat-security
-      -Wformat-y2k
       -Wimplicit
       -Wimport
       -Winline
@@ -180,6 +176,10 @@ else()
       # -Wpacked
       # -Wpadded
       # -Wcast-qual
+      # -Wformat
+      # -Wformat=2
+      # -Wformat-security
+      # -Wformat-y2k
   )
 endif()
 set_property(TARGET RaytracerLib PROPERTY CXX_STANDARD 17)
