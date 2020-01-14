@@ -8,7 +8,7 @@ struct plane_t
   vec3 min;
   vec3 max;
   vec3 normal;
-  uint mat_id;
+  uint32_t mat_id;
 };
 
 #ifdef __cplusplus

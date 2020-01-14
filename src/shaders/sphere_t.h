@@ -7,7 +7,7 @@ struct sphere_t
 {
   vec4 center;
   float radius;
-  uint mat_id;
+  uint32_t mat_id;
 };
 
 #ifdef __cplusplus

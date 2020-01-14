@@ -35,6 +35,8 @@
 
 using namespace Raytracer::Graphics;
 using namespace Raytracer::Math;
+using Raytracer::Camera;
+using Raytracer::Scene;
 
 namespace {
 void GLAPIENTRY

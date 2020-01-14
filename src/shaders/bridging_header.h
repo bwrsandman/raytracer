@@ -128,7 +128,7 @@ uint_to_normalized_float(uint32_t u)
   u |= ieee_one_bits;      // Add fractional part to 1.0
 
   float f = uintBitsToFloat(u); // Range [1:2]
-  return f - 1.0;               // Range [0:1]
+  return f - 1.0f;               // Range [0:1]
 }
 
 static uint32_t
@@ -136,9 +136,9 @@ rand_seed(uint32_t thread_id, uint32_t frame_id)
 {
   // For a list of 9-digit primes (will fit in 32-bit)
   // see: http://www.rsok.com/~jrm/9_digit_palindromic_primes.html
-  const uint large_prime_0 = 119010911; // chosen by fair die roll.
-  const uint large_prime_1 = 125292521; // guaranteed to be random.
-  //                                       https://www.xkcd.com/221/
+  const uint32_t large_prime_0 = 119010911; // chosen by fair die roll.
+  const uint32_t large_prime_1 = 125292521; // guaranteed to be random.
+  //                                         https://www.xkcd.com/221/
 
   return (thread_id + frame_id * large_prime_0) * large_prime_1;
 }
@@ -146,7 +146,7 @@ rand_seed(uint32_t thread_id, uint32_t frame_id)
 /// Xorshift by George Marsaglia
 /// Less instructions but visible patterns
 static float
-rand_xor32(inout uint REF seed)
+rand_xor32(inout uint32_t REF seed)
 {
   seed ^= seed << 13;
   seed ^= seed >> 17;
@@ -158,7 +158,7 @@ rand_xor32(inout uint REF seed)
 /// A few more instructions but less patterns
 /// http://www.burtleburtle.net/bob/hash/integer.html
 static float
-rand_wang_hash(inout uint REF seed)
+rand_wang_hash(inout uint32_t REF seed)
 {
   seed = (seed ^ 61) ^ (seed >> 16);
   seed *= 9;
@@ -169,13 +169,13 @@ rand_wang_hash(inout uint REF seed)
 }
 
 static vec3
-random_point_in_unit_cube_wang_hash(inout uint REF seed)
+random_point_in_unit_cube_wang_hash(inout uint32_t REF seed)
 {
   return vec3(rand_wang_hash(seed), rand_wang_hash(seed), rand_wang_hash(seed));
 }
 
 static vec3
-random_point_in_unit_sphere_wang_hash(inout uint REF seed)
+random_point_in_unit_sphere_wang_hash(inout uint32_t REF seed)
 {
   vec3 point;
   do {
@@ -193,7 +193,7 @@ schlick(float cosine, float refraction_index)
 }
 
 static bool
-refract(vec3 incident, vec3 normal, float ni_over_nt, out vec3 REF refracted)
+refract_(vec3 incident, vec3 normal, float ni_over_nt, out vec3 REF refracted)
 {
   float cosine = dot(incident, normal);
   float discriminant =
@@ -207,7 +207,7 @@ refract(vec3 incident, vec3 normal, float ni_over_nt, out vec3 REF refracted)
 }
 
 static vec3
-material_dielectric_scatter(inout uint seed, vec3 direction, vec3 normal, float refraction_index) {
+material_dielectric_scatter(inout uint32_t seed, vec3 direction, vec3 normal, float refraction_index) {
     vec3 outward_normal;
     vec3 reflected = reflect(direction, normal);
     float ni_over_nt;
@@ -223,7 +223,7 @@ material_dielectric_scatter(inout uint seed, vec3 direction, vec3 normal, float 
         ni_over_nt = 1.0f / refraction_index;
         cosine = -cosine;
     }
-    if (refract(direction, outward_normal, ni_over_nt, refracted)) {
+    if (refract_(direction, outward_normal, ni_over_nt, refracted)) {
         reflect_probability = schlick(cosine, refraction_index);
     } else {
         reflect_probability = 1.0f;
