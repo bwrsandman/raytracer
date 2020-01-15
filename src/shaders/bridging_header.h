@@ -61,10 +61,13 @@ uintBitsToFloat(uint32_t u)
 
 struct camera_uniform_t
 {
-  alignas(4 * sizeof(float))  vec3 origin;
+  alignas(4 * sizeof(float)) vec3 origin;
   alignas(4 * sizeof(float)) vec3 lower_left_corner;
   alignas(4 * sizeof(float)) vec3 horizontal;
   alignas(4 * sizeof(float)) vec3 vertical;
+  alignas(4 * sizeof(float)) vec3 u;
+  alignas(4 * sizeof(float)) vec3 v;
+  alignas(sizeof(float)) float lens_radius;
 };
 
 struct raygen_uniform_t
@@ -183,6 +186,17 @@ random_point_in_unit_cube_wang_hash(inout uint32_t REF seed)
 }
 
 static vec3
+random_point_in_unit_disk_wang_hash(inout uint32_t REF seed)
+{
+  vec3 point;
+  do {
+    point = 2.0f * vec3(rand_wang_hash(seed), rand_wang_hash(seed), 0) -
+            vec3(1, 1, 0);
+  } while (dot(point, point) >= 1.0f);
+  return point;
+}
+
+static vec3
 random_point_in_unit_sphere_wang_hash(inout uint32_t REF seed)
 {
   vec3 point;
@@ -215,32 +229,37 @@ refract_(vec3 incident, vec3 normal, float ni_over_nt, out vec3 REF refracted)
 }
 
 static vec3
-material_dielectric_scatter(inout uint32_t seed, vec3 direction, vec3 normal, float refraction_index) {
-    vec3 outward_normal;
-    vec3 reflected = reflect(direction, normal);
-    float ni_over_nt;
-    vec3 refracted;
-    float reflect_probability;
-    float cosine = dot(direction, normal);
-    if (cosine > 0.0f) {
-        outward_normal = -normal;
-        ni_over_nt = refraction_index;
-        cosine = sqrt(1 - refraction_index * refraction_index * (1.0f - cosine * cosine));
-    } else {
-        outward_normal = normal;
-        ni_over_nt = 1.0f / refraction_index;
-        cosine = -cosine;
-    }
-    if (refract_(direction, outward_normal, ni_over_nt, refracted)) {
-        reflect_probability = schlick(cosine, refraction_index);
-    } else {
-        reflect_probability = 1.0f;
-    }
-    if (rand_wang_hash(seed) < reflect_probability) {
-        return reflected;
-    } else {
-        return refracted;
-    }
+material_dielectric_scatter(inout uint32_t seed,
+                            vec3 direction,
+                            vec3 normal,
+                            float refraction_index)
+{
+  vec3 outward_normal;
+  vec3 reflected = reflect(direction, normal);
+  float ni_over_nt;
+  vec3 refracted;
+  float reflect_probability;
+  float cosine = dot(direction, normal);
+  if (cosine > 0.0f) {
+    outward_normal = -normal;
+    ni_over_nt = refraction_index;
+    cosine =
+      sqrt(1 - refraction_index * refraction_index * (1.0f - cosine * cosine));
+  } else {
+    outward_normal = normal;
+    ni_over_nt = 1.0f / refraction_index;
+    cosine = -cosine;
+  }
+  if (refract_(direction, outward_normal, ni_over_nt, refracted)) {
+    reflect_probability = schlick(cosine, refraction_index);
+  } else {
+    reflect_probability = 1.0f;
+  }
+  if (rand_wang_hash(seed) < reflect_probability) {
+    return reflected;
+  } else {
+    return refracted;
+  }
 }
 
 #ifndef __cplusplus

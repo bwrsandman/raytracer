@@ -16,7 +16,9 @@ public:
          const vec3& forward,
          const vec3& up,
          float vfov,
-         float aspect);
+         float aspect,
+         float focus_dist,
+         float apature);
 
   Ray get_ray(float s, float t) const;
   void set_aspect(float aspect);
@@ -33,11 +35,14 @@ public:
   vec3 v_up;
   float v_fov;
   float screen_aspect;
+  float focus_dist;
+  float apature;
 
   vec3 origin;
   vec3 lower_left_corner;
   vec3 horizontal;
   vec3 vertical;
+  vec3 u, v;
 
   /// Has the camera been changed this frame?
   /// If not, then we can skip a lot of computation.

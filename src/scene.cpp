@@ -311,7 +311,9 @@ Scene::load_from_gltf(const std::string& file_name)
         direction,
         up,
         180.0f * static_cast<float>(gltf_camera.yfov * M_1_PI),
-        static_cast<float>(gltf_camera.aspectRatio));
+        static_cast<float>(gltf_camera.aspectRatio),
+        27.f,
+        1.f);
       camera_index = static_cast<uint32_t>(nodes.size()) - 1;
       found_camera = true;
     } else if (gltf_node.extensions.count("KHR_lights_punctual") > 0) {
@@ -459,7 +461,9 @@ Scene::load_from_gltf(const std::string& file_name)
                                                   vec3(0.0f, 0.0f, -1.0f),
                                                   vec3(0.0f, 1.0f, 0.0f),
                                                   90.0f,
-                                                  1.0f);
+                                                  1.0f,
+                                                  27.f,
+                                                  1.f);
     camera_node.type = SceneNode::Type::Camera;
   }
 
@@ -522,7 +526,9 @@ Scene::load_whitted_scene()
                                                 vec3(0.0f, 0.0f, -1.0f),
                                                 vec3(0.0f, 1.0f, 0.0f),
                                                 90.0f,
-                                                1.0f);
+                                                1.0f,
+                                                27.f,
+                                                1.f);
   camera_node.type = SceneNode::Type::Camera;
   root_node.children_id_length++;
 
@@ -672,7 +678,9 @@ Scene::load_cornell_box()
                                                 vec3(0.0f, 0.0f, -1.0f),
                                                 vec3(0.0f, 1.0f, 0.0f),
                                                 90.0f,
-                                                1.0f);
+                                                1.0f,
+                                                4.5f,
+                                                .05f);
   camera_node.type = SceneNode::Type::Camera;
   root_node.children_id_length++;
   // Meshes
@@ -701,7 +709,7 @@ Scene::load_mandrelbulb()
   materials.emplace_back(std::make_unique<Lambert>(
     vec3(0.235294118f, 0.701960784f, 0.443137255f))); // 0
   materials.emplace_back(std::make_unique<EmissiveQuadraticDropOff>(
-    vec3(1000.0f, 1000.0f, 1000.0f), 1.0f));                            // 1
+    vec3(1000.0f, 1000.0f, 1000.0f), 1.0f));                               // 1
   materials.emplace_back(std::make_unique<Metal>(vec3(0.8f, 0.6f, 0.2f))); // 2
 
   std::vector<std::unique_ptr<Object>> list;
@@ -740,7 +748,9 @@ Scene::load_mandrelbulb()
                                                 vec3(0.0f, 0.0f, -1.0f),
                                                 vec3(0.0f, 1.0f, 0.0f),
                                                 90.0f,
-                                                1.0f);
+                                                1.0f,
+                                                27.f,
+                                                1.f);
   camera_node.type = SceneNode::Type::Camera;
   root_node.children_id_length++;
 
