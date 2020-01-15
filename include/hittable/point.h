@@ -17,7 +17,6 @@ struct Point : public Object
            float t_min,
            float t_max,
            hit_record& rec) const override;
-  void build_bvh() {};
 
   vec3 position;
   uint16_t mat_id;

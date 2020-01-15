@@ -10,12 +10,16 @@ Camera::Camera(const vec3& origin,
                const vec3& forward,
                const vec3& up,
                float vfov,
-               float aspect)
+               float aspect,
+               float focus_dist,
+               float apature)
   : look_from(origin)
   , look_at(origin + forward)
   , v_up(up)
   , v_fov(vfov)
   , screen_aspect(aspect)
+  , focus_dist(focus_dist)
+  , apature(apature)
   , origin(origin)
   , dirty(true)
 {
@@ -42,18 +46,20 @@ Camera::set_aspect(float aspect)
 void
 Camera::calculate_camera()
 {
-  vec3 u, v, w;
-  float theta = v_fov * M_PI / 180;
+  vec3 w;
+  float theta = v_fov * static_cast<float>(M_PI) / 180.0f;
   float half_height = tan(theta / 2);
   float half_width = screen_aspect * half_height;
 
-  w = unit_vector(look_from - look_at);
-  u = unit_vector(cross(v_up, w));
+  w = normalize(look_from - look_at);
+  u = normalize(cross(v_up, w));
   v = -cross(w, u);
 
-  lower_left_corner = origin - half_width * u - half_height * v - w;
-  horizontal = 2 * half_width * u;
-  vertical = 2 * half_height * v;
+  //lower_left_corner = origin - half_width * u - half_height * v - w;
+  lower_left_corner = origin - half_width * focus_dist * u -
+                      half_height * focus_dist * v - focus_dist * w;
+  horizontal = 2 * half_width * focus_dist * u;
+  vertical = 2 * half_height * focus_dist * v;
 
   dirty = true;
 }

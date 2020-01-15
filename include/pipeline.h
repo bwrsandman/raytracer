@@ -26,10 +26,11 @@ class Pipeline
 public:
   enum class Type
   {
-    RaterOpenGL,
+    RasterOpenGL,
   };
   virtual ~Pipeline() = default;
   virtual void bind() = 0;
+  virtual uint32_t get_native_handle() const = 0;
   /// Factory function from which all types of pipelines can be created
   static std::unique_ptr<Pipeline> create(Type type,
                                           const PipelineCreateInfo& info);

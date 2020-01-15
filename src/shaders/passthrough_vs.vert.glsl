@@ -11,5 +11,5 @@ layout(location = F_UV_LOCATION) out vec2 f_uv;
 void main()
 {
     f_uv = v_screen_coord;
-    gl_Position = vec4(mix(-1.0, 1.0f, v_screen_coord.x), mix(-1.0, 1.0f, 1.0f - v_screen_coord.y), 0.0, 1.0);
+    gl_Position = vec4(mix(vec2(-1.0, -1.0), vec2(1.0, 1.0), v_screen_coord), 0.0, 1.0);
 }

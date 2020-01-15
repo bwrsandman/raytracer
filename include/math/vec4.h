@@ -1,6 +1,6 @@
 #pragma once
 
-#include "vec3.h"
+#include <cassert>
 
 namespace Raytracer::Math {
 struct vec4
@@ -12,21 +12,26 @@ struct vec4
     : e{ e0, e1, e2, e3 }
   {}
 
-  inline float x() const { return e[0]; }
-  inline float y() const { return e[1]; }
-  inline float z() const { return e[2]; }
-  inline float w() const { return e[3]; }
-
-  float e[4];
-
-  inline void vec4::normalize_special()
+  inline vec4 operator*(float f) const
   {
-    float k = 1.0 / sqrt(e[0] * e[0] + e[1] * e[1] + e[2] * e[2] );
-    e[0] *= k;
-    e[1] *= k;
-    e[2] *= k;
+    return vec4(f * e[0], f * e[1], f * e[2], f * e[3]);
   }
 
-  explicit operator vec3() const { return vec3(e[1], e[2], e[3]); }
+  inline vec4 operator+(const vec4& other) const
+  {
+    return vec4(e[0] + other.e[0],
+                e[1] + other.e[1],
+                e[2] + other.e[2],
+                e[3] + other.e[3]);
+  }
+
+  inline float& operator[](uint8_t index)
+  {
+    assert(index < 4);
+    return e[index];
+  }
+
+  float e[4];
 };
+
 } // namespace Raytracer::Math

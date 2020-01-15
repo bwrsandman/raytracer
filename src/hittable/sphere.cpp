@@ -25,7 +25,7 @@ Sphere::~Sphere() = default;
 
 bool
 Sphere::hit(const Ray& r,
-            bool early_out,
+            [[maybe_unused]] bool early_out,
             float t_min,
             float t_max,
             hit_record& rec) const
@@ -35,8 +35,8 @@ Sphere::hit(const Ray& r,
     return false;
   }
 
-  static constexpr float f32_1_2PI = 0.5f / M_PI;
-  static constexpr float f32_1_PI = 1.0f / M_PI;
+  static constexpr float f32_1_2PI = 0.5f / static_cast<float>(M_PI);
+  static constexpr float f32_1_PI = 1.0f / static_cast<float>(M_PI);
 
   vec3 oc = r.origin - center;
   float a = dot(r.direction, r.direction);

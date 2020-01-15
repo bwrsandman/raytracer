@@ -14,12 +14,13 @@ using namespace Raytracer;
 using namespace Raytracer::Graphics;
 
 Game::Game() {
-  window = std::make_unique<Window>("Raytracer", 800, 600);
+  constexpr uint16_t width = 800;
+  constexpr uint16_t height = 600;
+  window = std::make_unique<Window>("Raytracer", width, height);
   input = std::make_unique<Input>();
-  renderer =
-    Renderer::create(Renderer::Type::Whitted, window->get_native_handle());
+  renderer = Renderer::create(Renderer::Type::Gpu, window->get_native_handle());
   ui = std::make_unique<Ui>(window->get_native_handle());
-  scene = Scene::load_from_gltf("Duck.gltf");
+  scene = Scene::load_cornell_box();
 }
 
 Game::~Game() = default;
@@ -76,6 +77,5 @@ std::chrono::microseconds
 Game::get_delta_time() const
 {
   auto dt = frame_end - frame_begin;
-  return std::chrono::duration_cast<std::chrono::microseconds>(frame_end -
-                                                               frame_begin);
+  return std::chrono::duration_cast<std::chrono::microseconds>(dt);
 }

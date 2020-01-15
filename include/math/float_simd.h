@@ -1,6 +1,9 @@
 #pragma once
 
 #include <cstdint>
+
+#include <array>
+
 #include <immintrin.h>
 
 #include "bool_simd.h"
@@ -35,16 +38,18 @@ struct float_simd_t
   inline explicit float_simd_t(const float values[]);
 
   template<uint8_t index>
-  inline float get_scalar() const
+  inline constexpr static float get_scalar(const float_simd_t& vector)
   {
     static_assert(index < D, "scalar index out of bounds");
     union scalar_getter_t
     {
-      bool scalar[D];
+      float scalar[D];
       raw_type_t vector;
     };
-    return ((scalar_getter_t*)(&_raw))->scalar[index];
+    return ((scalar_getter_t*)(&vector._raw))->scalar[index];
   }
+  inline constexpr static std::array<float, D> get_scalars(
+    const float_simd_t& vector);
 
   inline float_simd_t operator+(float_simd_t rhs) const;
   inline float_simd_t operator-(float_simd_t rhs) const;
@@ -184,6 +189,18 @@ float_simd_t<4>::reciprocal_sqrt() const
   return float_simd_t{ _mm_rsqrt_ps(_raw) };
 }
 
+template<>
+constexpr std::array<float, 4>
+float_simd_t<4>::get_scalars(const float_simd_t<4>& vector)
+{
+  return {
+    get_scalar<0>(vector),
+    get_scalar<1>(vector),
+    get_scalar<2>(vector),
+    get_scalar<3>(vector),
+  };
+}
+
 // Oct float
 
 template<>
@@ -313,6 +330,17 @@ float_simd_t<8>::reciprocal_sqrt() const
   return float_simd_t{ _mm256_rsqrt_ps(_raw) };
 }
 
+template<>
+constexpr std::array<float, 8>
+float_simd_t<8>::get_scalars(const float_simd_t<8>& vector)
+{
+  return {
+    get_scalar<0>(vector), get_scalar<1>(vector), get_scalar<2>(vector),
+    get_scalar<3>(vector), get_scalar<4>(vector), get_scalar<5>(vector),
+    get_scalar<6>(vector), get_scalar<7>(vector),
+  };
+}
+
 } // namespace Raytracer::Math
 
 namespace std {
@@ -323,7 +351,9 @@ using Raytracer::Math::float_simd_t;
 inline float_simd_t<4>
 abs(float_simd_t<4> value)
 {
-  return float_simd_t<4>{ _mm_and_ps(value._raw, _mm_set1_ps(0x7FFFFFFFU)) };
+  thread_local __m128i sign_mask_epi32 = _mm_set1_epi32(0x7FFFFFFFU);
+  thread_local __m128 sign_mask = *reinterpret_cast<__m128*>(&sign_mask_epi32);
+  return float_simd_t<4>{ _mm_and_ps(value._raw, sign_mask) };
 }
 inline float_simd_t<4>
 min(float_simd_t<4> lhs, float_simd_t<4> rhs)

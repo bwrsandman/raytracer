@@ -13,26 +13,9 @@ namespace Raytracer {
 class Camera;
 namespace Graphics {
 class Pipeline;
-
-struct IndexedMesh
-{
-  struct MeshAttributes
-  {
-    uint32_t type;
-    uint32_t count;
-  };
-  const uint32_t vertex_buffer;
-  const uint32_t index_buffer;
-  const uint32_t vao;
-  const std::vector<MeshAttributes> attributes;
-
-  IndexedMesh(uint32_t vertex_buffer,
-              uint32_t index_buffer,
-              uint32_t vao,
-              std::vector<MeshAttributes> attributes);
-  virtual ~IndexedMesh();
-  void bind() const;
-};
+struct IndexedMesh;
+struct Texture;
+struct Framebuffer;
 
 class RendererWhitted : public Renderer
 {
@@ -47,6 +30,11 @@ public:
   void set_debug(bool value) override;
   void set_debug_data(uint32_t data) override;
 
+  uint32_t raygen(const Ray& ray,
+                  const Scene& scene,
+                  bool debug_bvh,
+                  vec3& color) const;
+
 private:
   void rebuild_backbuffers();
   void create_geometry();
@@ -57,21 +45,17 @@ private:
              bool early_out,
              float t_min,
              float t_max) const;
-  uint32_t raygen(const Ray& ray,
-                  const Scene& scene,
-                  bool debug_bvh,
-                  vec3& color) const override;
 
   SDL_GLContext context;
-  bool debug_bvh;
-  uint32_t debug_bvh_count;
   uint16_t width;
   uint16_t height;
+  bool debug_bvh;
+  uint32_t debug_bvh_count;
 
   std::vector<Ray> rays;
   std::vector<vec3> cpu_buffer;
-  uint32_t gpu_buffer;
-  uint32_t linear_sampler;
+  std::unique_ptr<Framebuffer> backbuffer;
+  std::unique_ptr<Texture> gpu_buffer;
   std::unique_ptr<Pipeline> screen_space_pipeline;
   std::unique_ptr<IndexedMesh> fullscreen_quad;
 };

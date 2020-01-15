@@ -11,11 +11,11 @@ Point::Point(vec3 pos, uint16_t m)
 {}
 
 bool
-Point::hit(const Ray& r,
-           bool early_out,
-           float t_min,
-           float t_max,
-           hit_record& rec) const
+Point::hit([[maybe_unused]] const Ray& r,
+           [[maybe_unused]] bool early_out,
+           [[maybe_unused]] float t_min,
+           [[maybe_unused]] float t_max,
+           [[maybe_unused]] hit_record& rec) const
 {
   // In continuous space, the probability to hit a point is 0
   return false;

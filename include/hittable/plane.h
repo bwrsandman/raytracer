@@ -21,9 +21,7 @@ public:
            float t_max,
            hit_record& rec) const override;
   bool bounding_box(Aabb& box);
-  void build_bvh() {};
 
-private:
   const vec3 min, max, n;
   const uint16_t mat_id;
   Aabb aabb;

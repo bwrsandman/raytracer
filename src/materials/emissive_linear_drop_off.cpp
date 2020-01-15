@@ -14,9 +14,10 @@ EmissiveLinearDropOff::EmissiveLinearDropOff(const vec3& a, float factor)
 {}
 
 void
-EmissiveLinearDropOff::fill_type_data(const Scene& scene,
-                                      RayPayload& payload,
-                                      const vec3& texture_coordinates) const
+EmissiveLinearDropOff::fill_type_data(
+  [[maybe_unused]] const Scene& scene,
+  RayPayload& payload,
+  [[maybe_unused]] const vec3& texture_coordinates) const
 {
   payload.type = RayPayload::Type::Emissive;
   payload.emission = albedo / payload.distance * drop_off_factor;

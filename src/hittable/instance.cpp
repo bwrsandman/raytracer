@@ -4,20 +4,16 @@
 #include <math.h>
 
 #include "hit_record.h"
-#include "math/vec4.h"
 #include "ray.h"
 
+using Raytracer::Hittable::Translate;
+using Raytracer::Hittable::Rotate_y;
+using Raytracer::Math::vec3;
 using Raytracer::hit_record;
 using Raytracer::Ray;
-using Raytracer::Hittable::Rotate;
-using Raytracer::Hittable::Translate;
-using Raytracer::Math::mat4;
-using Raytracer::Math::quat;
-using Raytracer::Math::vec3;
-using Raytracer::Math::vec4;
 
-Translate::Translate(std::unique_ptr<Object>&& _p, vec3 _offset)
-  : p(std::move(_p))
+Translate::Translate(Object* _p, vec3 _offset)
+  : p(_p)
   , offset(_offset)
 {}
 
@@ -38,65 +34,50 @@ Translate::hit(const Ray& r,
   return false;
 }
 
-Rotate::Rotate(std::unique_ptr<Object>&& _p, vec4 _axis)
-  : p(std::move(_p))
-  , local_rot()
-  , total_rot(quat{ 1.f, 0.f, 0.f, 0.f })
-  , axis(_axis)
+
+Rotate_y::Rotate_y(Object* _p, float _angle)
+  : p(_p)
+  , sin_theta(0.f)
+  , cos_theta(0.f)
 {
-  axis.normalize_special();
-
-  local_rot = quat{ axis.x() * sin(axis.w() * 0.5f),
-                    axis.y() * sin(axis.w() * 0.5f),
-                    axis.z() * sin(axis.w() * 0.5f),
-                    cos(axis.w() * 0.5f) };
-
-  total_rot = local_rot * total_rot;
-
-  rotation = (mat4)total_rot.normalize();
-  inv_rotation = (mat4)total_rot.inverse();
+  float radians = static_cast<float>(M_PI) / 180.f * _angle;
+  sin_theta = std::sin(radians);
+  cos_theta = std::cos(radians);
 }
 
 bool
-Rotate::hit(const Ray& r,
-            bool early_out,
-            float t_min,
-            float t_max,
-            hit_record& rec) const
+Rotate_y::hit(const Ray& r,
+               bool early_out,
+               float t_min,
+               float t_max,
+               hit_record& rec) const
 {
-  quat current_total_rot =
-    local_rot * total_rot;
+  vec3 origin = r.origin;
+  vec3 direction = r.direction;
 
-  mat4 current_rotation = (mat4)total_rot.normalize();
-  mat4 current_inv_rotation = (mat4)total_rot.inverse();
+  origin[0] = cos_theta * r.origin.x() - sin_theta * r.origin.z();
+  origin[2] = sin_theta * r.origin.x() + cos_theta * r.origin.z();
 
-  vec4 origin = { 1.f, r.origin.x(), r.origin.y(), r.origin.z() };
-  vec4 direction = { 0.f, r.direction.x(), r.direction.y(), r.direction.z() };
+  direction[0] = cos_theta * r.direction.x() - sin_theta * r.direction.z();
+  direction[2] = sin_theta * r.direction.x() + cos_theta * r.direction.z();
 
-  // inverse matrix
-  origin = dot(current_inv_rotation, origin);
-  direction = dot(current_inv_rotation, direction);
-
-  Ray rotated_r((vec3)origin, (vec3)direction);
+  Ray rotated_r(origin, direction);
 
   if (p->hit(rotated_r, early_out, t_min, t_max, rec)) {
+    vec3 point = rec.p;
+    vec3 n = rec.normal;
 
-    vec4 point = { 1.f, rec.p.x(), rec.p.y(), rec.p.z() };
-    vec4 normal = { 0.f, rec.normal.x(), rec.normal.y(), rec.normal.z() };
+    point[0] = cos_theta * rec.p.x() + sin_theta * rec.p.z();
+    point[2] = -sin_theta * rec.p.x() + cos_theta * rec.p.z();
 
-    point = dot(current_rotation, point);
-    normal = dot(current_rotation, normal);
+    n[0] = cos_theta * rec.normal.x() + sin_theta * rec.normal.z();
+    n[2] = -sin_theta * rec.normal.x() + cos_theta * rec.normal.z();
 
-    rec.p = (vec3)point;
-    rec.normal = (vec3)normal;
+    rec.p = point;
+    rec.normal = n;
+
     return true;
   }
+
   return false;
 }
-
-void
-Rotate::build_bvh()
-{
-  p->build_bvh();
-}
-
