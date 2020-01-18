@@ -13,13 +13,16 @@ struct TextureFormatLookUp
   const uint32_t type;
 };
 
-std::array<TextureFormatLookUp, 4> TextureFormatLookUpTable = {
+std::array<TextureFormatLookUp, 7> TextureFormatLookUpTable = {
   /* rgb32f  */ TextureFormatLookUp{ GL_RGB, GL_RGB32F, GL_FLOAT },
   /* rgba32f */ TextureFormatLookUp{ GL_RGBA, GL_RGBA32F, GL_FLOAT },
+  /* rgba8i */ TextureFormatLookUp{ GL_RGBA_INTEGER, GL_RGBA8I, GL_BYTE },
+  /* rgba16i */ TextureFormatLookUp{ GL_RGBA_INTEGER, GL_RGBA16I, GL_SHORT },
+  /* rgba16u */
+  TextureFormatLookUp{ GL_RGBA_INTEGER, GL_RGBA16UI, GL_UNSIGNED_SHORT },
+  /* rgba32i */ TextureFormatLookUp{ GL_RGBA_INTEGER, GL_RGBA32I, GL_INT },
   /* rgba32u */
   TextureFormatLookUp{ GL_RGBA_INTEGER, GL_RGBA32UI, GL_UNSIGNED_INT },
-  /* rgba32i */
-  TextureFormatLookUp{ GL_RGBA_INTEGER, GL_RGBA32I, GL_INT },
 };
 
 std::array<uint32_t, 2> TextureFilterLookUpTable = {

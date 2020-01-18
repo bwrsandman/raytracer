@@ -12,8 +12,11 @@ struct Texture
   {
     rgb32f,
     rgba32f,
-    rgba32u,
+    rgba8i,
+    rgba16i,
+    rgba16u,
     rgba32i,
+    rgba32u,
   };
 
   enum class MipMapFilter
