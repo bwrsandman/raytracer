@@ -10,7 +10,15 @@ file(GLOB_RECURSE private_impl_sources CONFIGURE_DEPENDS src/private_impl/*)
 file(GLOB shaders CONFIGURE_DEPENDS src/shaders/*.glsl)
 file(GLOB shader_headers CONFIGURE_DEPENDS src/shaders/*.h)
 
-file(GLOB_RECURSE textures CONFIGURE_DEPENDS assets/*.jpg assets/*.png assets/*.tga assets/*.gltf)
+set(assets
+  ${CMAKE_CURRENT_SOURCE_DIR}/assets/earth/earth_albedo.jpg
+  ${CMAKE_CURRENT_SOURCE_DIR}/assets/earth/earth_normal_map.tga
+  ${CMAKE_CURRENT_SOURCE_DIR}/assets/whitted/whitted_floor.png
+  ${CMAKE_CURRENT_SOURCE_DIR}/assets/models/BoxTextured.gltf
+  ${CMAKE_CURRENT_SOURCE_DIR}/assets/models/DamagedHelmet.gltf
+  ${CMAKE_CURRENT_SOURCE_DIR}/assets/models/Duck.gltf
+  ${CMAKE_CURRENT_SOURCE_DIR}/assets/models/Sponza.gltf
+)
 
 # Tell CMake how to compile shaders into SPIV, then into headers
 foreach(shader ${shaders})
@@ -34,16 +42,16 @@ foreach(shader ${shaders})
 endforeach()
 
 # Tell CMake how to include assets
-foreach(texture ${textures})
-    get_filename_component(texture_name ${texture} NAME)
-    set(texture_output ${CMAKE_CURRENT_BINARY_DIR}/${texture_name})
+foreach(asset ${assets})
+    get_filename_component(asset_name ${asset} NAME)
+    set(asset_output ${CMAKE_CURRENT_BINARY_DIR}/${asset_name})
     add_custom_command(
-            OUTPUT ${texture_output}
-            COMMAND ${CMAKE_COMMAND} -E copy ${texture} ${texture_output}
-            DEPENDS ${texture}
+            OUTPUT ${asset_output}
+            COMMAND ${CMAKE_COMMAND} -E copy ${asset} ${asset_output}
+            DEPENDS ${asset}
     )
-    list(APPEND sources ${texture_output})
-    set(EMBED_FILES "${EMBED_FILES} --embed-file ${texture_name}")
+    list(APPEND sources ${asset_output})
+    set(EMBED_FILES "${EMBED_FILES} --embed-file ${asset_name}")
 endforeach()
 
 add_library(RaytracerLib STATIC ${sources} ${headers} ${private_impl_sources})
@@ -53,15 +61,15 @@ if (EMSCRIPTEN)
     set_target_properties(RaytracerLib PROPERTIES
       COMPILE_FLAGS_DEBUG "-g4"
       LINK_FLAGS_DEBUG "-g4"
-      COMPILE_FLAGS "-s USE_SDL=2 -s USE_PTHREADS=1 -s PTHREAD_POOL_SIZE=64 -s TOTAL_MEMORY=64MB"
-      LINK_FLAGS "-s USE_SDL=2 -s FULL_ES3=1 -s GL_ASSERTIONS=1 -s USE_WEBGL2=1 -s USE_PTHREADS=1 -s PTHREAD_POOL_SIZE=64 -s TOTAL_MEMORY=512MB ${EMBED_FILES} --emrun"
+      COMPILE_FLAGS "-s USE_SDL=2 -s USE_PTHREADS=1"
+      LINK_FLAGS "-s USE_SDL=2 -s FULL_ES3=1 -s GL_ASSERTIONS=1 -s USE_WEBGL2=1 -s USE_PTHREADS=1 -s TOTAL_MEMORY=128MB ${EMBED_FILES} --emrun"
       SUFFIX ".html"
     )
     set_target_properties(Raytracer PROPERTIES
       COMPILE_FLAGS_DEBUG "-g4"
       LINK_FLAGS_DEBUG "-g4"
-      COMPILE_FLAGS "-s USE_SDL=2 -s USE_PTHREADS=1 -s PTHREAD_POOL_SIZE=64 -s TOTAL_MEMORY=64MB"
-      LINK_FLAGS "-s USE_SDL=2 -s FULL_ES3=1 -s GL_ASSERTIONS=1 -s USE_WEBGL2=1 -s USE_PTHREADS=1 -s PTHREAD_POOL_SIZE=64 -s TOTAL_MEMORY=512MB ${EMBED_FILES} --emrun"
+      COMPILE_FLAGS "-s USE_SDL=2 -s USE_PTHREADS=1"
+      LINK_FLAGS "-s USE_SDL=2 -s FULL_ES3=1 -s GL_ASSERTIONS=1 -s USE_WEBGL2=1 -s USE_PTHREADS=1 -s TOTAL_MEMORY=128MB ${EMBED_FILES} --emrun"
       SUFFIX ".html"
     )
     list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules/backport")
@@ -128,6 +136,8 @@ elseif(EMSCRIPTEN)
       -Wextra
       -Wno-unused-function
       -Wno-format-nonliteral
+      -Wno-dollar-in-identifier-extension
+      -Wno-gnu-zero-variadic-macro-arguments
       -Werror
       -pedantic
       -pedantic-errors
