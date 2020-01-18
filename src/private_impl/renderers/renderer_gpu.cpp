@@ -243,15 +243,21 @@ RendererGpu::encode_any_hit([[maybe_unused]] uint8_t recursion_count)
       glUniform1i(ah_hit_record_5, AH_HIT_RECORD_5_LOCATION);
       GLint ah_incident_ray_origin = glGetUniformLocation(
         pipelines[i]->get_native_handle(), "ah_incident_ray_origin");
-      glUniform1i(ah_incident_ray_origin, AH_INCIDENT_RAY_ORIGIN_LOCATION);
+      if (ah_incident_ray_origin > 0) {
+        glUniform1i(ah_incident_ray_origin, AH_INCIDENT_RAY_ORIGIN_LOCATION);
+      }
       GLint ah_incident_ray_direction = glGetUniformLocation(
         pipelines[i]->get_native_handle(), "ah_incident_ray_direction");
-      glUniform1i(ah_incident_ray_direction,
-                  AH_INCIDENT_RAY_DIRECTION_LOCATION);
+      if (ah_incident_ray_direction > 0) {
+        glUniform1i(ah_incident_ray_direction,
+                    AH_INCIDENT_RAY_DIRECTION_LOCATION);
+      }
       GLint ah_out_energy_accumulation_direction = glGetUniformLocation(
         pipelines[i]->get_native_handle(), "ah_in_energy_accumulation");
-      glUniform1i(ah_out_energy_accumulation_direction,
-                  AH_IN_ENERGY_ACCUMULATION_LOCATION);
+      if (ah_out_energy_accumulation_direction > 0) {
+        glUniform1i(ah_out_energy_accumulation_direction,
+                    AH_IN_ENERGY_ACCUMULATION_LOCATION);
+      }
     }
     scene_traversal_textures_ah_hit_record_0[scene_traversal_framebuffer_active]
       ->bind(AH_HIT_RECORD_0_LOCATION);
