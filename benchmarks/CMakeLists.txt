@@ -1,5 +1,7 @@
 
-find_package(benchmark COMPONENTS benchmark_main)
+if (NOT EMSCRIPTEN)
+  find_package(benchmark COMPONENTS benchmark_main)
+endif()
 
 if (benchmark_FOUND)
 

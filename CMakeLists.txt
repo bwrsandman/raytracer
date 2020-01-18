@@ -117,6 +117,19 @@ if (MSVC)
       /wd4324 # structure padded due to alignment specifer
       /WX  # Warning are errors
   )
+elseif(EMSCRIPTEN)
+  target_compile_options(RaytracerLib
+    PUBLIC
+      -msimd128
+    PRIVATE
+      -Wall
+      -Wextra
+      -Wno-unused-function
+      -Wno-format-nonliteral
+      -Werror
+      -pedantic
+      -pedantic-errors
+  )
 else()
   target_compile_options(RaytracerLib
     PUBLIC

@@ -83,7 +83,7 @@ Texture::~Texture()
 }
 
 void
-Texture::set_debug_name(const std::string& name) const
+Texture::set_debug_name([[maybe_unused]] const std::string& name) const
 {
 #if !__EMSCRIPTEN__
   glObjectLabel(GL_TEXTURE, native_texture, -1, (name + " texture").c_str());

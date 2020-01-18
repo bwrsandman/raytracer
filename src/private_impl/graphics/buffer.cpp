@@ -27,7 +27,7 @@ Buffer::~Buffer()
 }
 
 void
-Buffer::set_debug_name(const std::string& name) const
+Buffer::set_debug_name([[maybe_unused]] const std::string& name) const
 {
 #if !__EMSCRIPTEN__
   glObjectLabel(GL_BUFFER, native_handle, -1, name.c_str());

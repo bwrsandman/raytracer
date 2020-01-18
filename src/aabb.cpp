@@ -2,14 +2,16 @@
 
 #include "ray.h"
 
-using Raytracer::Aabb;
+#if !__EMSCRIPTEN__
 using Raytracer::AabbSimd;
-using Raytracer::Ray;
 using Raytracer::RaySimd;
 using Raytracer::Math::bool_simd_t;
 using Raytracer::Math::float_simd_t;
-using Raytracer::Math::vec3;
 using Raytracer::Math::vec3_simd;
+#endif
+using Raytracer::Aabb;
+using Raytracer::Ray;
+using Raytracer::Math::vec3;
 
 bool
 Aabb::hit(const Aabb& box, const Ray& r, float t_min, float t_max)
@@ -46,6 +48,7 @@ Aabb::hit(const Aabb& box, const Ray& r, float t_min, float t_max)
   return true;
 }
 
+#if !__EMSCRIPTEN__
 template<uint8_t D>
 bool_simd_t<D>
 Raytracer::Aabb::hit(const Aabb& box,
@@ -154,3 +157,4 @@ AabbSimd<8>::hit(const AabbSimd<8>& box,
                  const Ray& r,
                  float_simd_t<8> t_min,
                  float_simd_t<8> t_max);
+#endif

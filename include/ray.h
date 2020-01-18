@@ -3,12 +3,16 @@
 #include <array>
 
 #include "math/vec3.h"
+#if !__EMSCRIPTEN__
 #include "math/vec3_simd.h"
+#endif
 
 namespace Raytracer {
+#if !__EMSCRIPTEN__
 using Raytracer::Math::float_simd_t;
-using Raytracer::Math::vec3;
 using Raytracer::Math::vec3_simd;
+#endif
+using Raytracer::Math::vec3;
 
 struct Ray
 {
@@ -31,6 +35,7 @@ struct Ray
 
 static_assert(sizeof(Ray) == 24, "ray is not minimal size");
 
+#if !__EMSCRIPTEN__
 template<uint8_t D>
 struct RaySimd
 {
@@ -64,6 +69,7 @@ struct RaySimd
 
 static_assert(sizeof(RaySimd<4>) == 0x60, "quad ray is not minimal size");
 static_assert(sizeof(RaySimd<8>) == 0xC0, "oct ray is not minimal size");
+#endif
 
 struct RayPayload
 {
