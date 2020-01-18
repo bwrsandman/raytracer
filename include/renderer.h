@@ -49,6 +49,7 @@ public:
   virtual void set_recursion_depth(uint8_t value) = 0;
 
   virtual std::vector<std::pair<std::string, float>> evaluate_metrics() = 0;
+  virtual std::vector<std::pair<std::string, uintptr_t>> debug_textures() = 0;
 
 protected:
   Renderer() = default;

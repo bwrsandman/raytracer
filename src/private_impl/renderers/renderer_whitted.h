@@ -33,6 +33,10 @@ public:
   void set_recursion_depth(uint8_t) override {}
 
   std::vector<std::pair<std::string, float>> evaluate_metrics() override { return {}; }
+  std::vector<std::pair<std::string, uintptr_t>> debug_textures() override
+  {
+    return {};
+  }
 
   uint32_t raygen(const Ray& ray,
                   const Scene& scene,

@@ -66,6 +66,7 @@ public:
   void set_recursion_depth(uint8_t value) override;
 
   std::vector<std::pair<std::string, float>> evaluate_metrics() override;
+  std::vector<std::pair<std::string, uintptr_t>> debug_textures() override;
 
 private:
   void upload_raygen_uniforms(const Camera& camera);

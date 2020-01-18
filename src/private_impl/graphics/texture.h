@@ -34,6 +34,7 @@ struct Texture
   void set_debug_name(const std::string& name) const;
   void bind(uint32_t slot) const;
   void upload(const void* data, uint32_t size) const;
+  uintptr_t get_native_handle() const;
 
 private:
   Texture(uint32_t native_texture,

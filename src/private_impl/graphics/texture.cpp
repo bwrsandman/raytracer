@@ -63,6 +63,11 @@ Raytracer::Graphics::Texture::create(uint32_t width,
                gl_format.type,
                nullptr);
 
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, clamp_to_edge);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, clamp_to_edge);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter);
+
   return std::unique_ptr<Texture>(
     new Texture(texture, sampler, width, height, format));
 }
@@ -117,4 +122,10 @@ Texture::upload(const void* data, [[maybe_unused]] uint32_t size) const
                   gl_format.format,
                   gl_format.type,
                   data);
+}
+
+uintptr_t
+Texture::get_native_handle() const
+{
+  return native_texture;
 }

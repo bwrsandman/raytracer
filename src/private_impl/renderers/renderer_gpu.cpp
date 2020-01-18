@@ -538,6 +538,24 @@ RendererGpu::run(const Scene& world)
     upload_uniforms(world);
 
 #if !__EMSCRIPTEN__
+    if (each_intersection_queries.size() != max_recursion_depth) {
+      auto current_size = each_intersection_queries.size();
+      int difference = max_recursion_depth - current_size;
+      if (difference > 0) {
+        each_intersection_queries.resize(max_recursion_depth);
+        glGenQueries(
+          difference *
+            (sizeof(intersection_timestamp_queries_t) / sizeof(uint32_t)),
+          reinterpret_cast<GLuint*>(&each_intersection_queries[current_size]));
+      } else {
+        glDeleteQueries(
+          -difference *
+            (sizeof(intersection_timestamp_queries_t) / sizeof(uint32_t)),
+          reinterpret_cast<GLuint*>(
+            &each_intersection_queries[max_recursion_depth]));
+        each_intersection_queries.resize(max_recursion_depth);
+      }
+    }
     glQueryCounter(timestamp_queries.start, GL_TIMESTAMP);
 #endif
     encode_raygen();
@@ -882,6 +900,59 @@ RendererGpu::evaluate_metrics()
   result.emplace_back("accumulation %.2f ms\n", accumulation_ms.count());
   result.emplace_back("blit %.2f ms\n", final_blit_ms.count());
 #endif
+
+  return result;
+}
+
+std::vector<std::pair<std::string, uintptr_t>>
+RendererGpu::debug_textures()
+{
+  auto result = std::vector<std::pair<std::string, uintptr_t>>();
+
+  result.emplace_back(
+    "ray origin",
+    raygen_textures[raygen_framebuffer_active][RG_OUT_RAY_ORIGIN_LOCATION]
+      ->get_native_handle());
+  result.emplace_back(
+    "ray direction",
+    raygen_textures[raygen_framebuffer_active][RG_OUT_RAY_DIRECTION_LOCATION]
+      ->get_native_handle());
+  result.emplace_back("frame energy accumulation",
+                      raygen_textures[raygen_framebuffer_active]
+                                     [RG_OUT_ENERGY_ACCUMULATION_LOCATION]
+                                       ->get_native_handle());
+  result.emplace_back("shadow ray direction",
+                      raygen_textures[raygen_framebuffer_active]
+                                     [RG_OUT_SHADOW_RAY_DIRECTION_LOCATION]
+                                       ->get_native_handle());
+  result.emplace_back(
+    "shadow ray data",
+    raygen_textures[raygen_framebuffer_active][RG_OUT_SHADOW_RAY_DATA_LOCATION]
+      ->get_native_handle());
+
+  result.emplace_back(
+    "hit record (t)",
+    scene_traversal_textures_ah_hit_record_0[scene_traversal_framebuffer_active]
+      ->get_native_handle());
+  result.emplace_back(
+    "hit record (position)",
+    scene_traversal_textures[AH_HIT_RECORD_1_LOCATION]->get_native_handle());
+  result.emplace_back(
+    "hit record (uv)",
+    scene_traversal_textures[AH_HIT_RECORD_2_LOCATION]->get_native_handle());
+  result.emplace_back(
+    "hit record (normal)",
+    scene_traversal_textures[AH_HIT_RECORD_3_LOCATION]->get_native_handle());
+  result.emplace_back(
+    "hit record (tangent)",
+    scene_traversal_textures[AH_HIT_RECORD_4_LOCATION]->get_native_handle());
+  result.emplace_back(
+    "hit record (status, mat_id, bvh_hits)",
+    scene_traversal_textures[AH_HIT_RECORD_5_LOCATION]->get_native_handle());
+
+  result.emplace_back(
+    "accumulated energy",
+    accumulation_texture[accumulation_framebuffer_active]->get_native_handle());
 
   return result;
 }
