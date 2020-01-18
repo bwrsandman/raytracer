@@ -10,6 +10,7 @@
 #include "../graphics/buffer.h"
 #include "../graphics/framebuffer.h"
 #include "../graphics/indexed_mesh.h"
+#include "../graphics/scoped_debug_group.h"
 #include "../graphics/texture.h"
 #include "camera.h"
 #include "hittable/plane.h"
@@ -119,7 +120,7 @@ void
 RendererGpu::encode_raygen()
 {
   constexpr vec4 clear_color = { 0.0f, 0.0f, 0.0f, 0.0f };
-  glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "raygen");
+  auto debug_group = ScopedDebugGroup("raygen");
   for (auto& framebuffer : raygen_framebuffer) {
     framebuffer->clear(
       { clear_color, clear_color, clear_color, clear_color, clear_color });
@@ -129,18 +130,17 @@ RendererGpu::encode_raygen()
   raygen_ray_uniform->bind(RG_RAY_CAMERA_BINDING);
   fullscreen_quad->draw();
   glQueryCounter(timestamp_queries.raygen, GL_TIMESTAMP);
-  glPopDebugGroup();
 }
 
 void
 RendererGpu::encode_scene_traversal(Texture& ray_direction)
 {
   constexpr vec4 clear_color = { 0.0f, 0.0f, 0.0f, 1.0f };
+  auto debug_group = ScopedDebugGroup("scene traversal");
   // set t_max to float max
   static const vec4 previous_hit_record_clear = {
     std::numeric_limits<float>::max(), 0.0f, 0.0f, 1.0f
   };
-  glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "scene traversal");
 
   // Clear the double buffer
   for (auto& framebuffer : scene_traversal_framebuffer) {
@@ -176,7 +176,7 @@ RendererGpu::encode_scene_traversal(Texture& ray_direction)
   };
 
   for (uint8_t i = 0; i < primitives_t::count; ++i) {
-    glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, debug_strs[i].data());
+    auto primitive_debug_group = ScopedDebugGroup(debug_strs[i]);
     pipelines[i]->bind();
     {
       GLint st_ray_direction = glGetUniformLocation(
@@ -196,10 +196,7 @@ RendererGpu::encode_scene_traversal(Texture& ray_direction)
     primitive_buffers[i]->bind(ST_OBJECT_BINDING);
     fullscreen_quad->draw();
     scene_traversal_framebuffer_active = 1 - scene_traversal_framebuffer_active;
-    glPopDebugGroup(); // debug_strs[i]
   }
-
-  glPopDebugGroup(); // scene traversal
 }
 
 void
@@ -214,7 +211,7 @@ RendererGpu::encode_any_hit(uint8_t recursion_count)
     miss_all_pipeline.get(),
   };
   for (uint8_t i = 0; i < 2; ++i) {
-    glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, debug_strs[i].data());
+    auto debug_group = ScopedDebugGroup(debug_strs[i]);
     pipelines[i]->bind();
     {
       GLint ah_hit_record_0 = glGetUniformLocation(
@@ -269,7 +266,6 @@ RendererGpu::encode_any_hit(uint8_t recursion_count)
     anyhit_uniform->bind(AH_UNIFORM_BINDING);
     raygen_framebuffer[1 - raygen_framebuffer_active]->bind();
     fullscreen_quad->draw();
-    glPopDebugGroup();
     glQueryCounter(
       timestamp_queries.each_intersection[recursion_count].any_hit[i],
       GL_TIMESTAMP);
@@ -279,7 +275,7 @@ RendererGpu::encode_any_hit(uint8_t recursion_count)
 void
 RendererGpu::encode_shadow_ray_light_hit()
 {
-  glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "shadow ray light hit");
+  auto debug_group = ScopedDebugGroup("shadow ray light hit");
   shadow_ray_light_hit_pipeline->bind();
   {
     GLint sr_hit_record_5 = glGetUniformLocation(
@@ -322,14 +318,13 @@ RendererGpu::encode_shadow_ray_light_hit()
   shadow_ray_light_hit_uniform->bind(SR_UNIFORM_BINDING);
   raygen_framebuffer[1 - raygen_framebuffer_active]->bind();
   fullscreen_quad->draw();
-  glPopDebugGroup();
 }
 
 void
 RendererGpu::encode_accumulation()
 {
   constexpr vec4 clear_color = { 0.0f, 0.0f, 0.0f, 1.0f };
-  glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "accumulation");
+  auto debug_group = ScopedDebugGroup("accumulation");
   accumulation_framebuffer[accumulation_framebuffer_active]->clear(
     { clear_color });
   accumulation_pipeline->bind();
@@ -343,7 +338,6 @@ RendererGpu::encode_accumulation()
   accumulation_texture[1 - accumulation_framebuffer_active]->bind(
     EA_IN_PREVIOUS_ENERGY_LOCATION);
   fullscreen_quad->draw();
-  glPopDebugGroup();
   glQueryCounter(timestamp_queries.accumulation, GL_TIMESTAMP);
 
   accumulation_framebuffer_active = 1 - accumulation_framebuffer_active;
@@ -353,14 +347,13 @@ void
 RendererGpu::encode_final_blit()
 {
   constexpr vec4 clear_color = { 1.0f, 1.0f, 0.0f, 1.0f };
-  glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "final blit");
+  auto debug_group = ScopedDebugGroup("final blit");
   backbuffer->clear({ clear_color });
   final_blit_pipeline->bind();
   accumulation_texture[raygen_framebuffer_active]->bind(
     F_IMAGE_SAMPLER_LOCATION);
   fullscreen_quad->draw();
   backbuffer->bind();
-  glPopDebugGroup();
   glQueryCounter(timestamp_queries.final_blit, GL_TIMESTAMP);
 }
 
@@ -533,45 +526,44 @@ RendererGpu::run(const Scene& world)
     glQueryCounter(timestamp_queries.start, GL_TIMESTAMP);
     encode_raygen();
 
-    glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "intersections");
-    for (uint8_t j = 0; j < max_recursion_depth; ++j) {
-      auto debug_str = (std::string("pass #") + std::to_string(j));
+    {
+      auto intersections_debug_group = ScopedDebugGroup("intersections");
+      for (uint8_t j = 0; j < max_recursion_depth; ++j) {
+        auto debug_str = (std::string("pass #") + std::to_string(j));
+        auto pass_debug_group = ScopedDebugGroup(debug_str.c_str());
 
-      glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, debug_str.c_str());
-      constexpr vec4 clear_color = { 0.0f, 0.0f, 0.0f, 0.0f };
-      raygen_framebuffer[1 - raygen_framebuffer_active]->clear(
-        { clear_color, clear_color, clear_color, clear_color, clear_color });
+        constexpr vec4 clear_color = { 0.0f, 0.0f, 0.0f, 0.0f };
+        raygen_framebuffer[1 - raygen_framebuffer_active]->clear(
+          { clear_color, clear_color, clear_color, clear_color, clear_color });
 
-      // Primary ray
-      glQueryCounter(timestamp_queries.each_intersection[j].start,
-                     GL_TIMESTAMP);
-      encode_scene_traversal(*raygen_textures[raygen_framebuffer_active]
-                                             [RG_OUT_RAY_DIRECTION_LOCATION]);
-      glQueryCounter(timestamp_queries.each_intersection[j].main_traversal,
-                     GL_TIMESTAMP);
-      encode_any_hit(j);
+        // Primary ray
+        glQueryCounter(timestamp_queries.each_intersection[j].start,
+                       GL_TIMESTAMP);
+        encode_scene_traversal(*raygen_textures[raygen_framebuffer_active]
+                                               [RG_OUT_RAY_DIRECTION_LOCATION]);
+        glQueryCounter(timestamp_queries.each_intersection[j].main_traversal,
+                       GL_TIMESTAMP);
+        encode_any_hit(j);
 
-      // Swap buffers
-      raygen_framebuffer_active = 1 - raygen_framebuffer_active;
+        // Swap buffers
+        raygen_framebuffer_active = 1 - raygen_framebuffer_active;
 
-      // Shadow ray (and blit)
-      encode_scene_traversal(
-        *raygen_textures[raygen_framebuffer_active]
-                        [RG_OUT_SHADOW_RAY_DIRECTION_LOCATION]);
-      glQueryCounter(
-        timestamp_queries.each_intersection[j].shadow_ray_traversal,
-        GL_TIMESTAMP);
-      encode_shadow_ray_light_hit();
-      glQueryCounter(timestamp_queries.each_intersection[j].shadow_ray_hit,
-                     GL_TIMESTAMP);
+        // Shadow ray (and blit)
+        encode_scene_traversal(
+          *raygen_textures[raygen_framebuffer_active]
+                          [RG_OUT_SHADOW_RAY_DIRECTION_LOCATION]);
+        glQueryCounter(
+          timestamp_queries.each_intersection[j].shadow_ray_traversal,
+          GL_TIMESTAMP);
+        encode_shadow_ray_light_hit();
+        glQueryCounter(timestamp_queries.each_intersection[j].shadow_ray_hit,
+                       GL_TIMESTAMP);
 
-      // Swap buffers
-      raygen_framebuffer_active = 1 - raygen_framebuffer_active;
-
-      glPopDebugGroup(); // pass #
+        // Swap buffers
+        raygen_framebuffer_active = 1 - raygen_framebuffer_active;
+      }
+      glQueryCounter(timestamp_queries.intersections, GL_TIMESTAMP);
     }
-    glPopDebugGroup(); // intersections
-    glQueryCounter(timestamp_queries.intersections, GL_TIMESTAMP);
 
     encode_accumulation();
     encode_final_blit();
