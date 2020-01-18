@@ -78,10 +78,26 @@ void main() {
         }
     } else if (material_type == MATERIAL_TYPE_DIELECTRIC) {
         float ref_idx = material_data.r;
+      bool inside_dielectric = false;
         rg_out_energy_accumulation.xyz = energy_accumulation.xyz;
-        rg_out_ray_direction.xyz = material_dielectric_scatter(seed, ray_direction.xyz, rec.normal, ref_idx);
+        rg_out_ray_direction.xyz = material_dielectric_scatter(
+        seed, ray_direction.xyz, rec.normal, ref_idx, inside_dielectric);
         rg_out_ray_origin.xyz = rec.position + FLT_EPSILON * rg_out_ray_direction.xyz;
         rg_out_ray_direction.w = RAY_STATUS_ACTIVE;
+
+		// Beer's law
+        if (inside_dielectric) {
+          vec4 ray_origin = texelFetch(ah_incident_ray_direction, iid, 0);
+          float dist = -distance(rg_out_ray_origin.xyz, ray_origin.xyz);
+
+          // unscramble floatshift x*1.000.000 + y*1.000 + z
+          vec3 albedo = vec3(float(int(material_data.z) / 1000000), 
+                             float(mod(int(material_data.z) / 1000,1000)), 
+                             mod(material_data.z ,1000.f));
+
+          vec3 absorb = vec3(exp(albedo.x * dist), exp(albedo.y * dist), exp(albedo.z * dist));
+          rg_out_energy_accumulation.xyz = rg_out_energy_accumulation.xyz * absorb.xyz;
+		}
     } else {
         rg_out_energy_accumulation = energy_accumulation * vec4(mod(rec.uv.x, 0.1f) > 0.05f ^^ mod(rec.uv.y, 0.1f) > 0.05f);
         rg_out_ray_origin.xyz = rec.position + FLT_EPSILON * rec.normal;
@@ -89,4 +105,8 @@ void main() {
         rg_out_ray_direction.w = RAY_STATUS_ACTIVE;
     }
     rg_out_energy_accumulation.a = 1.0f / uniform_block.data.frame_count;
-}
+
+
+
+
+    }

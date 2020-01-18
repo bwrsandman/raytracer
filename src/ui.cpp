@@ -55,12 +55,12 @@ Ui::run(std::unique_ptr<Scene>& scene,
     if (format.find("[GRAPH") != std::string::npos) {
       if (show_stats) {
         auto title_start = format.find("] ");
-        if (title_start!=std::string::npos) {
+        if (title_start != std::string::npos) {
           auto name = format.substr(title_start + 2);
           if (graphs_map.count(name) > 0) {
             graphs_map[name].push_back(value);
           } else {
-            graphs_map.emplace(name, std::vector{value});
+            graphs_map.emplace(name, std::vector{ value });
           }
         }
       }
@@ -73,7 +73,7 @@ Ui::run(std::unique_ptr<Scene>& scene,
   if (!graphs_map.empty()) {
     if (ImGui::Begin("Stats")) {
       for (auto [title, values] : graphs_map) {
-        ImGui::PlotHistogram(title.c_str(), values.data(), values.size());
+        ImGui::PlotHistogram(title.c_str(), values.data(), (int)values.size());
       }
     }
     ImGui::End();
@@ -150,6 +150,14 @@ Ui::run(std::unique_ptr<Scene>& scene,
         dirty = true;
         camera.screen_aspect = aspect;
       }
+
+      auto apature = camera.apature;
+      ImGui::SliderFloat("Aparture Size", &camera.apature, 0, 20);
+      dirty |= apature != camera.apature;
+
+	  auto focus_dist = camera.focus_dist;
+      ImGui::SliderFloat("Focus Distance", &camera.focus_dist, 0, 100);
+          dirty |= focus_dist != camera.focus_dist;
 
       vec3 origin = camera.origin;
       ImGui::InputFloat3("Origin", reinterpret_cast<float*>(&camera.origin));

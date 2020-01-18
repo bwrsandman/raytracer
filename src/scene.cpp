@@ -574,7 +574,7 @@ Scene::load_cornell_box()
   materials.emplace_back(std::make_unique<EmissiveQuadraticDropOff>(
     vec3(2.0f, 2.0f, 2.0f), 1.0f)); // 6
   materials.emplace_back(
-    std::make_unique<Dielectric>(vec3(0.0f, 2.0f, 2.0f), 1.5f, 1.0f)); // 7
+    std::make_unique<Dielectric>(vec3(1.0f, 1.0f, 0.0f), 1.5f, 1.0f)); // 7
   materials.emplace_back(
     std::make_unique<Lambert>(vec3(1.0f, 0.0f, 0.0f))); // 8
   materials.emplace_back(

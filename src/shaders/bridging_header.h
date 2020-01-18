@@ -111,7 +111,7 @@ struct alignas(64) scene_traversal_plane_uniform_t
 #define MAX_NUM_LIGHTS 16
 struct anyhit_uniform_data_t
 {
-  /// color (rgb) / refraction index+ni, type (a)
+  /// color (rgb) / refraction index+ni+albedo, type (a)
   vec4 material_data[MAX_NUM_MATERIALS];
   vec4 light_position_data[MAX_NUM_LIGHTS];
   uint32_t material_count;
@@ -232,7 +232,8 @@ static vec3
 material_dielectric_scatter(inout uint32_t seed,
                             vec3 direction,
                             vec3 normal,
-                            float refraction_index)
+                            float refraction_index,
+                            inout bool inside)
 {
   vec3 outward_normal;
   vec3 reflected = reflect(direction, normal);
@@ -241,11 +242,14 @@ material_dielectric_scatter(inout uint32_t seed,
   float reflect_probability;
   float cosine = dot(direction, normal);
   if (cosine > 0.0f) {
+    // inside out
+    inside = true;
     outward_normal = -normal;
     ni_over_nt = refraction_index;
     cosine =
       sqrt(1 - refraction_index * refraction_index * (1.0f - cosine * cosine));
   } else {
+	// outside in
     outward_normal = normal;
     ni_over_nt = 1.0f / refraction_index;
     cosine = -cosine;

@@ -25,12 +25,20 @@ struct vec4
                 e[3] + other.e[3]);
   }
 
+  inline vec4 operator-(const vec4& other) const
+  {
+    return vec4(e[0] - other.e[0],
+                e[1] - other.e[1],
+                e[2] - other.e[2],
+                e[3] - other.e[3]);
+  }
+
   inline float& operator[](uint8_t index)
   {
     assert(index < 4);
     return e[index];
   }
-
+  
   float e[4];
 };
 
