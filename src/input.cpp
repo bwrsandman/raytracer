@@ -122,11 +122,7 @@ Input::run(Ui& ui, Scene& scene, std::chrono::microseconds& dt)
         break;
       case SDL_KEYDOWN:
         switch (event.key.keysym.sym) {
-#if __EMSCRIPTEN__
-          case SDL_SCANCODE_ESCAPE: // weird sdl2 emscripten bug
-#else
           case SDLK_ESCAPE:
-#endif
             quit = true;
             break;
         }
