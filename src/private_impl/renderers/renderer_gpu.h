@@ -28,8 +28,6 @@ using Raytracer::Hittable::Object;
 
 class RendererGpu : public Renderer
 {
-  static constexpr uint8_t max_recursion_depth = 16;
-
   // Emscripten support for timestamp queries is incomplete
   // https://github.com/emscripten-core/emscripten/pull/9652
 #if !__EMSCRIPTEN__
@@ -47,11 +45,10 @@ class RendererGpu : public Renderer
     uint32_t start;
     uint32_t raygen;
     uint32_t intersections;
-    intersection_timestamp_queries_t each_intersection[max_recursion_depth];
     uint32_t accumulation;
     uint32_t final_blit;
   };
-  static_assert(sizeof(timestamp_queries_t) / sizeof(uint32_t) == 5 + 16 * 6);
+  static_assert(sizeof(timestamp_queries_t) / sizeof(uint32_t) == 5);
 #endif
 
 public:
@@ -64,6 +61,9 @@ public:
   bool get_debug() const override;
   void set_debug(bool value) override;
   void set_debug_data(uint32_t data) override;
+
+  uint8_t get_recursion_depth() const override;
+  void set_recursion_depth(uint8_t value) override;
 
   std::vector<std::pair<std::string, float>> evaluate_metrics() override;
 
@@ -90,6 +90,8 @@ private:
   uint32_t frame_count;
   uint16_t width;
   uint16_t height;
+
+  uint8_t max_recursion_depth = 16;
 
   std::unique_ptr<Framebuffer> backbuffer;
 
@@ -127,6 +129,7 @@ private:
   std::function<void(uint32_t, uint32_t)> glQueryCounter;
   std::function<void(uint32_t, uint32_t, uint64_t*)> glGetQueryObjectui64v;
   timestamp_queries_t timestamp_queries;
+  std::vector<intersection_timestamp_queries_t> each_intersection_queries;
 #endif
 };
 } // namespace Raytracer::Graphics

@@ -90,6 +90,12 @@ Ui::run(std::unique_ptr<Scene>& scene,
     ImGui::SameLine();
     ImGui::Checkbox("Show stats", &show_stats);
 
+    int recursion_depth = renderer.get_recursion_depth();
+    ImGui::InputInt("Max recursion depth", &recursion_depth);
+    if (recursion_depth > 0 && recursion_depth < 256) {
+      renderer.set_recursion_depth(recursion_depth);
+    }
+
     ImGui::Text("Load Scene");
     if (ImGui::Button("Whitted")) {
       SDL_SetWindowSize(window, 512, 512);

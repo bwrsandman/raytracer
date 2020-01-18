@@ -45,6 +45,9 @@ public:
   virtual void set_debug(bool value) = 0;
   virtual void set_debug_data(uint32_t data) = 0;
 
+  virtual uint8_t get_recursion_depth() const = 0;
+  virtual void set_recursion_depth(uint8_t value) = 0;
+
   virtual std::vector<std::pair<std::string, float>> evaluate_metrics() = 0;
 
 protected:

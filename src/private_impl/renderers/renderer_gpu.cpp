@@ -276,9 +276,8 @@ RendererGpu::encode_any_hit([[maybe_unused]] uint8_t recursion_count)
     raygen_framebuffer[1 - raygen_framebuffer_active]->bind();
     fullscreen_quad->draw();
 #if !__EMSCRIPTEN__
-    glQueryCounter(
-      timestamp_queries.each_intersection[recursion_count].any_hit[i],
-      GL_TIMESTAMP);
+    glQueryCounter(each_intersection_queries[recursion_count].any_hit[i],
+                   GL_TIMESTAMP);
 #endif
   }
 }
@@ -555,13 +554,12 @@ RendererGpu::run(const Scene& world)
 
         // Primary ray
 #if !__EMSCRIPTEN__
-        glQueryCounter(timestamp_queries.each_intersection[j].start,
-                       GL_TIMESTAMP);
+        glQueryCounter(each_intersection_queries[j].start, GL_TIMESTAMP);
 #endif
         encode_scene_traversal(*raygen_textures[raygen_framebuffer_active]
                                                [RG_OUT_RAY_DIRECTION_LOCATION]);
 #if !__EMSCRIPTEN__
-        glQueryCounter(timestamp_queries.each_intersection[j].main_traversal,
+        glQueryCounter(each_intersection_queries[j].main_traversal,
                        GL_TIMESTAMP);
 #endif
         encode_any_hit(j);
@@ -574,13 +572,12 @@ RendererGpu::run(const Scene& world)
           *raygen_textures[raygen_framebuffer_active]
                           [RG_OUT_SHADOW_RAY_DIRECTION_LOCATION]);
 #if !__EMSCRIPTEN__
-        glQueryCounter(
-          timestamp_queries.each_intersection[j].shadow_ray_traversal,
-          GL_TIMESTAMP);
+        glQueryCounter(each_intersection_queries[j].shadow_ray_traversal,
+                       GL_TIMESTAMP);
 #endif
         encode_shadow_ray_light_hit();
 #if !__EMSCRIPTEN__
-        glQueryCounter(timestamp_queries.each_intersection[j].shadow_ray_hit,
+        glQueryCounter(each_intersection_queries[j].shadow_ray_hit,
                        GL_TIMESTAMP);
 #endif
 
@@ -840,17 +837,15 @@ RendererGpu::evaluate_metrics()
   };
 
   for (uint8_t i = 0; i < max_recursion_depth; ++i) {
-    auto start = get_timestamp(timestamp_queries.each_intersection[i].start);
+    auto start = get_timestamp(each_intersection_queries[i].start);
     auto main_traversal =
-      get_timestamp(timestamp_queries.each_intersection[i].main_traversal);
-    auto closest_hit =
-      get_timestamp(timestamp_queries.each_intersection[i].any_hit[0]);
-    auto miss_all =
-      get_timestamp(timestamp_queries.each_intersection[i].any_hit[1]);
-    auto shadow_ray_traversal = get_timestamp(
-      timestamp_queries.each_intersection[i].shadow_ray_traversal);
+      get_timestamp(each_intersection_queries[i].main_traversal);
+    auto closest_hit = get_timestamp(each_intersection_queries[i].any_hit[0]);
+    auto miss_all = get_timestamp(each_intersection_queries[i].any_hit[1]);
+    auto shadow_ray_traversal =
+      get_timestamp(each_intersection_queries[i].shadow_ray_traversal);
     auto shadow_ray_hit =
-      get_timestamp(timestamp_queries.each_intersection[i].shadow_ray_hit);
+      get_timestamp(each_intersection_queries[i].shadow_ray_hit);
 
     auto main_traversal_ms = get_duration(start, main_traversal);
     auto closest_hit_ms = get_duration(main_traversal, closest_hit);
@@ -889,4 +884,16 @@ RendererGpu::evaluate_metrics()
 #endif
 
   return result;
+}
+
+uint8_t
+RendererGpu::get_recursion_depth() const
+{
+  return max_recursion_depth;
+}
+
+void
+RendererGpu::set_recursion_depth(uint8_t value)
+{
+  max_recursion_depth = value;
 }
