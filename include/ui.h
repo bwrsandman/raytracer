@@ -2,6 +2,9 @@
 
 #include <chrono>
 #include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 
 struct SDL_Window;
 union SDL_Event;
@@ -19,11 +22,13 @@ public:
 
   void run(std::unique_ptr<Scene>& scene,
            Graphics::Renderer& renderer,
-           std::chrono::microseconds& dt) const;
+           const std::vector<std::pair<std::string, float>>& renderer_metrics,
+           std::chrono::microseconds& dt);
   void draw() const;
   void process_event(const SDL_Event& event);
 
 private:
   SDL_Window* window;
+  bool show_stats;
 };
 } // namespace Raytracer

@@ -33,6 +33,8 @@
 #include "shaders/gpu_5_postprocess_fs.h"
 #include "shaders/passthrough_vs.h"
 
+#define GL_TIMESTAMP 0x8E28
+
 using namespace Raytracer::Graphics;
 using namespace Raytracer::Math;
 using Raytracer::Camera;
@@ -85,6 +87,11 @@ RendererGpu::RendererGpu(SDL_Window* window)
   if (context) {
     gladLoadGLES2Loader(SDL_GL_GetProcAddress);
 
+    typedef void (APIENTRYP PFNGLQUERYCOUNTERPROC)(GLuint id, GLenum target);
+    glQueryCounter = reinterpret_cast<PFNGLQUERYCOUNTERPROC>(SDL_GL_GetProcAddress("glQueryCounter"));
+    typedef void (APIENTRYP PFNGLGETQUERYOBJECTUI64VPROC)(GLuint id, GLenum pname, GLuint64 *params);
+    glGetQueryObjectui64v = reinterpret_cast<PFNGLGETQUERYOBJECTUI64VPROC>(SDL_GL_GetProcAddress("glGetQueryObjectui64v"));
+
 #if !__EMSCRIPTEN__
     glEnable(GL_DEBUG_OUTPUT);
     glDebugMessageCallback(MessageCallback, this);
@@ -92,12 +99,14 @@ RendererGpu::RendererGpu(SDL_Window* window)
 
     backbuffer = Framebuffer::default_framebuffer();
     fullscreen_quad = IndexedMesh::create_fullscreen_quad();
+    glGenQueries(sizeof(timestamp_queries_t) / sizeof(uint32_t), reinterpret_cast<uint32_t*>(&timestamp_queries));
     create_pipelines();
   }
 }
 
 RendererGpu::~RendererGpu()
 {
+  glDeleteQueries(sizeof(timestamp_queries_t) / sizeof(uint32_t), reinterpret_cast<uint32_t*>(&timestamp_queries));
   SDL_GL_DeleteContext(context);
 }
 
@@ -114,6 +123,7 @@ RendererGpu::encode_raygen()
   raygen_pipeline->bind();
   raygen_ray_uniform->bind(RG_RAY_CAMERA_BINDING);
   fullscreen_quad->draw();
+  glQueryCounter(timestamp_queries.raygen, GL_TIMESTAMP);
   glPopDebugGroup();
 }
 
@@ -188,7 +198,7 @@ RendererGpu::encode_scene_traversal(Texture& ray_direction)
 }
 
 void
-RendererGpu::encode_any_hit()
+RendererGpu::encode_any_hit(uint8_t recursion_count)
 {
   constexpr std::string_view debug_strs[2] = {
     "closest hit",
@@ -255,6 +265,7 @@ RendererGpu::encode_any_hit()
     raygen_framebuffer[1 - raygen_framebuffer_active]->bind();
     fullscreen_quad->draw();
     glPopDebugGroup();
+    glQueryCounter(timestamp_queries.each_intersection[recursion_count].any_hit[i], GL_TIMESTAMP);
   }
 }
 
@@ -326,6 +337,7 @@ RendererGpu::encode_accumulation()
     EA_IN_PREVIOUS_ENERGY_LOCATION);
   fullscreen_quad->draw();
   glPopDebugGroup();
+  glQueryCounter(timestamp_queries.accumulation, GL_TIMESTAMP);
 
   accumulation_framebuffer_active = 1 - accumulation_framebuffer_active;
 }
@@ -342,6 +354,7 @@ RendererGpu::encode_final_blit()
   fullscreen_quad->draw();
   backbuffer->bind();
   glPopDebugGroup();
+  glQueryCounter(timestamp_queries.final_blit, GL_TIMESTAMP);
 }
 
 void
@@ -502,6 +515,8 @@ RendererGpu::run(const Scene& world)
     glViewport(0, 0, width, height);
 
     upload_uniforms(world);
+
+    glQueryCounter(timestamp_queries.start, GL_TIMESTAMP);
     encode_raygen();
 
     glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "intersections");
@@ -514,9 +529,11 @@ RendererGpu::run(const Scene& world)
         { clear_color, clear_color, clear_color, clear_color, clear_color });
 
       // Primary ray
+      glQueryCounter(timestamp_queries.each_intersection[j].start, GL_TIMESTAMP);
       encode_scene_traversal(*raygen_textures[raygen_framebuffer_active]
                                              [RG_OUT_RAY_DIRECTION_LOCATION]);
-      encode_any_hit();
+      glQueryCounter(timestamp_queries.each_intersection[j].main_traversal, GL_TIMESTAMP);
+      encode_any_hit(j);
 
       // Swap buffers
       raygen_framebuffer_active = 1 - raygen_framebuffer_active;
@@ -525,7 +542,9 @@ RendererGpu::run(const Scene& world)
       encode_scene_traversal(
         *raygen_textures[raygen_framebuffer_active]
                         [RG_OUT_SHADOW_RAY_DIRECTION_LOCATION]);
+      glQueryCounter(timestamp_queries.each_intersection[j].shadow_ray_traversal, GL_TIMESTAMP);
       encode_shadow_ray_light_hit();
+      glQueryCounter(timestamp_queries.each_intersection[j].shadow_ray_hit, GL_TIMESTAMP);
 
       // Swap buffers
       raygen_framebuffer_active = 1 - raygen_framebuffer_active;
@@ -533,6 +552,7 @@ RendererGpu::run(const Scene& world)
       glPopDebugGroup(); // pass #
     }
     glPopDebugGroup(); // intersections
+    glQueryCounter(timestamp_queries.intersections, GL_TIMESTAMP);
 
     encode_accumulation();
     encode_final_blit();
@@ -758,4 +778,60 @@ RendererGpu::create_pipelines()
     sizeof(gpu_5_postprocess_fs) / sizeof(gpu_5_postprocess_fs[0]);
   info.fragment_shader_entry_point = "main";
   final_blit_pipeline = Pipeline::create(Pipeline::Type::RasterOpenGL, info);
+}
+
+std::vector<std::pair<std::string, float>> RendererGpu::evaluate_metrics() {
+  using duration_format = std::chrono::duration<float, std::milli>;
+
+  auto get_timestamp = [this](uint32_t query_object)-> std::chrono::nanoseconds {
+    uint64_t timestamp = 0;
+    glGetQueryObjectui64v(query_object, GL_QUERY_RESULT, &timestamp);
+    return std::chrono::nanoseconds(timestamp);
+  };
+
+  auto get_duration = [] (std::chrono::nanoseconds& start, std::chrono::nanoseconds& end) {
+    auto nanoseconds = end - start;
+    return std::chrono::duration_cast<duration_format>(nanoseconds);
+  };
+
+  std::vector<std::pair<std::string, float>> result;
+
+  for (uint8_t i = 0; i < max_recursion_depth; ++i) {
+    auto start = get_timestamp(timestamp_queries.each_intersection[i].start);
+    auto main_traversal = get_timestamp(timestamp_queries.each_intersection[i].main_traversal);
+    auto closest_hit = get_timestamp(timestamp_queries.each_intersection[i].any_hit[0]);
+    auto miss_all = get_timestamp(timestamp_queries.each_intersection[i].any_hit[1]);
+    auto shadow_ray_traversal = get_timestamp(timestamp_queries.each_intersection[i].shadow_ray_traversal);
+    auto shadow_ray_hit = get_timestamp(timestamp_queries.each_intersection[i].shadow_ray_hit);
+
+    auto main_traversal_ms = get_duration(start, main_traversal);
+    auto closest_hit_ms = get_duration(main_traversal, closest_hit);
+    auto miss_all_ms = get_duration(closest_hit, miss_all);
+    auto shadow_ray_traversal_ms = get_duration(miss_all, shadow_ray_traversal);
+    auto shadow_ray_hit_ms = get_duration(shadow_ray_traversal, shadow_ray_hit);
+
+    result.emplace_back("[GRAPH:" + std::to_string(i) + "] main_traversal", main_traversal_ms.count());
+    result.emplace_back("[GRAPH:" + std::to_string(i) + "] closest_hit", closest_hit_ms.count());
+    result.emplace_back("[GRAPH:" + std::to_string(i) + "] miss_all", miss_all_ms.count());
+    result.emplace_back("[GRAPH:" + std::to_string(i) + "] shadow_ray_traversal", shadow_ray_traversal_ms.count());
+    result.emplace_back("[GRAPH:" + std::to_string(i) + "] shadow_ray_hit", shadow_ray_hit_ms.count());
+  }
+
+  auto start = get_timestamp(timestamp_queries.start);
+  auto raygen = get_timestamp(timestamp_queries.raygen);
+  auto intersections = get_timestamp(timestamp_queries.intersections);
+  auto accumulation = get_timestamp(timestamp_queries.accumulation);
+  auto final_blit = get_timestamp(timestamp_queries.final_blit);
+
+  auto raygen_ms = get_duration(start, raygen);
+  auto intersections_ms = get_duration(raygen, intersections);
+  auto accumulation_ms = get_duration(intersections, accumulation);
+  auto final_blit_ms = get_duration(accumulation, final_blit);
+
+  result.emplace_back("raygen %.2f ms\n", raygen_ms.count());
+  result.emplace_back("intersections %.2f ms\n", intersections_ms.count());
+  result.emplace_back("accumulation %.2f ms\n", accumulation_ms.count());
+  result.emplace_back("blit %.2f ms\n", final_blit_ms.count());
+
+  return result;
 }

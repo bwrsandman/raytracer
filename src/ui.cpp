@@ -1,5 +1,7 @@
 #include "ui.h"
 
+#include <map>
+
 #include <SDL_video.h>
 #include <imgui.h>
 
@@ -27,6 +29,7 @@ using namespace Raytracer::Materials;
 
 Ui::Ui(SDL_Window* window)
   : window(window)
+  , show_stats(false)
 {
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
@@ -39,11 +42,42 @@ Ui::Ui(SDL_Window* window)
 void
 Ui::run(std::unique_ptr<Scene>& scene,
         Graphics::Renderer& renderer,
-        std::chrono::microseconds& dt) const
+        const std::vector<std::pair<std::string, float>>& renderer_metrics,
+        std::chrono::microseconds& dt)
 {
   ImGui_ImplOpenGL3_NewFrame();
   ImGui_ImplSDL2_NewFrame(window);
   ImGui::NewFrame();
+
+  ImGui::BeginMainMenuBar();
+  std::map<std::string, std::vector<float>> graphs_map;
+  for (auto [format, value] : renderer_metrics) {
+    if (format.find("[GRAPH") != std::string::npos) {
+      if (show_stats) {
+        auto title_start = format.find("] ");
+        if (title_start!=std::string::npos) {
+          auto name = format.substr(title_start + 2);
+          if (graphs_map.count(name) > 0) {
+            graphs_map[name].push_back(value);
+          } else {
+            graphs_map.emplace(name, std::vector{value});
+          }
+        }
+      }
+      continue;
+    }
+    ImGui::Text(format.c_str(), value);
+  }
+  ImGui::EndMainMenuBar();
+
+  if (!graphs_map.empty()) {
+    if (ImGui::Begin("Stats")) {
+      for (auto [title, values] : graphs_map) {
+        ImGui::PlotHistogram(title.c_str(), values.data(), values.size());
+      }
+    }
+    ImGui::End();
+  }
 
   if (ImGui::Begin("Configuration ")) {
     ImGui::Text("%.2f fps %.2f ms", 1e6f / dt.count(), dt.count() / 1000.0f);
@@ -53,6 +87,8 @@ Ui::run(std::unique_ptr<Scene>& scene,
       ImGui::Checkbox("Debug BVH", &debug);
       renderer.set_debug(debug);
     }
+    ImGui::SameLine();
+    ImGui::Checkbox("Show stats", &show_stats);
 
     ImGui::Text("Load Scene");
     if (ImGui::Button("Whitted")) {

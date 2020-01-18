@@ -30,6 +30,8 @@ public:
   void set_debug(bool value) override;
   void set_debug_data(uint32_t data) override;
 
+  std::vector<std::pair<std::string, float>> evaluate_metrics() override { return {}; }
+
   uint32_t raygen(const Ray& ray,
                   const Scene& scene,
                   bool debug_bvh,
