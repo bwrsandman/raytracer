@@ -70,7 +70,7 @@ if (EMSCRIPTEN)
       spirv-cross
       URL https://github.com/KhronosGroup/SPIRV-Cross/archive/2019-11-01.tar.gz
       URL_HASH MD5=841d5055ef364a4dea7b06378336212a
-      CMAKE_CACHE_ARGS "-DSPIRV_CROSS_CLI:STRING=OFF -DSPIRV_CROSS_ENABLE_TESTS:STRING=OFF"
+      CMAKE_CACHE_ARGS "-DSPIRV_CROSS_EXCEPTIONS_TO_ASSERTIONS:STRING=ON -DSPIRV_CROSS_CLI:STRING=OFF -DSPIRV_CROSS_ENABLE_TESTS:STRING=OFF"
     )
     FetchContent_MakeAvailable(spirv-cross)
     set_target_properties(spirv-cross-glsl PROPERTIES
@@ -78,6 +78,7 @@ if (EMSCRIPTEN)
       LINK_FLAGS_DEBUG "-g4"
       COMPILE_FLAGS "-s USE_PTHREADS=1"
       LINK_FLAGS "-s USE_PTHREADS=1")
+    target_compile_definitions(spirv-cross-glsl INTERFACE SPIRV_CROSS_EXCEPTIONS_TO_ASSERTIONS)
     set(LIBRARIES glad imgui spirv-cross-glsl)
 else()
     find_package(SDL2 REQUIRED)
@@ -122,6 +123,7 @@ elseif(EMSCRIPTEN)
     PUBLIC
       -msimd128
     PRIVATE
+      -fno-exceptions
       -Wall
       -Wextra
       -Wno-unused-function
@@ -135,6 +137,7 @@ else()
     PUBLIC
       -march=haswell
     PRIVATE
+      -fno-exceptions
       -Wall
       -Wextra
       -Wno-unused-function
