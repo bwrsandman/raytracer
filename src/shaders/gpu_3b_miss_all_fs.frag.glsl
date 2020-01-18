@@ -12,7 +12,7 @@ layout(binding = AH_HIT_RECORD_1_LOCATION) uniform sampler2D ah_hit_record_1;  /
 layout(binding = AH_HIT_RECORD_2_LOCATION) uniform sampler2D ah_hit_record_2;  // uv (xy)
 layout(binding = AH_HIT_RECORD_3_LOCATION) uniform sampler2D ah_hit_record_3;  // normal (xyz)
 layout(binding = AH_HIT_RECORD_4_LOCATION) uniform sampler2D ah_hit_record_4;  // tangent (xyz)
-layout(binding = AH_HIT_RECORD_5_LOCATION) uniform usampler2D ah_hit_record_5;  // status (x), mat_id (y), bvh_hits (z) // TODO: Maybe move bvh_hits to hit_record 0
+layout(binding = AH_HIT_RECORD_5_LOCATION) uniform sampler2D ah_hit_record_5;  // status (x), mat_id (y), bvh_hits (z) // TODO: Maybe move bvh_hits to hit_record 0
 layout(binding = AH_INCIDENT_RAY_ORIGIN_LOCATION) uniform sampler2D ah_incident_ray_origin;
 layout(binding = AH_INCIDENT_RAY_DIRECTION_LOCATION) uniform sampler2D ah_incident_ray_direction;
 layout(binding = AH_IN_ENERGY_ACCUMULATION_LOCATION) uniform sampler2D ah_in_energy_accumulation;
@@ -20,6 +20,8 @@ layout(binding = AH_IN_ENERGY_ACCUMULATION_LOCATION) uniform sampler2D ah_in_ene
 layout(location = RG_OUT_RAY_ORIGIN_LOCATION) out vec4 rg_out_ray_origin;
 layout(location = RG_OUT_RAY_DIRECTION_LOCATION) out vec4 rg_out_ray_direction;
 layout(location = RG_OUT_ENERGY_ACCUMULATION_LOCATION) out vec4 rg_out_energy_accumulation;
+layout(location = RG_OUT_SHADOW_RAY_DIRECTION_LOCATION) out vec4 rg_out_shadow_ray_direction;
+layout(location = RG_OUT_SHADOW_RAY_DATA_LOCATION) out vec4 rg_out_shadow_ray_data;
 
 layout (binding = AH_UNIFORM_BINDING, std140) uniform uniform_block_t {
     anyhit_uniform_data_t data;

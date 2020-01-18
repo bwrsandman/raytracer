@@ -25,7 +25,7 @@ hit_record_serialize(hit_record_t rec,
                      out vec4 part_2,
                      out vec4 part_3,
                      out vec4 part_4,
-                     out uvec4 part_5)
+                     out vec4 part_5)
 {
   part_0.x = rec.t;
   part_1.xyz = rec.position;
@@ -35,6 +35,12 @@ hit_record_serialize(hit_record_t rec,
   part_5.x = rec.status;
   part_5.y = rec.mat_id;
   part_5.z = rec.bvh_hits;
+
+  part_1.w = 1.0f;
+  part_2.w = 1.0f;
+  part_3.w = 1.0f;
+  part_4.w = 1.0f;
+  part_5.w = 1.0f;
 }
 
 void
@@ -44,16 +50,16 @@ hit_record_deserialize(out hit_record_t rec,
                        vec4 part_2,
                        vec4 part_3,
                        vec4 part_4,
-                       uvec4 part_5)
+                       vec4 part_5)
 {
   rec.t = part_0.x;
   rec.position = part_1.xyz;
   rec.uv = part_2.xy;
   rec.normal = part_3.xyz;
   rec.tangent = part_4.xyz;
-  rec.status = part_5.x;
-  rec.mat_id = part_5.y;
-  rec.bvh_hits = part_5.z;
+  rec.status = uint(part_5.x);
+  rec.mat_id = uint(part_5.y);
+  rec.bvh_hits = uint(part_5.z);
 }
 
 #endif // RAYTRACER_RAYTRACING_SHADER_COMMON_H

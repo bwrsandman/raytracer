@@ -11,6 +11,10 @@ layout(location = RG_OUT_RAY_ORIGIN_LOCATION) out vec4 rg_out_ray_origin;
 layout(location = RG_OUT_RAY_DIRECTION_LOCATION) out vec4 rg_out_ray_direction;
 layout(location = RG_OUT_ENERGY_ACCUMULATION_LOCATION) out vec4
   rg_out_energy_accumulation;
+layout(location = RG_OUT_SHADOW_RAY_DIRECTION_LOCATION) out vec4
+  rg_out_shadow_ray_direction;
+layout(location = RG_OUT_SHADOW_RAY_DATA_LOCATION) out vec4
+  rg_out_shadow_ray_data;
 
 layout(binding = RG_RAY_CAMERA_BINDING, std140) uniform uniform_block_t
 {
@@ -22,7 +26,7 @@ void
 main()
 {
   ivec2 iid = ivec2(gl_FragCoord.xy);
-  
+
   // anti-aliasing
   uint seed = rand_seed(iid.x + iid.y * uniform_block.data.width,
                         uniform_block.data.frame_count);

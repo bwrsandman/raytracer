@@ -17,7 +17,7 @@ layout(location = AH_HIT_RECORD_1_LOCATION) out vec4 ah_hit_record_1;  // positi
 layout(location = AH_HIT_RECORD_2_LOCATION) out vec4 ah_hit_record_2;  // uv (xy)
 layout(location = AH_HIT_RECORD_3_LOCATION) out vec4 ah_hit_record_3;  // normal (xyz)
 layout(location = AH_HIT_RECORD_4_LOCATION) out vec4 ah_hit_record_4;  // tangent (xyz)
-layout(location = AH_HIT_RECORD_5_LOCATION) out uvec4 ah_hit_record_5;  // status (x), mat_id (y), bvh_hits (z) // TODO: Maybe move bvh_hits to hit_record 0
+layout(location = AH_HIT_RECORD_5_LOCATION) out vec4 ah_hit_record_5;  // status (x), mat_id (y), bvh_hits (z) // TODO: Maybe move bvh_hits to hit_record 0
 layout(location = AH_INCIDENT_RAY_ORIGIN_LOCATION) out vec4 ah_incident_ray_origin;
 layout(location = AH_INCIDENT_RAY_DIRECTION_LOCATION) out vec4 ah_incident_ray_direction;
 

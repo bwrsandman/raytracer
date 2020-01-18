@@ -660,7 +660,7 @@ RendererGpu::rebuild_scene_traversal()
       width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32f),
     // status, mat_id, bvh_hits
     Texture::create(
-      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32i),
+      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32f),
   };
   scene_traversal_framebuffer[0] =
     Framebuffer::create(textures, sizeof(textures) / sizeof(textures[0]));
