@@ -30,6 +30,9 @@ class RendererGpu : public Renderer
 {
   static constexpr uint8_t max_recursion_depth = 16;
 
+  // Emscripten support for timestamp queries is incomplete
+  // https://github.com/emscripten-core/emscripten/pull/9652
+#if !__EMSCRIPTEN__
   struct intersection_timestamp_queries_t {
     uint32_t start;
     uint32_t main_traversal;
@@ -49,6 +52,7 @@ class RendererGpu : public Renderer
     uint32_t final_blit;
   };
   static_assert(sizeof(timestamp_queries_t) / sizeof(uint32_t) == 5 + 16 * 6);
+#endif
 
 public:
   explicit RendererGpu(SDL_Window* window);
@@ -119,8 +123,10 @@ private:
 
   std::unique_ptr<IndexedMesh> fullscreen_quad;
 
+#if !__EMSCRIPTEN__
   std::function<void(uint32_t, uint32_t)> glQueryCounter;
   std::function<void(uint32_t, uint32_t, uint64_t*)> glGetQueryObjectui64v;
   timestamp_queries_t timestamp_queries;
+#endif
 };
 } // namespace Raytracer::Graphics
