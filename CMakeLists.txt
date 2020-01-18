@@ -13,11 +13,11 @@ file(GLOB shader_headers CONFIGURE_DEPENDS src/shaders/*.h)
 set(assets
   ${CMAKE_CURRENT_SOURCE_DIR}/assets/earth/earth_albedo.jpg
   ${CMAKE_CURRENT_SOURCE_DIR}/assets/earth/earth_normal_map.tga
-  ${CMAKE_CURRENT_SOURCE_DIR}/assets/whitted/whitted_floor.png
-  ${CMAKE_CURRENT_SOURCE_DIR}/assets/models/BoxTextured.gltf
-  ${CMAKE_CURRENT_SOURCE_DIR}/assets/models/DamagedHelmet.gltf
-  ${CMAKE_CURRENT_SOURCE_DIR}/assets/models/Duck.gltf
-  ${CMAKE_CURRENT_SOURCE_DIR}/assets/models/Sponza.gltf
+  # ${CMAKE_CURRENT_SOURCE_DIR}/assets/whitted/whitted_floor.png
+  # ${CMAKE_CURRENT_SOURCE_DIR}/assets/models/BoxTextured.gltf
+  # ${CMAKE_CURRENT_SOURCE_DIR}/assets/models/DamagedHelmet.gltf
+  # ${CMAKE_CURRENT_SOURCE_DIR}/assets/models/Duck.gltf
+  # ${CMAKE_CURRENT_SOURCE_DIR}/assets/models/Sponza.gltf
 )
 
 # Tell CMake how to compile shaders into SPIV, then into headers
