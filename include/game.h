@@ -24,6 +24,8 @@ public:
   Game();
   virtual ~Game();
 
+  void clean_up();
+
   void run();
   bool main_loop();
 

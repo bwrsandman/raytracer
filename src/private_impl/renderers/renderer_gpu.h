@@ -87,7 +87,12 @@ private:
   void encode_accumulation();
   void encode_final_blit();
 
-  SDL_GLContext context;
+  struct SDLDestroyer
+  {
+    void operator()(void* context) const;
+  };
+
+  std::unique_ptr<void, SDLDestroyer> context;
   uint32_t frame_count;
   uint16_t width;
   uint16_t height;

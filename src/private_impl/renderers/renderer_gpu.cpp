@@ -88,7 +88,7 @@ RendererGpu::RendererGpu(SDL_Window* window)
   SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
   SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 
-  context = SDL_GL_CreateContext(window);
+  context.reset(SDL_GL_CreateContext(window));
   if (context) {
     gladLoadGLES2Loader(SDL_GL_GetProcAddress);
 
@@ -120,7 +120,12 @@ RendererGpu::~RendererGpu()
   glDeleteQueries(sizeof(timestamp_queries_t) / sizeof(uint32_t),
                   reinterpret_cast<uint32_t*>(&timestamp_queries));
 #endif
-  SDL_GL_DeleteContext(context);
+}
+
+void
+RendererGpu::SDLDestroyer::operator()(void* ctx) const
+{
+  SDL_GL_DeleteContext(ctx);
 }
 
 void

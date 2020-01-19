@@ -25,6 +25,17 @@ Game::Game() {
 
 Game::~Game() = default;
 
+void
+Game::clean_up()
+{
+  renderer_metrics.clear();
+  scene.reset();
+  ui.reset();
+  renderer.reset();
+  input.reset();
+  window.reset();
+}
+
 bool
 Game::main_loop()
 {
@@ -50,7 +61,7 @@ em_main_loop_callback(void* arg)
 {
   auto game = reinterpret_cast<Game*>(arg);
   if (!game->main_loop()) {
-    delete game;
+    game->clean_up();
     emscripten_cancel_main_loop();
   }
 }
@@ -65,6 +76,7 @@ Game::run()
 #else
   while (main_loop()) {
   }
+  clean_up();
 #endif
 }
 
