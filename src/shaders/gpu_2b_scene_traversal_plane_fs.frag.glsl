@@ -10,7 +10,12 @@
 
 layout(binding = ST_IN_RAY_ORIGIN_LOCATION) uniform sampler2D st_in_ray_origin;
 layout(binding = ST_IN_RAY_DIRECTION_LOCATION) uniform sampler2D st_in_ray_direction;
-layout(binding = ST_IN_PREVIOUS_HIT_RECORD_0_LOCATION) uniform sampler2D st_in_previous_hit_record_0; // t, position
+layout(binding = ST_IN_PREVIOUS_HIT_RECORD_0_LOCATION) uniform sampler2D st_in_previous_hit_record_0;
+layout(binding = ST_IN_PREVIOUS_HIT_RECORD_1_LOCATION) uniform sampler2D st_in_previous_hit_record_1;
+layout(binding = ST_IN_PREVIOUS_HIT_RECORD_2_LOCATION) uniform sampler2D st_in_previous_hit_record_2;
+layout(binding = ST_IN_PREVIOUS_HIT_RECORD_3_LOCATION) uniform sampler2D st_in_previous_hit_record_3;
+layout(binding = ST_IN_PREVIOUS_HIT_RECORD_4_LOCATION) uniform sampler2D st_in_previous_hit_record_4;
+layout(binding = ST_IN_PREVIOUS_HIT_RECORD_5_LOCATION) uniform sampler2D st_in_previous_hit_record_5;
 
 layout(location = AH_HIT_RECORD_0_LOCATION) out vec4 ah_hit_record_0;  // t (x)
 layout(location = AH_HIT_RECORD_1_LOCATION) out vec4 ah_hit_record_1;  // position (xyz)
@@ -62,7 +67,13 @@ void main() {
 
     if (rec.status == HIT_RECORD_STATUS_MISS)
     {
-        discard;
+        ah_hit_record_0 = vec4(t_max, 0, 0, 1);
+        ah_hit_record_1 = texelFetch(st_in_previous_hit_record_1, iid, 0);
+        ah_hit_record_2 = texelFetch(st_in_previous_hit_record_2, iid, 0);
+        ah_hit_record_3 = texelFetch(st_in_previous_hit_record_3, iid, 0);
+        ah_hit_record_4 = texelFetch(st_in_previous_hit_record_4, iid, 0);
+        ah_hit_record_5 = texelFetch(st_in_previous_hit_record_5, iid, 0);
+        return;
     }
 
     hit_record_serialize(rec,
