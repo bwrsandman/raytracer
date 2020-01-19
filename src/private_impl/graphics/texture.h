@@ -10,12 +10,31 @@ struct Texture
 {
   enum class Format
   {
+    r_snorm,
+    rg_snorm,
+    rgb_snorm,
+    rgba_snorm,
+
+    r8f,
+    rg8f,
+    rgb8f,
+    rgba8f,
+
+    r16f,
+    rg16f,
+    rgb16f,
+    rgba16f,
+
+    r32f,
+    rg32f,
     rgb32f,
     rgba32f,
+
     rgba8i,
     rgba16i,
-    rgba16u,
     rgba32i,
+
+    rgba16u,
     rgba32u,
   };
 

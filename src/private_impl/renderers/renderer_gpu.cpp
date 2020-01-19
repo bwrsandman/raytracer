@@ -682,19 +682,19 @@ RendererGpu::rebuild_raygen_buffers()
     raygen_textures[i][RG_OUT_RAY_ORIGIN_LOCATION]->set_debug_name(
       "ray origin " + std::to_string(i));
     raygen_textures[i][RG_OUT_RAY_DIRECTION_LOCATION] = Texture::create(
-      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32f);
+      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba16f);
     raygen_textures[i][RG_OUT_RAY_DIRECTION_LOCATION]->set_debug_name(
       "ray direction " + std::to_string(i));
     raygen_textures[i][RG_OUT_ENERGY_ACCUMULATION_LOCATION] = Texture::create(
-      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32f);
+      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba8f);
     raygen_textures[i][RG_OUT_ENERGY_ACCUMULATION_LOCATION]->set_debug_name(
       "frame energy accumulation " + std::to_string(i));
     raygen_textures[i][RG_OUT_SHADOW_RAY_DIRECTION_LOCATION] = Texture::create(
-      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32f);
+      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba16f);
     raygen_textures[i][RG_OUT_SHADOW_RAY_DIRECTION_LOCATION]->set_debug_name(
       "shadow ray direction " + std::to_string(i));
     raygen_textures[i][RG_OUT_SHADOW_RAY_DATA_LOCATION] = Texture::create(
-      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32f);
+      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba16f);
     raygen_textures[i][RG_OUT_SHADOW_RAY_DATA_LOCATION]->set_debug_name(
       "shadow ray (x: t, y: mat_id, zw: unused) " + std::to_string(i));
     raygen_framebuffer[i] = Framebuffer::create(
@@ -708,7 +708,7 @@ RendererGpu::rebuild_scene_traversal()
   for (uint8_t i = 0; i < 2; ++i) {
     // t
     scene_traversal_textures[i][AH_HIT_RECORD_0_LOCATION] = Texture::create(
-      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32f);
+      width, height, Texture::MipMapFilter::nearest, Texture::Format::r16f);
     scene_traversal_textures[i][AH_HIT_RECORD_0_LOCATION]->set_debug_name(
       "hit record (t, unused yzw) [" + std::to_string(i) + "]");
     // position
@@ -718,22 +718,22 @@ RendererGpu::rebuild_scene_traversal()
       "hit record (position, unused w) [" + std::to_string(i) + "]");
     // uv
     scene_traversal_textures[i][AH_HIT_RECORD_2_LOCATION] = Texture::create(
-      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32f);
+      width, height, Texture::MipMapFilter::nearest, Texture::Format::rg16f);
     scene_traversal_textures[i][AH_HIT_RECORD_2_LOCATION]->set_debug_name(
       "hit record (uv, unused zw) [" + std::to_string(i) + "]");
     // normal
     scene_traversal_textures[i][AH_HIT_RECORD_3_LOCATION] = Texture::create(
-      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32f);
+      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba16f);
     scene_traversal_textures[i][AH_HIT_RECORD_3_LOCATION]->set_debug_name(
       "hit record (normal, unused w) [" + std::to_string(i) + "]");
     // tangent
     scene_traversal_textures[i][AH_HIT_RECORD_4_LOCATION] = Texture::create(
-      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32f);
+      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba16f);
     scene_traversal_textures[i][AH_HIT_RECORD_4_LOCATION]->set_debug_name(
       "hit record (tangent, unused w) [" + std::to_string(i) + "]");
     // status, mat_id, bvh_hits
     scene_traversal_textures[i][AH_HIT_RECORD_5_LOCATION] = Texture::create(
-      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32f);
+      width, height, Texture::MipMapFilter::nearest, Texture::Format::rg16f);
     scene_traversal_textures[i][AH_HIT_RECORD_5_LOCATION]->set_debug_name(
       "hit record (status, mat_id, bvh_hits) [" + std::to_string(i) + "]");
 
