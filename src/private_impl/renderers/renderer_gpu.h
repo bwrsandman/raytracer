@@ -114,6 +114,8 @@ private:
   std::unique_ptr<Buffer> scene_traversal_spheres;
   std::unique_ptr<Pipeline> scene_traversal_plane_pipeline;
   std::unique_ptr<Buffer> scene_traversal_planes;
+  std::unique_ptr<Pipeline> scene_traversal_triangle_pipeline;
+  std::unique_ptr<Buffer> scene_traversal_triangles;
 
   std::unique_ptr<Buffer> anyhit_uniform;
   std::unique_ptr<Buffer> shadow_ray_light_hit_uniform;

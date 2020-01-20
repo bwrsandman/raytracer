@@ -568,9 +568,9 @@ Scene::load_cornell_box()
                             static_cast<uint16_t>(1)));                    // 2
   materials.emplace_back(std::make_unique<Metal>(vec3(0.8f, 0.8f, 0.8f))); // 3
   materials.emplace_back(
-    std::make_unique<EmissiveQuadraticDropOff>(vec3(0.8f, 0, 0), 1.0f)); // 4
+    std::make_unique<EmissiveQuadraticDropOff>(vec3(0, 1.8f, 0), 1.0f)); // 4
   materials.emplace_back(
-    std::make_unique<EmissiveQuadraticDropOff>(vec3(0, 0, 0.8f), 1.0f)); // 5
+    std::make_unique<EmissiveQuadraticDropOff>(vec3(1.8f, 0, 1.8f), 1.0f)); // 5
   materials.emplace_back(std::make_unique<EmissiveQuadraticDropOff>(
     vec3(2.0f, 2.0f, 2.0f), 1.0f)); // 6
   materials.emplace_back(
@@ -604,68 +604,149 @@ Scene::load_cornell_box()
                                             vec3(1.f, 0.f, 0.f),
                                             static_cast<uint16_t>(9)));
 
-  list.emplace_back(std::make_unique<Plane>(vec3(-2.6f, -1.5f, -4.f),
-                                            vec3(2.6f, -1.5f, 0.0f),
+  list.emplace_back(std::make_unique<Plane>(vec3(-2.6f, -1.0f, -4.f),
+                                            vec3(2.6f, -1.0f, 0.0f),
                                             vec3(0.f, 1.f, 0.f),
                                             static_cast<uint16_t>(1)));
 
   // small box rotated
-  vec3 translation(1.5f, -0.5f, -1.1f);
-  list.emplace_back(std::make_unique<Translate>(
-    new Rotate_y(new Plane(vec3(0.f, -0.5f, -1.25f),
-                           vec3(0.f, 0.5f, -.75f),
-                           vec3(-1.f, 0.f, 0.f),
-                           static_cast<uint16_t>(3)),
-                 20),
-    translation));
+  vec3 translation(1.5f, -0.5f, -2.1f);
 
-  list.emplace_back(std::make_unique<Translate>(
-    new Rotate_y(new Plane(vec3(1.f, -0.5f, -1.25f),
-                           vec3(1.f, 0.5f, -.75f),
-                           vec3(1.f, 0.f, 0.f),
-                           static_cast<uint16_t>(3)),
-                 20),
-    translation));
+  constexpr float radians = 20.0f * M_PI / 180.0f;
+  auto rotation_cos = std::cos(radians);
+  auto rotation_sin = std::sin(radians);
+  float rotated_back_left_x = -0.25f * rotation_cos - (-0.5f) * rotation_sin;
+  float rotated_back_left_z = -0.25f * rotation_sin + (-0.5f) * rotation_cos;
+  float rotated_back_right_x = 0.25f * rotation_cos - (-0.5f) * rotation_sin;
+  float rotated_back_right_z = 0.25f * rotation_sin + (-0.5f) * rotation_cos;
+  float rotated_front_left_x = -0.25f * rotation_cos - 0.5f * rotation_sin;
+  float rotated_front_left_z = -0.25f * rotation_sin + 0.5f * rotation_cos;
+  float rotated_front_right_x = 0.25f * rotation_cos - 0.5f * rotation_sin;
+  float rotated_front_right_z = 0.25f * rotation_sin + 0.5f * rotation_cos;
 
-  list.emplace_back(std::make_unique<Translate>(
-    new Rotate_y(new Plane(vec3(0.f, -0.5f, -1.25f),
-                           vec3(1.f, -0.5f, -.75f),
-                           vec3(0.f, -1.f, 0.f),
-                           static_cast<uint16_t>(3)),
-                 20),
-    translation));
+  std::vector<vec3> box_positions = {
+    // Front
+    translation + vec3{ rotated_front_right_x, -0.5f, rotated_front_right_z },
+    translation + vec3{ rotated_front_right_x, 0.5f, rotated_front_right_z },
+    translation + vec3{ rotated_front_left_x, 0.5f, rotated_front_left_z },
+    translation + vec3{ rotated_front_left_x, -0.5f, rotated_front_left_z },
+    // Back
+    translation + vec3{ rotated_back_right_x, -0.5f, rotated_back_right_z },
+    translation + vec3{ rotated_back_right_x, 0.5f, rotated_back_right_z },
+    translation + vec3{ rotated_back_left_x, 0.5f, rotated_back_left_z },
+    translation + vec3{ rotated_back_left_x, -0.5f, rotated_back_left_z },
+    // Top
+    translation + vec3{ rotated_front_right_x, 0.5f, rotated_front_right_z },
+    translation + vec3{ rotated_front_left_x, 0.5f, rotated_front_left_z },
+    translation + vec3{ rotated_back_left_x, 0.5f, rotated_back_left_z },
+    translation + vec3{ rotated_back_right_x, 0.5f, rotated_back_right_z },
+    // Bottom
+    translation + vec3{ rotated_front_right_x, -0.5f, rotated_front_right_z },
+    translation + vec3{ rotated_front_left_x, -0.5f, rotated_front_left_z },
+    translation + vec3{ rotated_back_left_x, -0.5f, rotated_back_left_z },
+    translation + vec3{ rotated_back_right_x, -0.5f, rotated_back_right_z },
+    // Left
+    translation + vec3{ rotated_front_left_x, 0.5f, rotated_front_left_z },
+    translation + vec3{ rotated_front_left_x, -0.5f, rotated_front_left_z },
+    translation + vec3{ rotated_back_left_x, -0.5f, rotated_back_left_z },
+    translation + vec3{ rotated_back_left_x, 0.5f, rotated_back_left_z },
+    // Right
+    translation + vec3{ rotated_front_right_x, 0.5f, rotated_front_right_z },
+    translation + vec3{ rotated_front_right_x, -0.5f, rotated_front_right_z },
+    translation + vec3{ rotated_back_right_x, -0.5f, rotated_back_right_z },
+    translation + vec3{ rotated_back_right_x, 0.5f, rotated_back_right_z },
+  };
+  std::vector<MeshVertexData> box_vertex_data = {
+    // Front
+    { { 0, 0 }, { 0, 0, 1 }, { 1, 0, 0 } },
+    { { 0, 1 }, { 0, 0, 1 }, { 1, 0, 0 } },
+    { { 1, 1 }, { 0, 0, 1 }, { 1, 0, 0 } },
+    { { 1, 0 }, { 0, 0, 1 }, { 1, 0, 0 } },
+    // Back
+    { { 0, 0 }, { 0, 0, -1 }, { -1, 0, 0 } },
+    { { 0, 1 }, { 0, 0, -1 }, { -1, 0, 0 } },
+    { { 1, 1 }, { 0, 0, -1 }, { -1, 0, 0 } },
+    { { 1, 0 }, { 0, 0, -1 }, { -1, 0, 0 } },
+    // Top
+    { { 0, 0 }, { 0, 1, 0 }, { 1, 0, 0 } },
+    { { 0, 1 }, { 0, 1, 0 }, { 1, 0, 0 } },
+    { { 1, 1 }, { 0, 1, 0 }, { 1, 0, 0 } },
+    { { 1, 0 }, { 0, 1, 0 }, { 1, 0, 0 } },
+    // Bottom
+    { { 0, 0 }, { 0, -1, 0 }, { -1, 0, 0 } },
+    { { 0, 1 }, { 0, -1, 0 }, { -1, 0, 0 } },
+    { { 1, 1 }, { 0, -1, 0 }, { -1, 0, 0 } },
+    { { 1, 0 }, { 0, -1, 0 }, { -1, 0, 0 } },
+    // Left
+    { { 0, 0 }, { -1, 0, 0 }, { 0, 0, 1 } },
+    { { 0, 1 }, { -1, 0, 0 }, { 0, 0, 1 } },
+    { { 1, 1 }, { -1, 0, 0 }, { 0, 0, 1 } },
+    { { 1, 0 }, { -1, 0, 0 }, { 0, 0, 1 } },
+    // Right
+    { { 0, 0 }, { 1, 0, 0 }, { 0, 0, -1 } },
+    { { 0, 1 }, { 1, 0, 0 }, { 0, 0, -1 } },
+    { { 1, 1 }, { 1, 0, 0 }, { 0, 0, -1 } },
+    { { 1, 0 }, { 1, 0, 0 }, { 0, 0, -1 } },
+  };
+  std::vector<uint16_t> box_indices = {
+    // Front
+    0,
+    1,
+    2,
+    2,
+    3,
+    0,
+    // Back
+    4,
+    5,
+    6,
+    6,
+    7,
+    4,
+    // Top
+    8,
+    9,
+    10,
+    10,
+    11,
+    8,
+    // Bottom
+    12,
+    13,
+    14,
+    14,
+    15,
+    12,
+    // Left
+    16,
+    17,
+    18,
+    18,
+    19,
+    16,
+    // Right
+    20,
+    21,
+    22,
+    22,
+    23,
+    20,
+  };
 
-  list.emplace_back(std::make_unique<Translate>(
-    new Rotate_y(new Plane(vec3(0.f, 0.5f, -1.25f),
-                           vec3(1.f, 0.5f, -.75f),
-                           vec3(0.f, 1.f, 0.f),
-                           static_cast<uint16_t>(3)),
-                 20),
-    translation));
-
-  list.emplace_back(std::make_unique<Translate>(
-    new Rotate_y(new Plane(vec3(0.f, -0.5f, -1.25f),
-                           vec3(1.f, 0.5f, -1.25f),
-                           vec3(0.f, 0.f, -1.f),
-                           static_cast<uint16_t>(3)),
-                 20),
-    translation));
-
-  list.emplace_back(std::make_unique<Translate>(
-    new Rotate_y(new Plane(vec3(0.f, -0.5f, -.75f),
-                           vec3(1.f, 0.5f, -.75f),
-                           vec3(0.f, 0.f, 1.f),
-                           static_cast<uint16_t>(3)),
-                 20),
-    translation));
+  auto mesh = std::make_unique<TriangleMesh>(std::move(box_positions),
+                                             std::move(box_vertex_data),
+                                             std::move(box_indices),
+                                             static_cast<uint16_t>(3));
+  mesh->build_bvh();
+  list.emplace_back(std::move(mesh));
 
   std::vector<std::unique_ptr<Object>> light_list;
   light_list.emplace_back(
-    std::make_unique<Point>(vec3(1, 1.5f, -2), static_cast<uint16_t>(4)));
+    std::make_unique<Point>(vec3(1, 1.5f, -1), static_cast<uint16_t>(4)));
   light_list.emplace_back(
-    std::make_unique<Point>(vec3(-1, 1.5f, -2), static_cast<uint16_t>(5)));
+    std::make_unique<Point>(vec3(-1, 1.5f, -1), static_cast<uint16_t>(5)));
   light_list.emplace_back(
-    std::make_unique<Point>(vec3(0, 2, -1.5f), static_cast<uint16_t>(6)));
+    std::make_unique<Point>(vec3(0, 2, 0.5f), static_cast<uint16_t>(6)));
 
   // Construct scene graph
   std::vector<SceneNode> nodes;

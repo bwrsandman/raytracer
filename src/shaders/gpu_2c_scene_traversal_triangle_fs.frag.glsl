@@ -6,10 +6,10 @@
 
 #include "gpu_2_layout.h"
 #include "hit_record_t.h"
-#include "sphere_t.h"
+#include "triangle_t.h"
 
 layout (binding = ST_OBJECT_BINDING, std140) uniform uniform_block_t {
-    scene_traversal_sphere_uniform_t objects;
+    scene_traversal_triangle_uniform_t objects;
 } uniform_block;
 
 void main() {
@@ -32,12 +32,26 @@ void main() {
 
     for (uint i = 0; i < uniform_block.objects.count; ++i)
     {
-        sphere_t sphere;
-        sphere_deserialize(uniform_block.objects.spheres[i], uniform_block.objects.materials[i], sphere);
+        uint index0 = uniform_block.objects.triangles[i].index0;
+        uint index1 = uniform_block.objects.triangles[i].index1;
+        uint index2 = uniform_block.objects.triangles[i].index2;
+
+        triangle_t triangle;
+        triangle_deserialize(uniform_block.objects.vertices.position[index0],
+                             uniform_block.objects.vertices.position[index1],
+                             uniform_block.objects.vertices.position[index2],
+                             uniform_block.objects.vertices.normal[index0],
+                             uniform_block.objects.vertices.normal[index1],
+                             uniform_block.objects.vertices.normal[index2],
+                             (index0 % 2 == 0) ? uniform_block.objects.vertices.uv[index0 / 2].xy : uniform_block.objects.vertices.uv[index0 / 2].zw,
+                             (index1 % 2 == 0) ? uniform_block.objects.vertices.uv[index1 / 2].xy : uniform_block.objects.vertices.uv[index1 / 2].zw,
+                             (index2 % 2 == 0) ? uniform_block.objects.vertices.uv[index2 / 2].xy : uniform_block.objects.vertices.uv[index2 / 2].zw,
+                             uniform_block.objects.mat_id,
+                             triangle);
 
         hit_record_t temp_rec;
 
-        sphere_hit(ray, sphere, T_MIN, rec.t - FLT_EPSILON, temp_rec);
+        triangle_hit(ray, triangle, T_MIN, rec.t - FLT_EPSILON, temp_rec);
         if (temp_rec.status == HIT_RECORD_STATUS_HIT && rec.t > temp_rec.t) {
             rec = temp_rec;
         }
