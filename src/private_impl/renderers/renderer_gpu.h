@@ -110,6 +110,7 @@ private:
   std::array<std::unique_ptr<Texture>, 6> scene_traversal_textures[2];
   std::unique_ptr<Framebuffer> scene_traversal_framebuffer[2];
   uint8_t scene_traversal_framebuffer_active;
+  std::unique_ptr<Buffer> scene_traversal_common;
   std::unique_ptr<Pipeline> scene_traversal_sphere_pipeline;
   std::unique_ptr<Buffer> scene_traversal_spheres;
   std::unique_ptr<Pipeline> scene_traversal_plane_pipeline;

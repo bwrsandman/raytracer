@@ -78,6 +78,11 @@ struct alignas(16) raygen_uniform_t
   uint32_t height;
 };
 
+struct alignas(16) scene_traversal_common_uniform_t
+{
+  uint32_t early_out;
+};
+
 #define MAX_NUM_SPHERES 4
 
 struct alignas(16) scene_traversal_sphere_uniform_t
@@ -346,6 +351,7 @@ random_point_on_unit_hemisphere_wang_hash(inout uint REF seed, vec3 REF normal)
 
 // Scene Traversal inputs
 #define ST_OBJECT_BINDING 0
+#define ST_EARLY_OUT_BINDING 1
 #define ST_IN_RAY_ORIGIN_LOCATION 0
 #define ST_IN_RAY_DIRECTION_LOCATION 1
 #define ST_IN_PREVIOUS_HIT_RECORD_0_LOCATION 2

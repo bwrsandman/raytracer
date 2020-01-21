@@ -244,6 +244,7 @@ RendererGpu::encode_scene_traversal(Texture& ray_direction)
     scene_traversal_textures[scene_traversal_framebuffer_active][5]->bind(
       ST_IN_PREVIOUS_HIT_RECORD_5_LOCATION);
     scene_traversal_framebuffer[1 - scene_traversal_framebuffer_active]->bind();
+    scene_traversal_common->bind(ST_EARLY_OUT_BINDING);
     primitive_buffers[i]->bind(ST_OBJECT_BINDING);
     fullscreen_quad->draw();
     scene_traversal_framebuffer_active = 1 - scene_traversal_framebuffer_active;
@@ -702,6 +703,10 @@ RendererGpu::run(const Scene& world)
 #if !__EMSCRIPTEN__
         glQueryCounter(each_intersection_queries[j].start, GL_TIMESTAMP);
 #endif
+        constexpr scene_traversal_common_uniform_t st_primary{
+          false,
+        };
+        scene_traversal_common->upload(&st_primary, sizeof(st_primary));
         encode_scene_traversal(*raygen_textures[raygen_framebuffer_active]
                                                [RG_OUT_RAY_DIRECTION_LOCATION]);
 #if !__EMSCRIPTEN__
@@ -714,6 +719,10 @@ RendererGpu::run(const Scene& world)
         raygen_framebuffer_active = 1 - raygen_framebuffer_active;
 
         // Shadow ray (and blit)
+        constexpr scene_traversal_common_uniform_t st_shadow{
+          true,
+        };
+        scene_traversal_common->upload(&st_shadow, sizeof(st_shadow));
         encode_scene_traversal(
           *raygen_textures[raygen_framebuffer_active]
                           [RG_OUT_SHADOW_RAY_DIRECTION_LOCATION]);
@@ -871,6 +880,11 @@ RendererGpu::create_pipelines()
   raygen_pipeline = Pipeline::create(Pipeline::Type::RasterOpenGL, info);
   raygen_ray_uniform = Buffer::create(sizeof(raygen_uniform_t));
   raygen_ray_uniform->set_debug_name("raygen_ray_uniform");
+
+  // Scene Traversal (common)
+  scene_traversal_common =
+    Buffer::create(sizeof(scene_traversal_common_uniform_t));
+  scene_traversal_common->set_debug_name("scene_traversal_common");
 
   // Scene Traversal (sphere)
   info.fragment_shader_binary = gpu_2a_scene_traversal_sphere_fs;

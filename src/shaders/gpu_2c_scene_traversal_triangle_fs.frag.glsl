@@ -47,6 +47,8 @@ void main() {
         nodes_to_visit[end] = root_node;
         end += 1;
 
+        bool break_out = false;
+
         while (start < end) {
             bvh_node_t node = nodes_to_visit[start];
             start += 1;
@@ -77,6 +79,10 @@ void main() {
                         triangle_hit(triangle, ray, T_MIN, rec.t - FLT_EPSILON, temp_rec);
                         if (temp_rec.status == HIT_RECORD_STATUS_HIT && rec.t > temp_rec.t) {
                             rec = temp_rec;
+                            if (common_uniform_block.data.early_out == 1) {
+                                break_out = true;
+                                break;
+                            }
                         }
                     }
                 } else {
@@ -92,6 +98,9 @@ void main() {
                                          nodes_to_visit[end + 1]);
                     end += 2;
                 }
+            }
+            if (break_out) {
+                break;
             }
         }
     }
