@@ -59,18 +59,18 @@ uintBitsToFloat(uint32_t u)
 /// c++ code.
 /// The purpose of this header is to avoid double declarations.
 
-struct camera_uniform_t
+struct alignas(16) camera_uniform_t
 {
-  alignas(4 * sizeof(float)) vec3 origin;
-  alignas(4 * sizeof(float)) vec3 lower_left_corner;
-  alignas(4 * sizeof(float)) vec3 horizontal;
-  alignas(4 * sizeof(float)) vec3 vertical;
-  alignas(4 * sizeof(float)) vec3 u;
-  alignas(4 * sizeof(float)) vec3 v;
-  alignas(sizeof(float)) float lens_radius;
+  alignas(16) vec3 origin;
+  alignas(16) vec3 lower_left_corner;
+  alignas(16) vec3 horizontal;
+  alignas(16) vec3 vertical;
+  alignas(16) vec3 u;
+  alignas(16) vec3 v;
+  float lens_radius;
 };
 
-struct raygen_uniform_t
+struct alignas(16) raygen_uniform_t
 {
   camera_uniform_t camera;
   uint32_t frame_count;
@@ -80,7 +80,7 @@ struct raygen_uniform_t
 
 #define MAX_NUM_SPHERES 4
 
-struct alignas(64) scene_traversal_sphere_uniform_t
+struct alignas(16) scene_traversal_sphere_uniform_t
 {
   // x, y, z, radius
   vec4 spheres[MAX_NUM_SPHERES];
@@ -91,13 +91,39 @@ struct alignas(64) scene_traversal_sphere_uniform_t
 
 #define MAX_NUM_PLANES 4
 
-struct alignas(64) scene_traversal_plane_uniform_t
+struct alignas(16) scene_traversal_plane_uniform_t
 {
   vec4 min[MAX_NUM_PLANES];
   vec4 max[MAX_NUM_PLANES];
   vec4 normal[MAX_NUM_PLANES];
   // material_id, unused x3
   uvec4 materials[MAX_NUM_PLANES];
+  uint32_t count;
+};
+
+#define MAX_NUM_VERTICES 24
+#define MAX_NUM_TRIANGLES 12
+
+struct alignas(16) scene_traversal_triangle_vertex_t
+{
+  vec4 position[MAX_NUM_VERTICES];
+  vec4 normal[MAX_NUM_VERTICES];
+  vec4 tangent[MAX_NUM_VERTICES];
+  vec4 uv[MAX_NUM_VERTICES / 2];
+};
+
+struct alignas(16) scene_traversal_triangle_triangle_t
+{
+  uint32_t index0;
+  uint32_t index1;
+  uint32_t index2;
+};
+
+struct alignas(16) scene_traversal_triangle_uniform_t
+{
+  scene_traversal_triangle_vertex_t vertices;
+  scene_traversal_triangle_triangle_t triangles[MAX_NUM_TRIANGLES];
+  uint32_t mat_id;
   uint32_t count;
 };
 
@@ -109,7 +135,7 @@ struct alignas(64) scene_traversal_plane_uniform_t
 
 #define MAX_NUM_MATERIALS 16
 #define MAX_NUM_LIGHTS 16
-struct anyhit_uniform_data_t
+struct alignas(16) anyhit_uniform_data_t
 {
   /// color (rgb) / refraction index+ni+albedo, type (a)
   vec4 material_data[MAX_NUM_MATERIALS];
@@ -120,7 +146,7 @@ struct anyhit_uniform_data_t
   uint32_t width;
 };
 
-struct shadow_ray_light_hit_uniform_data_t
+struct alignas(16) shadow_ray_light_hit_uniform_data_t
 {
   vec4 light_color_data[MAX_NUM_LIGHTS];
 };
@@ -314,6 +340,11 @@ random_point_on_unit_hemisphere_wang_hash(inout uint REF seed, vec3 REF normal)
 #define ST_IN_RAY_ORIGIN_LOCATION 0
 #define ST_IN_RAY_DIRECTION_LOCATION 1
 #define ST_IN_PREVIOUS_HIT_RECORD_0_LOCATION 2
+#define ST_IN_PREVIOUS_HIT_RECORD_1_LOCATION 3
+#define ST_IN_PREVIOUS_HIT_RECORD_2_LOCATION 4
+#define ST_IN_PREVIOUS_HIT_RECORD_3_LOCATION 5
+#define ST_IN_PREVIOUS_HIT_RECORD_4_LOCATION 6
+#define ST_IN_PREVIOUS_HIT_RECORD_5_LOCATION 7
 
 // Any Hit inputs
 #define AH_HIT_RECORD_0_LOCATION 0

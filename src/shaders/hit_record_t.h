@@ -36,6 +36,8 @@ hit_record_serialize(hit_record_t rec,
   part_5.y = rec.mat_id;
   part_5.z = rec.bvh_hits;
 
+  part_0.yz = vec2(0, 0);
+  part_0.w = 1.0f;
   part_1.w = 1.0f;
   part_2.w = 1.0f;
   part_3.w = 1.0f;

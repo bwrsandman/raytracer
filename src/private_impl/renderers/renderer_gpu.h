@@ -97,7 +97,7 @@ private:
   uint16_t width;
   uint16_t height;
 
-  uint8_t max_recursion_depth = 16;
+  uint8_t max_recursion_depth = 8;
 
   std::unique_ptr<Framebuffer> backbuffer;
 
@@ -107,14 +107,15 @@ private:
   std::unique_ptr<Framebuffer> raygen_framebuffer[2];
   uint8_t raygen_framebuffer_active;
 
-  std::unique_ptr<Texture> scene_traversal_textures_ah_hit_record_0[2];
-  std::array<std::unique_ptr<Texture>, 5> scene_traversal_textures;
+  std::array<std::unique_ptr<Texture>, 6> scene_traversal_textures[2];
   std::unique_ptr<Framebuffer> scene_traversal_framebuffer[2];
   uint8_t scene_traversal_framebuffer_active;
   std::unique_ptr<Pipeline> scene_traversal_sphere_pipeline;
   std::unique_ptr<Buffer> scene_traversal_spheres;
   std::unique_ptr<Pipeline> scene_traversal_plane_pipeline;
   std::unique_ptr<Buffer> scene_traversal_planes;
+  std::unique_ptr<Pipeline> scene_traversal_triangle_pipeline;
+  std::unique_ptr<Buffer> scene_traversal_triangles;
 
   std::unique_ptr<Buffer> anyhit_uniform;
   std::unique_ptr<Buffer> shadow_ray_light_hit_uniform;

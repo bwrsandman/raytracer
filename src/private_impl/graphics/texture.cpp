@@ -13,14 +13,35 @@ struct TextureFormatLookUp
   const uint32_t type;
 };
 
-std::array<TextureFormatLookUp, 7> TextureFormatLookUpTable = {
+std::array<TextureFormatLookUp, 21> TextureFormatLookUpTable = {
+  /* r_snorm  */ TextureFormatLookUp{ GL_RED, GL_R8_SNORM, GL_BYTE },
+  /* rg_snorm  */ TextureFormatLookUp{ GL_RG, GL_RG8_SNORM, GL_BYTE },
+  /* rgb_snorm  */
+  TextureFormatLookUp{ GL_RGB, GL_RGB8_SNORM, GL_BYTE },
+  /* rgba_snorm */
+  TextureFormatLookUp{ GL_RGBA, GL_RGBA8_SNORM, GL_BYTE },
+
+  /* r8f  */ TextureFormatLookUp{ GL_RED, GL_R8, GL_UNSIGNED_BYTE },
+  /* rg8f  */ TextureFormatLookUp{ GL_RG, GL_RG8, GL_UNSIGNED_BYTE },
+  /* rgb8f  */ TextureFormatLookUp{ GL_RGB, GL_RGB8, GL_UNSIGNED_BYTE },
+  /* rgba8f */ TextureFormatLookUp{ GL_RGBA, GL_RGBA8, GL_UNSIGNED_BYTE },
+
+  /* r16f  */ TextureFormatLookUp{ GL_RED, GL_R16F, GL_HALF_FLOAT },
+  /* rg16f  */ TextureFormatLookUp{ GL_RG, GL_RG16F, GL_HALF_FLOAT },
+  /* rgb16f  */ TextureFormatLookUp{ GL_RGB, GL_RGB16F, GL_HALF_FLOAT },
+  /* rgba16f  */ TextureFormatLookUp{ GL_RGBA, GL_RGBA16F, GL_HALF_FLOAT },
+
+  /* r32f  */ TextureFormatLookUp{ GL_RED, GL_R32F, GL_FLOAT },
+  /* rg32f  */ TextureFormatLookUp{ GL_RG, GL_RG32F, GL_FLOAT },
   /* rgb32f  */ TextureFormatLookUp{ GL_RGB, GL_RGB32F, GL_FLOAT },
   /* rgba32f */ TextureFormatLookUp{ GL_RGBA, GL_RGBA32F, GL_FLOAT },
+
   /* rgba8i */ TextureFormatLookUp{ GL_RGBA_INTEGER, GL_RGBA8I, GL_BYTE },
   /* rgba16i */ TextureFormatLookUp{ GL_RGBA_INTEGER, GL_RGBA16I, GL_SHORT },
+  /* rgba32i */ TextureFormatLookUp{ GL_RGBA_INTEGER, GL_RGBA32I, GL_INT },
+
   /* rgba16u */
   TextureFormatLookUp{ GL_RGBA_INTEGER, GL_RGBA16UI, GL_UNSIGNED_SHORT },
-  /* rgba32i */ TextureFormatLookUp{ GL_RGBA_INTEGER, GL_RGBA32I, GL_INT },
   /* rgba32u */
   TextureFormatLookUp{ GL_RGBA_INTEGER, GL_RGBA32UI, GL_UNSIGNED_INT },
 };

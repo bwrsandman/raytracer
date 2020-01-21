@@ -4,6 +4,7 @@
 #include <cassert>
 #include <glad/glad.h>
 
+#include "math/vec2.h"
 #include "math/vec3.h"
 #include "math/vec4.h"
 
@@ -16,6 +17,7 @@
 #include "hittable/plane.h"
 #include "hittable/point.h"
 #include "hittable/sphere.h"
+#include "hittable/triangle_mesh.h"
 #include "materials/dielectric.h"
 #include "materials/emissive_quadratic_drop_off.h"
 #include "materials/lambert.h"
@@ -27,6 +29,7 @@
 #include "shaders/gpu_1_raygen_fs.h"
 #include "shaders/gpu_2a_scene_traversal_sphere_fs.h"
 #include "shaders/gpu_2b_scene_traversal_plane_fs.h"
+#include "shaders/gpu_2c_scene_traversal_triangle_fs.h"
 #include "shaders/gpu_3a_closest_hit_fs.h"
 #include "shaders/gpu_3b_miss_all_fs.h"
 #include "shaders/gpu_3c_shadow_ray_light_hit_fs.h"
@@ -172,6 +175,7 @@ RendererGpu::encode_scene_traversal(Texture& ray_direction)
   {
     sphere,
     plane,
+    triangle,
 
     count
   };
@@ -179,14 +183,17 @@ RendererGpu::encode_scene_traversal(Texture& ray_direction)
   constexpr std::string_view debug_strs[primitives_t::count] = {
     "sphere",
     "plane",
+    "triangle",
   };
   Pipeline* pipelines[primitives_t::count] = {
     scene_traversal_sphere_pipeline.get(),
     scene_traversal_plane_pipeline.get(),
+    scene_traversal_triangle_pipeline.get(),
   };
   Buffer* primitive_buffers[primitives_t::count] = {
     scene_traversal_spheres.get(),
     scene_traversal_planes.get(),
+    scene_traversal_triangles.get(),
   };
 
   for (uint8_t i = 0; i < primitives_t::count; ++i) {
@@ -200,12 +207,42 @@ RendererGpu::encode_scene_traversal(Texture& ray_direction)
         pipelines[i]->get_native_handle(), "st_in_previous_hit_record_0");
       glUniform1i(st_previous_hit_record_0,
                   ST_IN_PREVIOUS_HIT_RECORD_0_LOCATION);
+      GLint st_previous_hit_record_1 = glGetUniformLocation(
+        pipelines[i]->get_native_handle(), "st_in_previous_hit_record_1");
+      glUniform1i(st_previous_hit_record_1,
+                  ST_IN_PREVIOUS_HIT_RECORD_1_LOCATION);
+      GLint st_previous_hit_record_2 = glGetUniformLocation(
+        pipelines[i]->get_native_handle(), "st_in_previous_hit_record_2");
+      glUniform1i(st_previous_hit_record_2,
+                  ST_IN_PREVIOUS_HIT_RECORD_2_LOCATION);
+      GLint st_previous_hit_record_3 = glGetUniformLocation(
+        pipelines[i]->get_native_handle(), "st_in_previous_hit_record_3");
+      glUniform1i(st_previous_hit_record_3,
+                  ST_IN_PREVIOUS_HIT_RECORD_3_LOCATION);
+      GLint st_previous_hit_record_4 = glGetUniformLocation(
+        pipelines[i]->get_native_handle(), "st_in_previous_hit_record_4");
+      glUniform1i(st_previous_hit_record_4,
+                  ST_IN_PREVIOUS_HIT_RECORD_4_LOCATION);
+      GLint st_previous_hit_record_5 = glGetUniformLocation(
+        pipelines[i]->get_native_handle(), "st_in_previous_hit_record_5");
+      glUniform1i(st_previous_hit_record_5,
+                  ST_IN_PREVIOUS_HIT_RECORD_5_LOCATION);
     }
     raygen_textures[raygen_framebuffer_active][RG_OUT_RAY_ORIGIN_LOCATION]
       ->bind(ST_IN_RAY_ORIGIN_LOCATION);
     ray_direction.bind(ST_IN_RAY_DIRECTION_LOCATION);
-    scene_traversal_textures_ah_hit_record_0[scene_traversal_framebuffer_active]
-      ->bind(ST_IN_PREVIOUS_HIT_RECORD_0_LOCATION);
+    scene_traversal_textures[scene_traversal_framebuffer_active][0]->bind(
+      ST_IN_PREVIOUS_HIT_RECORD_0_LOCATION);
+    scene_traversal_textures[scene_traversal_framebuffer_active][1]->bind(
+      ST_IN_PREVIOUS_HIT_RECORD_1_LOCATION);
+    scene_traversal_textures[scene_traversal_framebuffer_active][2]->bind(
+      ST_IN_PREVIOUS_HIT_RECORD_2_LOCATION);
+    scene_traversal_textures[scene_traversal_framebuffer_active][3]->bind(
+      ST_IN_PREVIOUS_HIT_RECORD_3_LOCATION);
+    scene_traversal_textures[scene_traversal_framebuffer_active][4]->bind(
+      ST_IN_PREVIOUS_HIT_RECORD_4_LOCATION);
+    scene_traversal_textures[scene_traversal_framebuffer_active][5]->bind(
+      ST_IN_PREVIOUS_HIT_RECORD_5_LOCATION);
     scene_traversal_framebuffer[1 - scene_traversal_framebuffer_active]->bind();
     primitive_buffers[i]->bind(ST_OBJECT_BINDING);
     fullscreen_quad->draw();
@@ -264,18 +301,24 @@ RendererGpu::encode_any_hit([[maybe_unused]] uint8_t recursion_count)
                     AH_IN_ENERGY_ACCUMULATION_LOCATION);
       }
     }
-    scene_traversal_textures_ah_hit_record_0[scene_traversal_framebuffer_active]
-      ->bind(AH_HIT_RECORD_0_LOCATION);
-    scene_traversal_textures[AH_HIT_RECORD_1_LOCATION - 1]->bind(
-      AH_HIT_RECORD_1_LOCATION);
-    scene_traversal_textures[AH_HIT_RECORD_2_LOCATION - 1]->bind(
-      AH_HIT_RECORD_2_LOCATION);
-    scene_traversal_textures[AH_HIT_RECORD_3_LOCATION - 1]->bind(
-      AH_HIT_RECORD_3_LOCATION);
-    scene_traversal_textures[AH_HIT_RECORD_4_LOCATION - 1]->bind(
-      AH_HIT_RECORD_4_LOCATION);
-    scene_traversal_textures[AH_HIT_RECORD_5_LOCATION - 1]->bind(
-      AH_HIT_RECORD_5_LOCATION);
+    scene_traversal_textures[scene_traversal_framebuffer_active]
+                            [AH_HIT_RECORD_0_LOCATION]
+                              ->bind(AH_HIT_RECORD_0_LOCATION);
+    scene_traversal_textures[scene_traversal_framebuffer_active]
+                            [AH_HIT_RECORD_1_LOCATION]
+                              ->bind(AH_HIT_RECORD_1_LOCATION);
+    scene_traversal_textures[scene_traversal_framebuffer_active]
+                            [AH_HIT_RECORD_2_LOCATION]
+                              ->bind(AH_HIT_RECORD_2_LOCATION);
+    scene_traversal_textures[scene_traversal_framebuffer_active]
+                            [AH_HIT_RECORD_3_LOCATION]
+                              ->bind(AH_HIT_RECORD_3_LOCATION);
+    scene_traversal_textures[scene_traversal_framebuffer_active]
+                            [AH_HIT_RECORD_4_LOCATION]
+                              ->bind(AH_HIT_RECORD_4_LOCATION);
+    scene_traversal_textures[scene_traversal_framebuffer_active]
+                            [AH_HIT_RECORD_5_LOCATION]
+                              ->bind(AH_HIT_RECORD_5_LOCATION);
     raygen_textures[raygen_framebuffer_active][RG_OUT_RAY_ORIGIN_LOCATION]
       ->bind(AH_INCIDENT_RAY_ORIGIN_LOCATION);
     raygen_textures[raygen_framebuffer_active][RG_OUT_RAY_DIRECTION_LOCATION]
@@ -322,8 +365,9 @@ RendererGpu::encode_shadow_ray_light_hit()
       shadow_ray_light_hit_pipeline->get_native_handle(), "sr_in_data");
     glUniform1i(sr_in_data, SR_IN_DATA_LOCATION);
   }
-  scene_traversal_textures[AH_HIT_RECORD_5_LOCATION - 1]->bind(
-    SR_HIT_RECORD_5_LOCATION);
+  scene_traversal_textures[scene_traversal_framebuffer_active]
+                          [AH_HIT_RECORD_5_LOCATION]
+                            ->bind(SR_HIT_RECORD_5_LOCATION);
   raygen_textures[raygen_framebuffer_active][RG_OUT_RAY_ORIGIN_LOCATION]->bind(
     SR_INCIDENT_RAY_ORIGIN_LOCATION);
   raygen_textures[raygen_framebuffer_active]
@@ -409,9 +453,13 @@ RendererGpu::upload_scene(const std::vector<std::unique_ptr<Object>>& objects)
   spheres.count = 0;
   scene_traversal_plane_uniform_t planes;
   planes.count = 0;
+  scene_traversal_triangle_uniform_t triangles;
+  triangles.count = 0;
+  uint32_t vertex_count = 0;
   for (const auto& obj : objects) {
     auto sphere = dynamic_cast<const Sphere*>(obj.get());
     auto plane = dynamic_cast<const Plane*>(obj.get());
+    auto triangle_mesh = dynamic_cast<const TriangleMesh*>(obj.get());
     if (sphere != nullptr) {
       assert(spheres.count < MAX_NUM_SPHERES);
       sphere_t shader_sphere;
@@ -424,7 +472,7 @@ RendererGpu::upload_scene(const std::vector<std::unique_ptr<Object>>& objects)
                        spheres.materials[spheres.count]);
       spheres.count++;
     } else if (plane != nullptr) {
-      assert(spheres.count < MAX_NUM_PLANES);
+      assert(planes.count < MAX_NUM_PLANES);
       plane_t shader_plane;
       shader_plane.min = plane->min;
       shader_plane.max = plane->max;
@@ -436,10 +484,54 @@ RendererGpu::upload_scene(const std::vector<std::unique_ptr<Object>>& objects)
                       planes.normal[planes.count],
                       planes.materials[planes.count]);
       planes.count++;
+    } else if (triangle_mesh != nullptr) {
+      assert(triangles.count + triangle_mesh->indices.size() / 3 <=
+             MAX_NUM_TRIANGLES);
+      assert(vertex_count + triangle_mesh->positions.size() <=
+             MAX_NUM_VERTICES);
+      for (uint32_t i = 0; i < triangle_mesh->indices.size() / 3; ++i) {
+        triangles.triangles[triangles.count + i].index0 =
+          vertex_count + triangle_mesh->indices[3 * i];
+        triangles.triangles[triangles.count + i].index1 =
+          vertex_count + triangle_mesh->indices[3 * i + 1];
+        triangles.triangles[triangles.count + i].index2 =
+          vertex_count + triangle_mesh->indices[3 * i + 2];
+      }
+      triangles.count += triangle_mesh->indices.size() / 3;
+      for (uint32_t i = 0; i < triangle_mesh->positions.size(); ++i) {
+        triangles.vertices.position[vertex_count + i].e[0] =
+          triangle_mesh->positions[i].e[0];
+        triangles.vertices.position[vertex_count + i].e[1] =
+          triangle_mesh->positions[i].e[1];
+        triangles.vertices.position[vertex_count + i].e[2] =
+          triangle_mesh->positions[i].e[2];
+        triangles.vertices.normal[vertex_count + i].e[0] =
+          triangle_mesh->vertex_data[i].normal.e[0];
+        triangles.vertices.normal[vertex_count + i].e[1] =
+          triangle_mesh->vertex_data[i].normal.e[1];
+        triangles.vertices.normal[vertex_count + i].e[2] =
+          triangle_mesh->vertex_data[i].normal.e[2];
+        triangles.vertices.tangent[vertex_count + i].e[0] =
+          triangle_mesh->vertex_data[i].tangent.e[0];
+        triangles.vertices.tangent[vertex_count + i].e[1] =
+          triangle_mesh->vertex_data[i].tangent.e[1];
+        triangles.vertices.tangent[vertex_count + i].e[2] =
+          triangle_mesh->vertex_data[i].tangent.e[2];
+        triangles.vertices.uv[(vertex_count + i) / 2]
+          .e[2 * ((vertex_count + i) % 2)] =
+          triangle_mesh->vertex_data[i].uv.e[0];
+        triangles.vertices.uv[(vertex_count + i) / 2]
+          .e[2 * ((vertex_count + i) % 2) + 1] =
+          triangle_mesh->vertex_data[i].uv.e[1];
+      }
+      vertex_count += triangle_mesh->positions.size();
+      triangles.mat_id =
+        triangle_mesh->mat_id; // TODO: Support material per primitive
     }
   }
   scene_traversal_spheres->upload(&spheres, sizeof(spheres));
   scene_traversal_planes->upload(&planes, sizeof(planes));
+  scene_traversal_triangles->upload(&triangles, sizeof(triangles));
 }
 
 void
@@ -645,19 +737,19 @@ RendererGpu::rebuild_raygen_buffers()
     raygen_textures[i][RG_OUT_RAY_ORIGIN_LOCATION]->set_debug_name(
       "ray origin " + std::to_string(i));
     raygen_textures[i][RG_OUT_RAY_DIRECTION_LOCATION] = Texture::create(
-      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32f);
+      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba16f);
     raygen_textures[i][RG_OUT_RAY_DIRECTION_LOCATION]->set_debug_name(
       "ray direction " + std::to_string(i));
     raygen_textures[i][RG_OUT_ENERGY_ACCUMULATION_LOCATION] = Texture::create(
-      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32f);
+      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba8f);
     raygen_textures[i][RG_OUT_ENERGY_ACCUMULATION_LOCATION]->set_debug_name(
       "frame energy accumulation " + std::to_string(i));
     raygen_textures[i][RG_OUT_SHADOW_RAY_DIRECTION_LOCATION] = Texture::create(
-      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32f);
+      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba16f);
     raygen_textures[i][RG_OUT_SHADOW_RAY_DIRECTION_LOCATION]->set_debug_name(
       "shadow ray direction " + std::to_string(i));
     raygen_textures[i][RG_OUT_SHADOW_RAY_DATA_LOCATION] = Texture::create(
-      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32f);
+      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba16f);
     raygen_textures[i][RG_OUT_SHADOW_RAY_DATA_LOCATION]->set_debug_name(
       "shadow ray (x: t, y: mat_id, zw: unused) " + std::to_string(i));
     raygen_framebuffer[i] = Framebuffer::create(
@@ -668,65 +760,41 @@ RendererGpu::rebuild_raygen_buffers()
 void
 RendererGpu::rebuild_scene_traversal()
 {
-  std::unique_ptr<Texture> textures[6] = {
-    // t (double buffered)
-    Texture::create(
-      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32f),
+  for (uint8_t i = 0; i < 2; ++i) {
+    // t
+    scene_traversal_textures[i][AH_HIT_RECORD_0_LOCATION] = Texture::create(
+      width, height, Texture::MipMapFilter::nearest, Texture::Format::r16f);
+    scene_traversal_textures[i][AH_HIT_RECORD_0_LOCATION]->set_debug_name(
+      "hit record (t, unused yzw) [" + std::to_string(i) + "]");
     // position
-    Texture::create(
-      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32f),
+    scene_traversal_textures[i][AH_HIT_RECORD_1_LOCATION] = Texture::create(
+      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32f);
+    scene_traversal_textures[i][AH_HIT_RECORD_1_LOCATION]->set_debug_name(
+      "hit record (position, unused w) [" + std::to_string(i) + "]");
     // uv
-    Texture::create(
-      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32f),
+    scene_traversal_textures[i][AH_HIT_RECORD_2_LOCATION] = Texture::create(
+      width, height, Texture::MipMapFilter::nearest, Texture::Format::rg16f);
+    scene_traversal_textures[i][AH_HIT_RECORD_2_LOCATION]->set_debug_name(
+      "hit record (uv, unused zw) [" + std::to_string(i) + "]");
     // normal
-    Texture::create(
-      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32f),
+    scene_traversal_textures[i][AH_HIT_RECORD_3_LOCATION] = Texture::create(
+      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba16f);
+    scene_traversal_textures[i][AH_HIT_RECORD_3_LOCATION]->set_debug_name(
+      "hit record (normal, unused w) [" + std::to_string(i) + "]");
     // tangent
-    Texture::create(
-      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32f),
+    scene_traversal_textures[i][AH_HIT_RECORD_4_LOCATION] = Texture::create(
+      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba16f);
+    scene_traversal_textures[i][AH_HIT_RECORD_4_LOCATION]->set_debug_name(
+      "hit record (tangent, unused w) [" + std::to_string(i) + "]");
     // status, mat_id, bvh_hits
-    Texture::create(
-      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32f),
-  };
-  scene_traversal_framebuffer[0] =
-    Framebuffer::create(textures, sizeof(textures) / sizeof(textures[0]));
+    scene_traversal_textures[i][AH_HIT_RECORD_5_LOCATION] = Texture::create(
+      width, height, Texture::MipMapFilter::nearest, Texture::Format::rg16f);
+    scene_traversal_textures[i][AH_HIT_RECORD_5_LOCATION]->set_debug_name(
+      "hit record (status, mat_id, bvh_hits) [" + std::to_string(i) + "]");
 
-  scene_traversal_textures_ah_hit_record_0[0] =
-    std::move(textures[AH_HIT_RECORD_0_LOCATION]);
-  scene_traversal_textures_ah_hit_record_0[0]->set_debug_name(
-    "hit record (t, unused yzw) [0]");
-
-  textures[AH_HIT_RECORD_0_LOCATION] = Texture::create(
-    width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32f);
-
-  scene_traversal_framebuffer[1] =
-    Framebuffer::create(textures, sizeof(textures) / sizeof(textures[0]));
-
-  scene_traversal_textures_ah_hit_record_0[1] =
-    std::move(textures[AH_HIT_RECORD_0_LOCATION]);
-  scene_traversal_textures_ah_hit_record_0[1]->set_debug_name(
-    "hit record (t, unused yzw) [1]");
-
-  scene_traversal_textures[AH_HIT_RECORD_1_LOCATION - 1] =
-    std::move(textures[AH_HIT_RECORD_1_LOCATION]);
-  scene_traversal_textures[AH_HIT_RECORD_1_LOCATION - 1]->set_debug_name(
-    "hit record (position, unused w)");
-  scene_traversal_textures[AH_HIT_RECORD_2_LOCATION - 1] =
-    std::move(textures[AH_HIT_RECORD_2_LOCATION]);
-  scene_traversal_textures[AH_HIT_RECORD_2_LOCATION - 1]->set_debug_name(
-    "hit record (uv, unused zw)");
-  scene_traversal_textures[AH_HIT_RECORD_3_LOCATION - 1] =
-    std::move(textures[AH_HIT_RECORD_3_LOCATION]);
-  scene_traversal_textures[AH_HIT_RECORD_3_LOCATION - 1]->set_debug_name(
-    "hit record (normal, unused w)");
-  scene_traversal_textures[AH_HIT_RECORD_4_LOCATION - 1] =
-    std::move(textures[AH_HIT_RECORD_4_LOCATION]);
-  scene_traversal_textures[AH_HIT_RECORD_4_LOCATION - 1]->set_debug_name(
-    "hit record (tangent, unused w)");
-  scene_traversal_textures[AH_HIT_RECORD_5_LOCATION - 1] =
-    std::move(textures[AH_HIT_RECORD_5_LOCATION]);
-  scene_traversal_textures[AH_HIT_RECORD_5_LOCATION - 1]->set_debug_name(
-    "hit record (status, mat_id, bvh_hits)");
+    scene_traversal_framebuffer[i] = Framebuffer::create(
+      scene_traversal_textures[i].data(), scene_traversal_textures[i].size());
+  }
 }
 
 void
@@ -801,8 +869,22 @@ RendererGpu::create_pipelines()
     Buffer::create(sizeof(scene_traversal_plane_uniform_t));
   scene_traversal_planes->set_debug_name("scene_traversal_planes");
 
+  // Scene Traversal (triangle)
+  info.fragment_shader_binary = gpu_2c_scene_traversal_triangle_fs;
+  info.fragment_shader_size = sizeof(gpu_2c_scene_traversal_triangle_fs) /
+                              sizeof(gpu_2c_scene_traversal_triangle_fs[0]);
+  info.fragment_shader_entry_point = "main";
+  scene_traversal_triangle_pipeline =
+    Pipeline::create(Pipeline::Type::RasterOpenGL, info);
+  scene_traversal_triangles =
+    Buffer::create(sizeof(scene_traversal_triangle_uniform_t));
+  scene_traversal_triangles->set_debug_name("scene_traversal_triangle");
+
+  // Any Hit
   anyhit_uniform = Buffer::create(sizeof(anyhit_uniform_data_t));
   anyhit_uniform->set_debug_name("anyhit_uniform");
+
+  // Shadow Ray hit
   shadow_ray_light_hit_uniform =
     Buffer::create(sizeof(shadow_ray_light_hit_uniform_data_t));
   shadow_ray_light_hit_uniform->set_debug_name("shadow_ray_light_hit_uniform");
@@ -943,23 +1025,28 @@ RendererGpu::debug_textures()
 
   result.emplace_back(
     "hit record (t)",
-    scene_traversal_textures_ah_hit_record_0[scene_traversal_framebuffer_active]
+    scene_traversal_textures[scene_traversal_framebuffer_active][0]
       ->get_native_handle());
   result.emplace_back(
     "hit record (position)",
-    scene_traversal_textures[AH_HIT_RECORD_1_LOCATION]->get_native_handle());
+    scene_traversal_textures[scene_traversal_framebuffer_active][1]
+      ->get_native_handle());
   result.emplace_back(
     "hit record (uv)",
-    scene_traversal_textures[AH_HIT_RECORD_2_LOCATION]->get_native_handle());
+    scene_traversal_textures[scene_traversal_framebuffer_active][2]
+      ->get_native_handle());
   result.emplace_back(
     "hit record (normal)",
-    scene_traversal_textures[AH_HIT_RECORD_3_LOCATION]->get_native_handle());
+    scene_traversal_textures[scene_traversal_framebuffer_active][3]
+      ->get_native_handle());
   result.emplace_back(
     "hit record (tangent)",
-    scene_traversal_textures[AH_HIT_RECORD_4_LOCATION]->get_native_handle());
+    scene_traversal_textures[scene_traversal_framebuffer_active][4]
+      ->get_native_handle());
   result.emplace_back(
     "hit record (status, mat_id, bvh_hits)",
-    scene_traversal_textures[AH_HIT_RECORD_5_LOCATION]->get_native_handle());
+    scene_traversal_textures[scene_traversal_framebuffer_active][5]
+      ->get_native_handle());
 
   result.emplace_back(
     "accumulated energy",
