@@ -33,17 +33,16 @@ main()
   vec3 rand_in_disk = uniform_block.data.camera.lens_radius * random_point_in_unit_disk_wang_hash(seed);
   vec3 offset = uniform_block.data.camera.u * rand_in_disk.x
     + uniform_block.data.camera.v * rand_in_disk.y;
+  vec3 new_origin = uniform_block.data.camera.origin + offset;
 
   vec3 direction =
     uniform_block.data.camera.lower_left_corner +
     (f_uv.x + random_point_x) * uniform_block.data.camera.horizontal +
-    (f_uv.y + random_point_y) * uniform_block.data.camera.vertical -
-    uniform_block.data.camera.origin - offset;
+    (f_uv.y + random_point_y) * uniform_block.data.camera.vertical - new_origin;
 
   direction = normalize(direction);
-  direction.y *= -1.0f;
 
-  rg_out_ray_origin = vec4(uniform_block.data.camera.origin + offset, 1);
+  rg_out_ray_origin = vec4(new_origin, 1);
   rg_out_ray_direction = vec4(direction, RAY_STATUS_ACTIVE);
   rg_out_energy_accumulation = vec4(1, 1, 1, 0);
 }

@@ -53,7 +53,7 @@ Camera::calculate_camera()
 
   w = normalize(look_from - look_at);
   u = normalize(cross(v_up, w));
-  v = -cross(w, u);
+  v = cross(w, u);
 
   //lower_left_corner = origin - half_width * u - half_height * v - w;
   lower_left_corner = origin - half_width * focus_dist * u -
