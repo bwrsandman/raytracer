@@ -118,7 +118,7 @@ Ui::run(std::unique_ptr<Scene>& scene,
 
     int recursion_depth = renderer.get_recursion_depth();
     ImGui::InputInt("Max recursion depth", &recursion_depth);
-    if (recursion_depth > 0 && recursion_depth < 256) {
+    if (recursion_depth >= 0 && recursion_depth < 256) {
       renderer.set_recursion_depth((uint8_t)recursion_depth);
     }
 
