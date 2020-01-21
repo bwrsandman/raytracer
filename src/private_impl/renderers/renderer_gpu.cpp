@@ -497,7 +497,7 @@ RendererGpu::upload_scene(const std::vector<std::unique_ptr<Object>>& objects)
         triangles.triangles[triangles.count + i].index2 =
           vertex_count + triangle_mesh->indices[3 * i + 2];
       }
-      triangles.count += triangle_mesh->indices.size() / 3;
+      triangles.count += (uint32_t)triangle_mesh->indices.size() / 3;
       for (uint32_t i = 0; i < triangle_mesh->positions.size(); ++i) {
         triangles.vertices.position[vertex_count + i].e[0] =
           triangle_mesh->positions[i].e[0];
@@ -524,7 +524,7 @@ RendererGpu::upload_scene(const std::vector<std::unique_ptr<Object>>& objects)
           .e[2 * ((vertex_count + i) % 2) + 1] =
           triangle_mesh->vertex_data[i].uv.e[1];
       }
-      vertex_count += triangle_mesh->positions.size();
+      vertex_count += (uint32_t)triangle_mesh->positions.size();
       triangles.mat_id =
         triangle_mesh->mat_id; // TODO: Support material per primitive
     }
@@ -643,7 +643,7 @@ RendererGpu::run(const Scene& world)
 #if !__EMSCRIPTEN__
     if (each_intersection_queries.size() != max_recursion_depth) {
       auto current_size = each_intersection_queries.size();
-      int difference = max_recursion_depth - current_size;
+      int difference = max_recursion_depth - (uint32_t)current_size;
       if (difference > 0) {
         each_intersection_queries.resize(max_recursion_depth);
         glGenQueries(
@@ -792,8 +792,8 @@ RendererGpu::rebuild_scene_traversal()
     scene_traversal_textures[i][AH_HIT_RECORD_5_LOCATION]->set_debug_name(
       "hit record (status, mat_id, bvh_hits) [" + std::to_string(i) + "]");
 
-    scene_traversal_framebuffer[i] = Framebuffer::create(
-      scene_traversal_textures[i].data(), scene_traversal_textures[i].size());
+    scene_traversal_framebuffer[i] = Framebuffer::create(scene_traversal_textures[i].data(),
+                          (uint8_t)scene_traversal_textures[i].size());
   }
 }
 

@@ -612,7 +612,7 @@ Scene::load_cornell_box()
   // small box rotated
   vec3 translation(1.5f, -0.5f, -2.1f);
 
-  constexpr float radians = 20.0f * M_PI / 180.0f;
+  constexpr float radians = 20.0f * (float)M_PI / 180.0f;
   auto rotation_cos = std::cos(radians);
   auto rotation_sin = std::sin(radians);
   float rotated_back_left_x = -0.25f * rotation_cos - (-0.5f) * rotation_sin;
