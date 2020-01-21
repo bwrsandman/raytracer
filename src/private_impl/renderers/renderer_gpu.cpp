@@ -454,8 +454,11 @@ RendererGpu::upload_scene(const std::vector<std::unique_ptr<Object>>& objects)
   scene_traversal_plane_uniform_t planes;
   planes.count = 0;
   scene_traversal_triangle_uniform_t triangles;
-  triangles.count = 0;
+  triangles.bvh[0].offset = 0;
+  triangles.bvh[0].count = 0;
   uint32_t vertex_count = 0;
+  uint32_t triangle_count = 0;
+  uint32_t bvh_count = 0;
   for (const auto& obj : objects) {
     auto sphere = dynamic_cast<const Sphere*>(obj.get());
     auto plane = dynamic_cast<const Plane*>(obj.get());
@@ -484,20 +487,42 @@ RendererGpu::upload_scene(const std::vector<std::unique_ptr<Object>>& objects)
                       planes.normal[planes.count],
                       planes.materials[planes.count]);
       planes.count++;
-    } else if (triangle_mesh != nullptr) {
-      assert(triangles.count + triangle_mesh->indices.size() / 3 <=
+    } else if (triangle_mesh != nullptr &&
+               !triangle_mesh->bvh_optimized_indices.empty()) {
+      assert(triangle_count + triangle_mesh->bvh_optimized_indices.size() / 3 <=
              MAX_NUM_TRIANGLES);
       assert(vertex_count + triangle_mesh->positions.size() <=
              MAX_NUM_VERTICES);
-      for (uint32_t i = 0; i < triangle_mesh->indices.size() / 3; ++i) {
-        triangles.triangles[triangles.count + i].index0 =
-          vertex_count + triangle_mesh->indices[3 * i];
-        triangles.triangles[triangles.count + i].index1 =
-          vertex_count + triangle_mesh->indices[3 * i + 1];
-        triangles.triangles[triangles.count + i].index2 =
-          vertex_count + triangle_mesh->indices[3 * i + 2];
+      assert(bvh_count + triangle_mesh->bvh.size() <= MAX_NUM_BVH_NODES);
+      for (uint32_t i = 0; i < triangle_mesh->bvh.size(); ++i) {
+        triangles.bvh[bvh_count + i].aabb_min.e[0] =
+          triangle_mesh->bvh[i].bounds.min.e[0];
+        triangles.bvh[bvh_count + i].aabb_min.e[1] =
+          triangle_mesh->bvh[i].bounds.min.e[1];
+        triangles.bvh[bvh_count + i].aabb_min.e[2] =
+          triangle_mesh->bvh[i].bounds.min.e[2];
+        triangles.bvh[bvh_count + i].aabb_max.e[0] =
+          triangle_mesh->bvh[i].bounds.max.e[0];
+        triangles.bvh[bvh_count + i].aabb_max.e[1] =
+          triangle_mesh->bvh[i].bounds.max.e[1];
+        triangles.bvh[bvh_count + i].aabb_max.e[2] =
+          triangle_mesh->bvh[i].bounds.max.e[2];
+        triangles.bvh[bvh_count + i].offset =
+          triangle_mesh->bvh[i].index_offset;
+        triangles.bvh[bvh_count + i].count = triangle_mesh->bvh[i].index_count;
       }
-      triangles.count += (uint32_t)triangle_mesh->indices.size() / 3;
+      bvh_count += (uint32_t)triangle_mesh->bvh.size();
+      for (uint32_t i = 0; i < triangle_mesh->bvh_optimized_indices.size() / 3;
+           ++i) {
+        triangles.triangles[triangle_count + i].index0 =
+          vertex_count + triangle_mesh->bvh_optimized_indices[3 * i];
+        triangles.triangles[triangle_count + i].index1 =
+          vertex_count + triangle_mesh->bvh_optimized_indices[3 * i + 1];
+        triangles.triangles[triangle_count + i].index2 =
+          vertex_count + triangle_mesh->bvh_optimized_indices[3 * i + 2];
+      }
+      triangle_count +=
+        (uint32_t)triangle_mesh->bvh_optimized_indices.size() / 3;
       for (uint32_t i = 0; i < triangle_mesh->positions.size(); ++i) {
         triangles.vertices.position[vertex_count + i].e[0] =
           triangle_mesh->positions[i].e[0];
@@ -788,7 +813,7 @@ RendererGpu::rebuild_scene_traversal()
       "hit record (tangent, unused w) [" + std::to_string(i) + "]");
     // status, mat_id, bvh_hits
     scene_traversal_textures[i][AH_HIT_RECORD_5_LOCATION] = Texture::create(
-      width, height, Texture::MipMapFilter::nearest, Texture::Format::rg16f);
+      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba16f);
     scene_traversal_textures[i][AH_HIT_RECORD_5_LOCATION]->set_debug_name(
       "hit record (status, mat_id, bvh_hits) [" + std::to_string(i) + "]");
 

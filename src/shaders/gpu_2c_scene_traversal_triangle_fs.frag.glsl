@@ -5,6 +5,7 @@
 #extension GL_ARB_shading_language_420pack : enable
 
 #include "gpu_2_layout.h"
+#include "bvh_node_t.h"
 #include "hit_record_t.h"
 #include "triangle_t.h"
 
@@ -25,37 +26,77 @@ void main() {
     }
 
     float t_max = texelFetch(st_in_previous_hit_record_0, iid, 0).x;
+    vec4 old_ah_hit_record_5 = texelFetch(st_in_previous_hit_record_5, iid, 0);
 
     hit_record_t rec;
     rec.status = HIT_RECORD_STATUS_MISS;
     rec.t = t_max;
+    rec.bvh_hits = uint(old_ah_hit_record_5.z);
 
-    for (uint i = 0; i < uniform_block.objects.count; ++i)
-    {
-        uint index0 = uniform_block.objects.triangles[i].index0;
-        uint index1 = uniform_block.objects.triangles[i].index1;
-        uint index2 = uniform_block.objects.triangles[i].index2;
+    bvh_node_t root_node;
+    bvh_node_deserialize(uniform_block.objects.bvh[0].aabb_min,
+                         uniform_block.objects.bvh[0].aabb_max,
+                         uniform_block.objects.bvh[0].offset,
+                         uniform_block.objects.bvh[0].count,
+                         root_node);
 
-        triangle_t triangle;
-        triangle_deserialize(uniform_block.objects.vertices.position[index0],
-                             uniform_block.objects.vertices.position[index1],
-                             uniform_block.objects.vertices.position[index2],
-                             uniform_block.objects.vertices.normal[index0],
-                             uniform_block.objects.vertices.normal[index1],
-                             uniform_block.objects.vertices.normal[index2],
-                             (index0 % 2 == 0) ? uniform_block.objects.vertices.uv[index0 / 2].xy : uniform_block.objects.vertices.uv[index0 / 2].zw,
-                             (index1 % 2 == 0) ? uniform_block.objects.vertices.uv[index1 / 2].xy : uniform_block.objects.vertices.uv[index1 / 2].zw,
-                             (index2 % 2 == 0) ? uniform_block.objects.vertices.uv[index2 / 2].xy : uniform_block.objects.vertices.uv[index2 / 2].zw,
-                             uniform_block.objects.mat_id,
-                             triangle);
+    if (root_node.offset != 0 || bvh_node_is_leaf(root_node)) {
+        bvh_node_t nodes_to_visit[MAX_NUM_BVH_NODES];
+        uint start = 0;
+        uint end = 0;
+        nodes_to_visit[end] = root_node;
+        end += 1;
 
-        hit_record_t temp_rec;
+        while (start < end) {
+            bvh_node_t node = nodes_to_visit[start];
+            start += 1;
+            if (aabb_hit(node.bounds, ray, T_MIN, rec.t - FLT_EPSILON)) {
+                rec.bvh_hits += 1;
+                if (bvh_node_is_leaf(node)) {
+                    for (uint i = 0; i < node.count / 3; i++)
+                    {
+                        uint index0 = uniform_block.objects.triangles[node.offset / 3 + i].index0;
+                        uint index1 = uniform_block.objects.triangles[node.offset / 3 + i].index1;
+                        uint index2 = uniform_block.objects.triangles[node.offset / 3 + i].index2;
 
-        triangle_hit(ray, triangle, T_MIN, rec.t - FLT_EPSILON, temp_rec);
-        if (temp_rec.status == HIT_RECORD_STATUS_HIT && rec.t > temp_rec.t) {
-            rec = temp_rec;
+                        triangle_t triangle;
+                        triangle_deserialize(uniform_block.objects.vertices.position[index0],
+                                             uniform_block.objects.vertices.position[index1],
+                                             uniform_block.objects.vertices.position[index2],
+                                             uniform_block.objects.vertices.normal[index0],
+                                             uniform_block.objects.vertices.normal[index1],
+                                             uniform_block.objects.vertices.normal[index2],
+                                             (index0 % 2 == 0) ? uniform_block.objects.vertices.uv[index0 / 2].xy : uniform_block.objects.vertices.uv[index0 / 2].zw,
+                                             (index1 % 2 == 0) ? uniform_block.objects.vertices.uv[index1 / 2].xy : uniform_block.objects.vertices.uv[index1 / 2].zw,
+                                             (index2 % 2 == 0) ? uniform_block.objects.vertices.uv[index2 / 2].xy : uniform_block.objects.vertices.uv[index2 / 2].zw,
+                                             uniform_block.objects.mat_id,
+                                             triangle);
+
+                        hit_record_t temp_rec;
+
+                        triangle_hit(triangle, ray, T_MIN, rec.t - FLT_EPSILON, temp_rec);
+                        if (temp_rec.status == HIT_RECORD_STATUS_HIT && rec.t > temp_rec.t) {
+                            rec = temp_rec;
+                        }
+                    }
+                } else {
+                    bvh_node_deserialize(uniform_block.objects.bvh[node.offset].aabb_min,
+                                         uniform_block.objects.bvh[node.offset].aabb_max,
+                                         uniform_block.objects.bvh[node.offset].offset,
+                                         uniform_block.objects.bvh[node.offset].count,
+                                         nodes_to_visit[end]);
+                    bvh_node_deserialize(uniform_block.objects.bvh[node.offset + 1].aabb_min,
+                                         uniform_block.objects.bvh[node.offset + 1].aabb_max,
+                                         uniform_block.objects.bvh[node.offset + 1].offset,
+                                         uniform_block.objects.bvh[node.offset + 1].count,
+                                         nodes_to_visit[end + 1]);
+                    end += 2;
+                }
+            }
         }
     }
+
+    old_ah_hit_record_5.z = float(rec.bvh_hits);
 
     if (rec.status == HIT_RECORD_STATUS_MISS)
     {
@@ -64,7 +105,7 @@ void main() {
         ah_hit_record_2 = texelFetch(st_in_previous_hit_record_2, iid, 0);
         ah_hit_record_3 = texelFetch(st_in_previous_hit_record_3, iid, 0);
         ah_hit_record_4 = texelFetch(st_in_previous_hit_record_4, iid, 0);
-        ah_hit_record_5 = texelFetch(st_in_previous_hit_record_5, iid, 0);
+        ah_hit_record_5 = old_ah_hit_record_5;
         return;
     }
 

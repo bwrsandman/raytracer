@@ -103,6 +103,7 @@ struct alignas(16) scene_traversal_plane_uniform_t
 
 #define MAX_NUM_VERTICES 24
 #define MAX_NUM_TRIANGLES 12
+#define MAX_NUM_BVH_NODES 8
 
 struct alignas(16) scene_traversal_triangle_vertex_t
 {
@@ -119,12 +120,20 @@ struct alignas(16) scene_traversal_triangle_triangle_t
   uint32_t index2;
 };
 
+struct alignas(16) scene_traversal_triangle_bvh_t
+{
+  vec4 aabb_min;
+  vec4 aabb_max;
+  uint32_t offset; // index or left_bvh
+  uint32_t count;
+};
+
 struct alignas(16) scene_traversal_triangle_uniform_t
 {
   scene_traversal_triangle_vertex_t vertices;
   scene_traversal_triangle_triangle_t triangles[MAX_NUM_TRIANGLES];
+  scene_traversal_triangle_bvh_t bvh[MAX_NUM_BVH_NODES];
   uint32_t mat_id;
-  uint32_t count;
 };
 
 // TODO: Remove concept of material types and use single PBR material
