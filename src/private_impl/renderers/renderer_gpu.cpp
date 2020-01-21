@@ -10,6 +10,7 @@
 #include "../graphics/buffer.h"
 #include "../graphics/framebuffer.h"
 #include "../graphics/indexed_mesh.h"
+#include "../graphics/scoped_debug_group.h"
 #include "../graphics/texture.h"
 #include "camera.h"
 #include "hittable/plane.h"
@@ -33,6 +34,10 @@
 #include "shaders/gpu_5_postprocess_fs.h"
 #include "shaders/passthrough_vs.h"
 
+#if __EMSCRIPTEN__
+#include <emscripten.h>
+#include <emscripten/html5.h>
+#endif
 #define GL_TIMESTAMP 0x8E28
 
 using namespace Raytracer::Graphics;
@@ -83,10 +88,11 @@ RendererGpu::RendererGpu(SDL_Window* window)
   SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
   SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 
-  context = SDL_GL_CreateContext(window);
+  context.reset(SDL_GL_CreateContext(window));
   if (context) {
     gladLoadGLES2Loader(SDL_GL_GetProcAddress);
 
+#if !__EMSCRIPTEN__
     typedef void(APIENTRYP PFNGLQUERYCOUNTERPROC)(GLuint id, GLenum target);
     glQueryCounter = reinterpret_cast<PFNGLQUERYCOUNTERPROC>(
       SDL_GL_GetProcAddress("glQueryCounter"));
@@ -95,31 +101,38 @@ RendererGpu::RendererGpu(SDL_Window* window)
     glGetQueryObjectui64v = reinterpret_cast<PFNGLGETQUERYOBJECTUI64VPROC>(
       SDL_GL_GetProcAddress("glGetQueryObjectui64v"));
 
-#if !__EMSCRIPTEN__
     glEnable(GL_DEBUG_OUTPUT);
     glDebugMessageCallback(MessageCallback, this);
+
+    glGenQueries(sizeof(timestamp_queries_t) / sizeof(uint32_t),
+                 reinterpret_cast<uint32_t*>(&timestamp_queries));
 #endif
 
     backbuffer = Framebuffer::default_framebuffer();
     fullscreen_quad = IndexedMesh::create_fullscreen_quad();
-    glGenQueries(sizeof(timestamp_queries_t) / sizeof(uint32_t),
-                 reinterpret_cast<uint32_t*>(&timestamp_queries));
     create_pipelines();
   }
 }
 
 RendererGpu::~RendererGpu()
 {
+#if !__EMSCRIPTEN__
   glDeleteQueries(sizeof(timestamp_queries_t) / sizeof(uint32_t),
                   reinterpret_cast<uint32_t*>(&timestamp_queries));
-  SDL_GL_DeleteContext(context);
+#endif
+}
+
+void
+RendererGpu::SDLDestroyer::operator()(void* ctx) const
+{
+  SDL_GL_DeleteContext(ctx);
 }
 
 void
 RendererGpu::encode_raygen()
 {
   constexpr vec4 clear_color = { 0.0f, 0.0f, 0.0f, 0.0f };
-  glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "raygen");
+  auto debug_group = ScopedDebugGroup("raygen");
   for (auto& framebuffer : raygen_framebuffer) {
     framebuffer->clear(
       { clear_color, clear_color, clear_color, clear_color, clear_color });
@@ -128,19 +141,20 @@ RendererGpu::encode_raygen()
   raygen_pipeline->bind();
   raygen_ray_uniform->bind(RG_RAY_CAMERA_BINDING);
   fullscreen_quad->draw();
+#if !__EMSCRIPTEN__
   glQueryCounter(timestamp_queries.raygen, GL_TIMESTAMP);
-  glPopDebugGroup();
+#endif
 }
 
 void
 RendererGpu::encode_scene_traversal(Texture& ray_direction)
 {
   constexpr vec4 clear_color = { 0.0f, 0.0f, 0.0f, 1.0f };
+  auto debug_group = ScopedDebugGroup("scene traversal");
   // set t_max to float max
   static const vec4 previous_hit_record_clear = {
     std::numeric_limits<float>::max(), 0.0f, 0.0f, 1.0f
   };
-  glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "scene traversal");
 
   // Clear the double buffer
   for (auto& framebuffer : scene_traversal_framebuffer) {
@@ -176,7 +190,7 @@ RendererGpu::encode_scene_traversal(Texture& ray_direction)
   };
 
   for (uint8_t i = 0; i < primitives_t::count; ++i) {
-    glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, debug_strs[i].data());
+    auto primitive_debug_group = ScopedDebugGroup(debug_strs[i]);
     pipelines[i]->bind();
     {
       GLint st_ray_direction = glGetUniformLocation(
@@ -196,14 +210,11 @@ RendererGpu::encode_scene_traversal(Texture& ray_direction)
     primitive_buffers[i]->bind(ST_OBJECT_BINDING);
     fullscreen_quad->draw();
     scene_traversal_framebuffer_active = 1 - scene_traversal_framebuffer_active;
-    glPopDebugGroup(); // debug_strs[i]
   }
-
-  glPopDebugGroup(); // scene traversal
 }
 
 void
-RendererGpu::encode_any_hit(uint8_t recursion_count)
+RendererGpu::encode_any_hit([[maybe_unused]] uint8_t recursion_count)
 {
   constexpr std::string_view debug_strs[2] = {
     "closest hit",
@@ -214,7 +225,7 @@ RendererGpu::encode_any_hit(uint8_t recursion_count)
     miss_all_pipeline.get(),
   };
   for (uint8_t i = 0; i < 2; ++i) {
-    glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, debug_strs[i].data());
+    auto debug_group = ScopedDebugGroup(debug_strs[i]);
     pipelines[i]->bind();
     {
       GLint ah_hit_record_0 = glGetUniformLocation(
@@ -237,15 +248,21 @@ RendererGpu::encode_any_hit(uint8_t recursion_count)
       glUniform1i(ah_hit_record_5, AH_HIT_RECORD_5_LOCATION);
       GLint ah_incident_ray_origin = glGetUniformLocation(
         pipelines[i]->get_native_handle(), "ah_incident_ray_origin");
-      glUniform1i(ah_incident_ray_origin, AH_INCIDENT_RAY_ORIGIN_LOCATION);
+      if (ah_incident_ray_origin > 0) {
+        glUniform1i(ah_incident_ray_origin, AH_INCIDENT_RAY_ORIGIN_LOCATION);
+      }
       GLint ah_incident_ray_direction = glGetUniformLocation(
         pipelines[i]->get_native_handle(), "ah_incident_ray_direction");
-      glUniform1i(ah_incident_ray_direction,
-                  AH_INCIDENT_RAY_DIRECTION_LOCATION);
+      if (ah_incident_ray_direction > 0) {
+        glUniform1i(ah_incident_ray_direction,
+                    AH_INCIDENT_RAY_DIRECTION_LOCATION);
+      }
       GLint ah_out_energy_accumulation_direction = glGetUniformLocation(
         pipelines[i]->get_native_handle(), "ah_in_energy_accumulation");
-      glUniform1i(ah_out_energy_accumulation_direction,
-                  AH_IN_ENERGY_ACCUMULATION_LOCATION);
+      if (ah_out_energy_accumulation_direction > 0) {
+        glUniform1i(ah_out_energy_accumulation_direction,
+                    AH_IN_ENERGY_ACCUMULATION_LOCATION);
+      }
     }
     scene_traversal_textures_ah_hit_record_0[scene_traversal_framebuffer_active]
       ->bind(AH_HIT_RECORD_0_LOCATION);
@@ -269,17 +286,17 @@ RendererGpu::encode_any_hit(uint8_t recursion_count)
     anyhit_uniform->bind(AH_UNIFORM_BINDING);
     raygen_framebuffer[1 - raygen_framebuffer_active]->bind();
     fullscreen_quad->draw();
-    glPopDebugGroup();
-    glQueryCounter(
-      timestamp_queries.each_intersection[recursion_count].any_hit[i],
-      GL_TIMESTAMP);
+#if !__EMSCRIPTEN__
+    glQueryCounter(each_intersection_queries[recursion_count].any_hit[i],
+                   GL_TIMESTAMP);
+#endif
   }
 }
 
 void
 RendererGpu::encode_shadow_ray_light_hit()
 {
-  glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "shadow ray light hit");
+  auto debug_group = ScopedDebugGroup("shadow ray light hit");
   shadow_ray_light_hit_pipeline->bind();
   {
     GLint sr_hit_record_5 = glGetUniformLocation(
@@ -322,14 +339,13 @@ RendererGpu::encode_shadow_ray_light_hit()
   shadow_ray_light_hit_uniform->bind(SR_UNIFORM_BINDING);
   raygen_framebuffer[1 - raygen_framebuffer_active]->bind();
   fullscreen_quad->draw();
-  glPopDebugGroup();
 }
 
 void
 RendererGpu::encode_accumulation()
 {
   constexpr vec4 clear_color = { 0.0f, 0.0f, 0.0f, 1.0f };
-  glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "accumulation");
+  auto debug_group = ScopedDebugGroup("accumulation");
   accumulation_framebuffer[accumulation_framebuffer_active]->clear(
     { clear_color });
   accumulation_pipeline->bind();
@@ -343,8 +359,9 @@ RendererGpu::encode_accumulation()
   accumulation_texture[1 - accumulation_framebuffer_active]->bind(
     EA_IN_PREVIOUS_ENERGY_LOCATION);
   fullscreen_quad->draw();
-  glPopDebugGroup();
+#if !__EMSCRIPTEN__
   glQueryCounter(timestamp_queries.accumulation, GL_TIMESTAMP);
+#endif
 
   accumulation_framebuffer_active = 1 - accumulation_framebuffer_active;
 }
@@ -353,15 +370,16 @@ void
 RendererGpu::encode_final_blit()
 {
   constexpr vec4 clear_color = { 1.0f, 1.0f, 0.0f, 1.0f };
-  glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "final blit");
+  auto debug_group = ScopedDebugGroup("final blit");
   backbuffer->clear({ clear_color });
   final_blit_pipeline->bind();
   accumulation_texture[raygen_framebuffer_active]->bind(
     F_IMAGE_SAMPLER_LOCATION);
   fullscreen_quad->draw();
   backbuffer->bind();
-  glPopDebugGroup();
+#if !__EMSCRIPTEN__
   glQueryCounter(timestamp_queries.final_blit, GL_TIMESTAMP);
+#endif
 }
 
 void
@@ -530,48 +548,75 @@ RendererGpu::run(const Scene& world)
 
     upload_uniforms(world);
 
+#if !__EMSCRIPTEN__
+    if (each_intersection_queries.size() != max_recursion_depth) {
+      auto current_size = each_intersection_queries.size();
+      int difference = max_recursion_depth - current_size;
+      if (difference > 0) {
+        each_intersection_queries.resize(max_recursion_depth);
+        glGenQueries(
+          difference *
+            (sizeof(intersection_timestamp_queries_t) / sizeof(uint32_t)),
+          reinterpret_cast<GLuint*>(&each_intersection_queries[current_size]));
+      } else {
+        glDeleteQueries(
+          -difference *
+            (sizeof(intersection_timestamp_queries_t) / sizeof(uint32_t)),
+          reinterpret_cast<GLuint*>(
+            &each_intersection_queries[max_recursion_depth]));
+        each_intersection_queries.resize(max_recursion_depth);
+      }
+    }
     glQueryCounter(timestamp_queries.start, GL_TIMESTAMP);
+#endif
     encode_raygen();
 
-    glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "intersections");
-    for (uint8_t j = 0; j < max_recursion_depth; ++j) {
-      auto debug_str = (std::string("pass #") + std::to_string(j));
+    {
+      auto intersections_debug_group = ScopedDebugGroup("intersections");
+      for (uint8_t j = 0; j < max_recursion_depth; ++j) {
+        auto debug_str = (std::string("pass #") + std::to_string(j));
+        auto pass_debug_group = ScopedDebugGroup(debug_str.c_str());
 
-      glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, debug_str.c_str());
-      constexpr vec4 clear_color = { 0.0f, 0.0f, 0.0f, 0.0f };
-      raygen_framebuffer[1 - raygen_framebuffer_active]->clear(
-        { clear_color, clear_color, clear_color, clear_color, clear_color });
+        constexpr vec4 clear_color = { 0.0f, 0.0f, 0.0f, 0.0f };
+        raygen_framebuffer[1 - raygen_framebuffer_active]->clear(
+          { clear_color, clear_color, clear_color, clear_color, clear_color });
 
-      // Primary ray
-      glQueryCounter(timestamp_queries.each_intersection[j].start,
-                     GL_TIMESTAMP);
-      encode_scene_traversal(*raygen_textures[raygen_framebuffer_active]
-                                             [RG_OUT_RAY_DIRECTION_LOCATION]);
-      glQueryCounter(timestamp_queries.each_intersection[j].main_traversal,
-                     GL_TIMESTAMP);
-      encode_any_hit(j);
+        // Primary ray
+#if !__EMSCRIPTEN__
+        glQueryCounter(each_intersection_queries[j].start, GL_TIMESTAMP);
+#endif
+        encode_scene_traversal(*raygen_textures[raygen_framebuffer_active]
+                                               [RG_OUT_RAY_DIRECTION_LOCATION]);
+#if !__EMSCRIPTEN__
+        glQueryCounter(each_intersection_queries[j].main_traversal,
+                       GL_TIMESTAMP);
+#endif
+        encode_any_hit(j);
 
-      // Swap buffers
-      raygen_framebuffer_active = 1 - raygen_framebuffer_active;
+        // Swap buffers
+        raygen_framebuffer_active = 1 - raygen_framebuffer_active;
 
-      // Shadow ray (and blit)
-      encode_scene_traversal(
-        *raygen_textures[raygen_framebuffer_active]
-                        [RG_OUT_SHADOW_RAY_DIRECTION_LOCATION]);
-      glQueryCounter(
-        timestamp_queries.each_intersection[j].shadow_ray_traversal,
-        GL_TIMESTAMP);
-      encode_shadow_ray_light_hit();
-      glQueryCounter(timestamp_queries.each_intersection[j].shadow_ray_hit,
-                     GL_TIMESTAMP);
+        // Shadow ray (and blit)
+        encode_scene_traversal(
+          *raygen_textures[raygen_framebuffer_active]
+                          [RG_OUT_SHADOW_RAY_DIRECTION_LOCATION]);
+#if !__EMSCRIPTEN__
+        glQueryCounter(each_intersection_queries[j].shadow_ray_traversal,
+                       GL_TIMESTAMP);
+#endif
+        encode_shadow_ray_light_hit();
+#if !__EMSCRIPTEN__
+        glQueryCounter(each_intersection_queries[j].shadow_ray_hit,
+                       GL_TIMESTAMP);
+#endif
 
-      // Swap buffers
-      raygen_framebuffer_active = 1 - raygen_framebuffer_active;
-
-      glPopDebugGroup(); // pass #
+        // Swap buffers
+        raygen_framebuffer_active = 1 - raygen_framebuffer_active;
+      }
+#if !__EMSCRIPTEN__
+      glQueryCounter(timestamp_queries.intersections, GL_TIMESTAMP);
+#endif
     }
-    glPopDebugGroup(); // intersections
-    glQueryCounter(timestamp_queries.intersections, GL_TIMESTAMP);
 
     encode_accumulation();
     encode_final_blit();
@@ -641,7 +686,7 @@ RendererGpu::rebuild_scene_traversal()
       width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32f),
     // status, mat_id, bvh_hits
     Texture::create(
-      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32i),
+      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32f),
   };
   scene_traversal_framebuffer[0] =
     Framebuffer::create(textures, sizeof(textures) / sizeof(textures[0]));
@@ -802,6 +847,9 @@ RendererGpu::create_pipelines()
 std::vector<std::pair<std::string, float>>
 RendererGpu::evaluate_metrics()
 {
+  std::vector<std::pair<std::string, float>> result;
+
+#if !__EMSCRIPTEN__
   using duration_format = std::chrono::duration<float, std::milli>;
 
   auto get_timestamp =
@@ -817,20 +865,16 @@ RendererGpu::evaluate_metrics()
     return std::chrono::duration_cast<duration_format>(nanoseconds);
   };
 
-  std::vector<std::pair<std::string, float>> result;
-
   for (uint8_t i = 0; i < max_recursion_depth; ++i) {
-    auto start = get_timestamp(timestamp_queries.each_intersection[i].start);
+    auto start = get_timestamp(each_intersection_queries[i].start);
     auto main_traversal =
-      get_timestamp(timestamp_queries.each_intersection[i].main_traversal);
-    auto closest_hit =
-      get_timestamp(timestamp_queries.each_intersection[i].any_hit[0]);
-    auto miss_all =
-      get_timestamp(timestamp_queries.each_intersection[i].any_hit[1]);
-    auto shadow_ray_traversal = get_timestamp(
-      timestamp_queries.each_intersection[i].shadow_ray_traversal);
+      get_timestamp(each_intersection_queries[i].main_traversal);
+    auto closest_hit = get_timestamp(each_intersection_queries[i].any_hit[0]);
+    auto miss_all = get_timestamp(each_intersection_queries[i].any_hit[1]);
+    auto shadow_ray_traversal =
+      get_timestamp(each_intersection_queries[i].shadow_ray_traversal);
     auto shadow_ray_hit =
-      get_timestamp(timestamp_queries.each_intersection[i].shadow_ray_hit);
+      get_timestamp(each_intersection_queries[i].shadow_ray_hit);
 
     auto main_traversal_ms = get_duration(start, main_traversal);
     auto closest_hit_ms = get_duration(main_traversal, closest_hit);
@@ -866,6 +910,72 @@ RendererGpu::evaluate_metrics()
   result.emplace_back("intersections %.2f ms\n", intersections_ms.count());
   result.emplace_back("accumulation %.2f ms\n", accumulation_ms.count());
   result.emplace_back("blit %.2f ms\n", final_blit_ms.count());
+#endif
 
   return result;
+}
+
+std::vector<std::pair<std::string, uintptr_t>>
+RendererGpu::debug_textures()
+{
+  auto result = std::vector<std::pair<std::string, uintptr_t>>();
+
+  result.emplace_back(
+    "ray origin",
+    raygen_textures[raygen_framebuffer_active][RG_OUT_RAY_ORIGIN_LOCATION]
+      ->get_native_handle());
+  result.emplace_back(
+    "ray direction",
+    raygen_textures[raygen_framebuffer_active][RG_OUT_RAY_DIRECTION_LOCATION]
+      ->get_native_handle());
+  result.emplace_back("frame energy accumulation",
+                      raygen_textures[raygen_framebuffer_active]
+                                     [RG_OUT_ENERGY_ACCUMULATION_LOCATION]
+                                       ->get_native_handle());
+  result.emplace_back("shadow ray direction",
+                      raygen_textures[raygen_framebuffer_active]
+                                     [RG_OUT_SHADOW_RAY_DIRECTION_LOCATION]
+                                       ->get_native_handle());
+  result.emplace_back(
+    "shadow ray data",
+    raygen_textures[raygen_framebuffer_active][RG_OUT_SHADOW_RAY_DATA_LOCATION]
+      ->get_native_handle());
+
+  result.emplace_back(
+    "hit record (t)",
+    scene_traversal_textures_ah_hit_record_0[scene_traversal_framebuffer_active]
+      ->get_native_handle());
+  result.emplace_back(
+    "hit record (position)",
+    scene_traversal_textures[AH_HIT_RECORD_1_LOCATION]->get_native_handle());
+  result.emplace_back(
+    "hit record (uv)",
+    scene_traversal_textures[AH_HIT_RECORD_2_LOCATION]->get_native_handle());
+  result.emplace_back(
+    "hit record (normal)",
+    scene_traversal_textures[AH_HIT_RECORD_3_LOCATION]->get_native_handle());
+  result.emplace_back(
+    "hit record (tangent)",
+    scene_traversal_textures[AH_HIT_RECORD_4_LOCATION]->get_native_handle());
+  result.emplace_back(
+    "hit record (status, mat_id, bvh_hits)",
+    scene_traversal_textures[AH_HIT_RECORD_5_LOCATION]->get_native_handle());
+
+  result.emplace_back(
+    "accumulated energy",
+    accumulation_texture[accumulation_framebuffer_active]->get_native_handle());
+
+  return result;
+}
+
+uint8_t
+RendererGpu::get_recursion_depth() const
+{
+  return max_recursion_depth;
+}
+
+void
+RendererGpu::set_recursion_depth(uint8_t value)
+{
+  max_recursion_depth = value;
 }

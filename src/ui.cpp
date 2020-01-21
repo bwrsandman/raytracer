@@ -30,6 +30,7 @@ using namespace Raytracer::Materials;
 Ui::Ui(SDL_Window* window)
   : window(window)
   , show_stats(false)
+  , show_textures(false)
 {
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
@@ -71,10 +72,32 @@ Ui::run(std::unique_ptr<Scene>& scene,
   ImGui::EndMainMenuBar();
 
   if (!graphs_map.empty()) {
-    if (ImGui::Begin("Stats")) {
+    if (ImGui::Begin("Stats"), &show_stats) {
       for (auto [title, values] : graphs_map) {
         ImGui::PlotHistogram(title.c_str(), values.data(), (int)values.size());
       }
+    }
+    ImGui::End();
+  }
+
+  auto debug_textures = renderer.debug_textures();
+  if (show_textures && !debug_textures.empty()) {
+    if (ImGui::Begin("Intermediate Textures", &show_textures)) {
+      ImGui::Columns(2);
+      ImGuiIO& io = ImGui::GetIO();
+      ImVec2 size = io.DisplaySize;
+      auto aspect = size.y / size.x;
+      auto width = ImGui::CalcItemWidth();
+      auto height = aspect * width;
+      for (auto [name, texture] : debug_textures) {
+        ImGui::Text("%s", name.c_str());
+        ImGui::Image(reinterpret_cast<void*>(texture),
+                     ImVec2(width, height),
+                     ImVec2(0, 1),
+                     ImVec2(1, 0));
+        ImGui::NextColumn();
+      }
+      ImGui::Columns();
     }
     ImGui::End();
   }
@@ -89,6 +112,15 @@ Ui::run(std::unique_ptr<Scene>& scene,
     }
     ImGui::SameLine();
     ImGui::Checkbox("Show stats", &show_stats);
+    if (!debug_textures.empty()) {
+      ImGui::Checkbox("Show Intermediate Textures", &show_textures);
+    }
+
+    int recursion_depth = renderer.get_recursion_depth();
+    ImGui::InputInt("Max recursion depth", &recursion_depth);
+    if (recursion_depth > 0 && recursion_depth < 256) {
+      renderer.set_recursion_depth(recursion_depth);
+    }
 
     ImGui::Text("Load Scene");
     if (ImGui::Button("Whitted")) {

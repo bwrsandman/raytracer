@@ -24,6 +24,8 @@ public:
   Game();
   virtual ~Game();
 
+  void clean_up();
+
   void run();
   bool main_loop();
 
@@ -37,6 +39,6 @@ private:
   std::unique_ptr<Scene> scene;
   std::chrono::high_resolution_clock::time_point frame_begin;
   std::chrono::high_resolution_clock::time_point frame_end;
-  std::vector<std::pair<std::string, float>> renderer_metrics;
+  std::vector<std::pair<std::string, float> > renderer_metrics;
 };
 } // namespace Raytracer

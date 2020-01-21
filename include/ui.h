@@ -30,5 +30,6 @@ public:
 private:
   SDL_Window* window;
   bool show_stats;
+  bool show_textures;
 };
 } // namespace Raytracer

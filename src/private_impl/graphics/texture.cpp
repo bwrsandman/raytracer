@@ -13,13 +13,16 @@ struct TextureFormatLookUp
   const uint32_t type;
 };
 
-std::array<TextureFormatLookUp, 4> TextureFormatLookUpTable = {
+std::array<TextureFormatLookUp, 7> TextureFormatLookUpTable = {
   /* rgb32f  */ TextureFormatLookUp{ GL_RGB, GL_RGB32F, GL_FLOAT },
   /* rgba32f */ TextureFormatLookUp{ GL_RGBA, GL_RGBA32F, GL_FLOAT },
+  /* rgba8i */ TextureFormatLookUp{ GL_RGBA_INTEGER, GL_RGBA8I, GL_BYTE },
+  /* rgba16i */ TextureFormatLookUp{ GL_RGBA_INTEGER, GL_RGBA16I, GL_SHORT },
+  /* rgba16u */
+  TextureFormatLookUp{ GL_RGBA_INTEGER, GL_RGBA16UI, GL_UNSIGNED_SHORT },
+  /* rgba32i */ TextureFormatLookUp{ GL_RGBA_INTEGER, GL_RGBA32I, GL_INT },
   /* rgba32u */
   TextureFormatLookUp{ GL_RGBA_INTEGER, GL_RGBA32UI, GL_UNSIGNED_INT },
-  /* rgba32i */
-  TextureFormatLookUp{ GL_RGBA_INTEGER, GL_RGBA32I, GL_INT },
 };
 
 std::array<uint32_t, 2> TextureFilterLookUpTable = {
@@ -60,6 +63,11 @@ Raytracer::Graphics::Texture::create(uint32_t width,
                gl_format.type,
                nullptr);
 
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, clamp_to_edge);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, clamp_to_edge);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter);
+
   return std::unique_ptr<Texture>(
     new Texture(texture, sampler, width, height, format));
 }
@@ -83,7 +91,7 @@ Texture::~Texture()
 }
 
 void
-Texture::set_debug_name(const std::string& name) const
+Texture::set_debug_name([[maybe_unused]] const std::string& name) const
 {
 #if !__EMSCRIPTEN__
   glObjectLabel(GL_TEXTURE, native_texture, -1, (name + " texture").c_str());
@@ -114,4 +122,10 @@ Texture::upload(const void* data, [[maybe_unused]] uint32_t size) const
                   gl_format.format,
                   gl_format.type,
                   data);
+}
+
+uintptr_t
+Texture::get_native_handle() const
+{
+  return native_texture;
 }

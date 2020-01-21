@@ -128,99 +128,59 @@ Camera::process_event(const SDL_Event& event, std::chrono::microseconds& dt)
         speed *= 0.2f;
       }
       switch (event.key.keysym.sym) {
-#if __EMSCRIPTEN__
-        case SDL_SCANCODE_W: // weird sdl2 emscripten bug
-#else
         case SDLK_w:
-#endif
         {
           auto direction = (look_at - look_from);
           direction.make_unit_vector();
           origin += direction * speed;
           calculate_camera();
         } break;
-#if __EMSCRIPTEN__
-        case SDL_SCANCODE_S: // weird sdl2 emscripten bug
-#else
         case SDLK_s:
-#endif
         {
           auto direction = (look_at - look_from);
           direction.make_unit_vector();
           origin -= direction * speed;
           calculate_camera();
         } break;
-#if __EMSCRIPTEN__
-        case SDL_SCANCODE_E: // weird sdl2 emscripten bug
-#else
         case SDLK_e:
-#endif
           origin += v_up * speed;
           calculate_camera();
           break;
-#if __EMSCRIPTEN__
-        case SDL_SCANCODE_Q: // weird sdl2 emscripten bug
-#else
         case SDLK_q:
-#endif
           origin -= v_up * speed;
           calculate_camera();
           break;
-#if __EMSCRIPTEN__
-        case SDL_SCANCODE_A: // weird sdl2 emscripten bug
-#else
         case SDLK_a:
-#endif
         {
           auto direction = cross(v_up, (look_at - look_from));
           direction.make_unit_vector();
           origin += direction * speed;
           calculate_camera();
         } break;
-#if __EMSCRIPTEN__
-        case SDL_SCANCODE_D: // weird sdl2 emscripten bug
-#else
         case SDLK_d:
-#endif
         {
           auto direction = cross(v_up, (look_at - look_from));
           direction.make_unit_vector();
           origin -= direction * speed;
           calculate_camera();
         } break;
-#if __EMSCRIPTEN__
-        case SDL_SCANCODE_UP: // weird sdl2 emscripten bug
-#else
         case SDLK_UP:
-#endif
           look_at += v_up * speed;
           calculate_camera();
           break;
-#if __EMSCRIPTEN__
-        case SDL_SCANCODE_DOWN: // weird sdl2 emscripten bug
-#else
         case SDLK_DOWN:
-#endif
           look_at -= v_up * speed;
           calculate_camera();
           break;
 
-#if __EMSCRIPTEN__
-        case SDL_SCANCODE_LEFT: // weird sdl2 emscripten bug
-#else
         case SDLK_LEFT:
-#endif
         {
           auto direction = cross(v_up, (look_at - look_from));
           direction.make_unit_vector();
           look_at += direction * speed;
           calculate_camera();
         } break;
-#if __EMSCRIPTEN__
-        case SDL_SCANCODE_RIGHT: // weird sdl2 emscripten bug
-#else
         case SDLK_RIGHT:
-#endif
         {
           auto direction = cross(v_up, (look_at - look_from));
           direction.make_unit_vector();
