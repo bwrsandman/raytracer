@@ -11,39 +11,40 @@ struct TextureFormatLookUp
   const uint32_t format;
   const uint32_t internal_format;
   const uint32_t type;
+  const uint8_t size;
 };
 
 std::array<TextureFormatLookUp, 21> TextureFormatLookUpTable = {
-  /* r_snorm  */ TextureFormatLookUp{ GL_RED, GL_R8_SNORM, GL_BYTE },
-  /* rg_snorm  */ TextureFormatLookUp{ GL_RG, GL_RG8_SNORM, GL_BYTE },
+  /* r_snorm  */ TextureFormatLookUp{ GL_RED, GL_R8_SNORM, GL_BYTE, 1 },
+  /* rg_snorm  */ TextureFormatLookUp{ GL_RG, GL_RG8_SNORM, GL_BYTE, 2 },
   /* rgb_snorm  */
-  TextureFormatLookUp{ GL_RGB, GL_RGB8_SNORM, GL_BYTE },
+  TextureFormatLookUp{ GL_RGB, GL_RGB8_SNORM, GL_BYTE, 3 },
   /* rgba_snorm */
-  TextureFormatLookUp{ GL_RGBA, GL_RGBA8_SNORM, GL_BYTE },
+  TextureFormatLookUp{ GL_RGBA, GL_RGBA8_SNORM, GL_BYTE, 4 },
 
-  /* r8f  */ TextureFormatLookUp{ GL_RED, GL_R8, GL_UNSIGNED_BYTE },
-  /* rg8f  */ TextureFormatLookUp{ GL_RG, GL_RG8, GL_UNSIGNED_BYTE },
-  /* rgb8f  */ TextureFormatLookUp{ GL_RGB, GL_RGB8, GL_UNSIGNED_BYTE },
-  /* rgba8f */ TextureFormatLookUp{ GL_RGBA, GL_RGBA8, GL_UNSIGNED_BYTE },
+  /* r8f  */ TextureFormatLookUp{ GL_RED, GL_R8, GL_UNSIGNED_BYTE, 1 },
+  /* rg8f  */ TextureFormatLookUp{ GL_RG, GL_RG8, GL_UNSIGNED_BYTE, 2 },
+  /* rgb8f  */ TextureFormatLookUp{ GL_RGB, GL_RGB8, GL_UNSIGNED_BYTE, 3 },
+  /* rgba8f */ TextureFormatLookUp{ GL_RGBA, GL_RGBA8, GL_UNSIGNED_BYTE, 4 },
 
-  /* r16f  */ TextureFormatLookUp{ GL_RED, GL_R16F, GL_HALF_FLOAT },
-  /* rg16f  */ TextureFormatLookUp{ GL_RG, GL_RG16F, GL_HALF_FLOAT },
-  /* rgb16f  */ TextureFormatLookUp{ GL_RGB, GL_RGB16F, GL_HALF_FLOAT },
-  /* rgba16f  */ TextureFormatLookUp{ GL_RGBA, GL_RGBA16F, GL_HALF_FLOAT },
+  /* r16f  */ TextureFormatLookUp{ GL_RED, GL_R16F, GL_HALF_FLOAT, 2 },
+  /* rg16f  */ TextureFormatLookUp{ GL_RG, GL_RG16F, GL_HALF_FLOAT, 4 },
+  /* rgb16f  */ TextureFormatLookUp{ GL_RGB, GL_RGB16F, GL_HALF_FLOAT, 6 },
+  /* rgba16f  */ TextureFormatLookUp{ GL_RGBA, GL_RGBA16F, GL_HALF_FLOAT, 8 },
 
-  /* r32f  */ TextureFormatLookUp{ GL_RED, GL_R32F, GL_FLOAT },
-  /* rg32f  */ TextureFormatLookUp{ GL_RG, GL_RG32F, GL_FLOAT },
-  /* rgb32f  */ TextureFormatLookUp{ GL_RGB, GL_RGB32F, GL_FLOAT },
-  /* rgba32f */ TextureFormatLookUp{ GL_RGBA, GL_RGBA32F, GL_FLOAT },
+  /* r32f  */ TextureFormatLookUp{ GL_RED, GL_R32F, GL_FLOAT, 4 },
+  /* rg32f  */ TextureFormatLookUp{ GL_RG, GL_RG32F, GL_FLOAT, 8 },
+  /* rgb32f  */ TextureFormatLookUp{ GL_RGB, GL_RGB32F, GL_FLOAT, 12 },
+  /* rgba32f */ TextureFormatLookUp{ GL_RGBA, GL_RGBA32F, GL_FLOAT, 16 },
 
-  /* rgba8i */ TextureFormatLookUp{ GL_RGBA_INTEGER, GL_RGBA8I, GL_BYTE },
-  /* rgba16i */ TextureFormatLookUp{ GL_RGBA_INTEGER, GL_RGBA16I, GL_SHORT },
-  /* rgba32i */ TextureFormatLookUp{ GL_RGBA_INTEGER, GL_RGBA32I, GL_INT },
+  /* rgba8i */ TextureFormatLookUp{ GL_RGBA_INTEGER, GL_RGBA8I, GL_BYTE, 4 },
+  /* rgba16i */ TextureFormatLookUp{ GL_RGBA_INTEGER, GL_RGBA16I, GL_SHORT, 8 },
+  /* rgba32i */ TextureFormatLookUp{ GL_RGBA_INTEGER, GL_RGBA32I, GL_INT, 16 },
 
   /* rgba16u */
-  TextureFormatLookUp{ GL_RGBA_INTEGER, GL_RGBA16UI, GL_UNSIGNED_SHORT },
+  TextureFormatLookUp{ GL_RGBA_INTEGER, GL_RGBA16UI, GL_UNSIGNED_SHORT, 8 },
   /* rgba32u */
-  TextureFormatLookUp{ GL_RGBA_INTEGER, GL_RGBA32UI, GL_UNSIGNED_INT },
+  TextureFormatLookUp{ GL_RGBA_INTEGER, GL_RGBA32UI, GL_UNSIGNED_INT, 16 },
 };
 
 std::array<uint32_t, 2> TextureFilterLookUpTable = {
@@ -131,9 +132,9 @@ Texture::bind(uint32_t slot) const
 void
 Texture::upload(const void* data, [[maybe_unused]] uint32_t size) const
 {
-  assert(size == width * height * sizeof(float) * 3);
-  glBindTexture(GL_TEXTURE_2D, native_texture);
   auto gl_format = TextureFormatLookUpTable[static_cast<uint32_t>(format)];
+  assert(size == width * height * gl_format.size);
+  glBindTexture(GL_TEXTURE_2D, native_texture);
   glTexSubImage2D(GL_TEXTURE_2D,
                   0,
                   0,

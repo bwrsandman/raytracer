@@ -227,6 +227,23 @@ RendererGpu::encode_scene_traversal(Texture& ray_direction)
         pipelines[i]->get_native_handle(), "st_in_previous_hit_record_5");
       glUniform1i(st_previous_hit_record_5,
                   ST_IN_PREVIOUS_HIT_RECORD_5_LOCATION);
+      if (i == primitives_t::triangle) {
+        GLint st_vertex_positions =
+          glGetUniformLocation(pipelines[i]->get_native_handle(),
+                               "st_triangles_in_vertex_positions");
+        glUniform1i(st_vertex_positions,
+                    ST_TRIANGLES_IN_VERTEX_POSITIONS_LOCATION);
+        GLint st_vertex_normals = glGetUniformLocation(
+          pipelines[i]->get_native_handle(), "st_triangles_in_vertex_normals");
+        glUniform1i(st_vertex_normals, ST_TRIANGLES_IN_VERTEX_NORMALS_LOCATION);
+        GLint st_vertex_tangents = glGetUniformLocation(
+          pipelines[i]->get_native_handle(), "st_triangles_in_vertex_tangents");
+        glUniform1i(st_vertex_tangents,
+                    ST_TRIANGLES_IN_VERTEX_TANGENTS_LOCATION);
+        GLint st_vertex_uvs = glGetUniformLocation(
+          pipelines[i]->get_native_handle(), "st_triangles_in_vertex_uvs");
+        glUniform1i(st_vertex_uvs, ST_TRIANGLES_IN_VERTEX_UVS_LOCATION);
+      }
     }
     raygen_textures[raygen_framebuffer_active][RG_OUT_RAY_ORIGIN_LOCATION]
       ->bind(ST_IN_RAY_ORIGIN_LOCATION);
@@ -243,6 +260,14 @@ RendererGpu::encode_scene_traversal(Texture& ray_direction)
       ST_IN_PREVIOUS_HIT_RECORD_4_LOCATION);
     scene_traversal_textures[scene_traversal_framebuffer_active][5]->bind(
       ST_IN_PREVIOUS_HIT_RECORD_5_LOCATION);
+    scene_traversal_triangle_vertex_positions->bind(
+      ST_TRIANGLES_IN_VERTEX_POSITIONS_LOCATION);
+    scene_traversal_triangle_vertex_normals->bind(
+      ST_TRIANGLES_IN_VERTEX_NORMALS_LOCATION);
+    scene_traversal_triangle_vertex_tangents->bind(
+      ST_TRIANGLES_IN_VERTEX_TANGENTS_LOCATION);
+    scene_traversal_triangle_vertex_uvs->bind(
+      ST_TRIANGLES_IN_VERTEX_UVS_LOCATION);
     scene_traversal_framebuffer[1 - scene_traversal_framebuffer_active]->bind();
     scene_traversal_common->bind(ST_EARLY_OUT_BINDING);
     primitive_buffers[i]->bind(ST_OBJECT_BINDING);
@@ -457,6 +482,7 @@ RendererGpu::upload_scene(const std::vector<std::unique_ptr<Object>>& objects)
   scene_traversal_triangle_uniform_t triangles;
   triangles.bvh[0].offset = 0;
   triangles.bvh[0].count = 0;
+  scene_traversal_triangle_vertex_t vertices;
   uint32_t vertex_count = 0;
   uint32_t triangle_count = 0;
   uint32_t bvh_count = 0;
@@ -525,30 +551,28 @@ RendererGpu::upload_scene(const std::vector<std::unique_ptr<Object>>& objects)
       triangle_count +=
         (uint32_t)triangle_mesh->bvh_optimized_indices.size() / 3;
       for (uint32_t i = 0; i < triangle_mesh->positions.size(); ++i) {
-        triangles.vertices.position[vertex_count + i].e[0] =
+        vertices.position[vertex_count + i].e[0] =
           triangle_mesh->positions[i].e[0];
-        triangles.vertices.position[vertex_count + i].e[1] =
+        vertices.position[vertex_count + i].e[1] =
           triangle_mesh->positions[i].e[1];
-        triangles.vertices.position[vertex_count + i].e[2] =
+        vertices.position[vertex_count + i].e[2] =
           triangle_mesh->positions[i].e[2];
-        triangles.vertices.normal[vertex_count + i].e[0] =
-          triangle_mesh->vertex_data[i].normal.e[0];
-        triangles.vertices.normal[vertex_count + i].e[1] =
-          triangle_mesh->vertex_data[i].normal.e[1];
-        triangles.vertices.normal[vertex_count + i].e[2] =
-          triangle_mesh->vertex_data[i].normal.e[2];
-        triangles.vertices.tangent[vertex_count + i].e[0] =
-          triangle_mesh->vertex_data[i].tangent.e[0];
-        triangles.vertices.tangent[vertex_count + i].e[1] =
-          triangle_mesh->vertex_data[i].tangent.e[1];
-        triangles.vertices.tangent[vertex_count + i].e[2] =
-          triangle_mesh->vertex_data[i].tangent.e[2];
-        triangles.vertices.uv[(vertex_count + i) / 2]
-          .e[2 * ((vertex_count + i) % 2)] =
-          triangle_mesh->vertex_data[i].uv.e[0];
-        triangles.vertices.uv[(vertex_count + i) / 2]
-          .e[2 * ((vertex_count + i) % 2) + 1] =
-          triangle_mesh->vertex_data[i].uv.e[1];
+        vertices.normal[vertex_count + i][0] =
+          triangle_mesh->vertex_data[i].normal.e[0] * 127;
+        vertices.normal[vertex_count + i][1] =
+          triangle_mesh->vertex_data[i].normal.e[1] * 127;
+        vertices.normal[vertex_count + i][2] =
+          triangle_mesh->vertex_data[i].normal.e[2] * 127;
+        vertices.tangent[vertex_count + i][0] =
+          triangle_mesh->vertex_data[i].tangent.e[0] * 127;
+        vertices.tangent[vertex_count + i][1] =
+          triangle_mesh->vertex_data[i].tangent.e[1] * 127;
+        vertices.tangent[vertex_count + i][2] =
+          triangle_mesh->vertex_data[i].tangent.e[2] * 127;
+        vertices.uv[(vertex_count + i) / 2][2 * ((vertex_count + i) % 2)] =
+          triangle_mesh->vertex_data[i].uv.e[0] * 127;
+        vertices.uv[(vertex_count + i) / 2][2 * ((vertex_count + i) % 2) + 1] =
+          triangle_mesh->vertex_data[i].uv.e[1] * 127;
       }
       vertex_count += (uint32_t)triangle_mesh->positions.size();
       triangles.mat_id =
@@ -558,6 +582,14 @@ RendererGpu::upload_scene(const std::vector<std::unique_ptr<Object>>& objects)
   scene_traversal_spheres->upload(&spheres, sizeof(spheres));
   scene_traversal_planes->upload(&planes, sizeof(planes));
   scene_traversal_triangles->upload(&triangles, sizeof(triangles));
+  scene_traversal_triangle_vertex_positions->upload(&vertices.position,
+                                                    sizeof(vertices.position));
+  scene_traversal_triangle_vertex_normals->upload(&vertices.normal,
+                                                  sizeof(vertices.normal));
+  scene_traversal_triangle_vertex_tangents->upload(&vertices.tangent,
+                                                   sizeof(vertices.tangent));
+  scene_traversal_triangle_vertex_uvs->upload(&vertices.uv,
+                                              sizeof(vertices.uv));
 }
 
 void
@@ -829,6 +861,34 @@ RendererGpu::rebuild_scene_traversal()
     scene_traversal_framebuffer[i] = Framebuffer::create(scene_traversal_textures[i].data(),
                           (uint8_t)scene_traversal_textures[i].size());
   }
+
+  scene_traversal_triangle_vertex_positions =
+    Texture::create(MAX_NUM_VERTICES,
+                    1,
+                    Texture::MipMapFilter::nearest,
+                    Texture::Format::rgb32f);
+  scene_traversal_triangle_vertex_positions->set_debug_name(
+    "triangle vertex positions");
+  scene_traversal_triangle_vertex_normals =
+    Texture::create(MAX_NUM_VERTICES,
+                    1,
+                    Texture::MipMapFilter::nearest,
+                    Texture::Format::rgb_snorm);
+  scene_traversal_triangle_vertex_normals->set_debug_name(
+    "triangle vertex normals");
+  scene_traversal_triangle_vertex_tangents =
+    Texture::create(MAX_NUM_VERTICES,
+                    1,
+                    Texture::MipMapFilter::nearest,
+                    Texture::Format::rgb_snorm);
+  scene_traversal_triangle_vertex_tangents->set_debug_name(
+    "triangle vertex tangents");
+  scene_traversal_triangle_vertex_uvs =
+    Texture::create(MAX_NUM_VERTICES,
+                    1,
+                    Texture::MipMapFilter::nearest,
+                    Texture::Format::rg_snorm);
+  scene_traversal_triangle_vertex_uvs->set_debug_name("triangle vertex uvs");
 }
 
 void

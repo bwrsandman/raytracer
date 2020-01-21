@@ -6,6 +6,8 @@
 #define inout
 #define REF &
 #define mix(a, b, t) lerp((a), (b), (t))
+typedef int8_t vec3_snorm[3];
+typedef int8_t vec2_snorm[2];
 using namespace Raytracer::Math;
 struct uvec4
 {
@@ -50,6 +52,9 @@ uintBitsToFloat(uint32_t u)
 
 #define static
 #define REF
+
+#define vec3_snorm vec3
+#define vec2_snorm vec2
 #endif
 
 #include "plane_t.h"
@@ -112,10 +117,10 @@ struct alignas(16) scene_traversal_plane_uniform_t
 
 struct alignas(16) scene_traversal_triangle_vertex_t
 {
-  vec4 position[MAX_NUM_VERTICES];
-  vec4 normal[MAX_NUM_VERTICES];
-  vec4 tangent[MAX_NUM_VERTICES];
-  vec4 uv[MAX_NUM_VERTICES / 2];
+  vec3 position[MAX_NUM_VERTICES];
+  vec3_snorm normal[MAX_NUM_VERTICES];
+  vec3_snorm tangent[MAX_NUM_VERTICES];
+  vec2_snorm uv[MAX_NUM_VERTICES];
 };
 
 struct alignas(16) scene_traversal_triangle_triangle_t
@@ -135,7 +140,6 @@ struct alignas(16) scene_traversal_triangle_bvh_t
 
 struct alignas(16) scene_traversal_triangle_uniform_t
 {
-  scene_traversal_triangle_vertex_t vertices;
   scene_traversal_triangle_triangle_t triangles[MAX_NUM_TRIANGLES];
   scene_traversal_triangle_bvh_t bvh[MAX_NUM_BVH_NODES];
   uint32_t mat_id;
@@ -360,6 +364,10 @@ random_point_on_unit_hemisphere_wang_hash(inout uint REF seed, vec3 REF normal)
 #define ST_IN_PREVIOUS_HIT_RECORD_3_LOCATION 5
 #define ST_IN_PREVIOUS_HIT_RECORD_4_LOCATION 6
 #define ST_IN_PREVIOUS_HIT_RECORD_5_LOCATION 7
+#define ST_TRIANGLES_IN_VERTEX_POSITIONS_LOCATION 8
+#define ST_TRIANGLES_IN_VERTEX_NORMALS_LOCATION 9
+#define ST_TRIANGLES_IN_VERTEX_TANGENTS_LOCATION 10
+#define ST_TRIANGLES_IN_VERTEX_UVS_LOCATION 11
 
 // Any Hit inputs
 #define AH_HIT_RECORD_0_LOCATION 0

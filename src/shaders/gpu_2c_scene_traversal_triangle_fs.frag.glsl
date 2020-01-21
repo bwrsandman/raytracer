@@ -9,6 +9,15 @@
 #include "hit_record_t.h"
 #include "triangle_t.h"
 
+layout(binding = ST_TRIANGLES_IN_VERTEX_POSITIONS_LOCATION) uniform sampler2D
+st_triangles_in_vertex_positions;
+layout(binding = ST_TRIANGLES_IN_VERTEX_NORMALS_LOCATION) uniform sampler2D
+st_triangles_in_vertex_normals;
+layout(binding = ST_TRIANGLES_IN_VERTEX_TANGENTS_LOCATION) uniform sampler2D
+st_triangles_in_vertex_tangents;
+layout(binding = ST_TRIANGLES_IN_VERTEX_UVS_LOCATION) uniform sampler2D
+st_triangles_in_vertex_uvs;
+
 layout (binding = ST_OBJECT_BINDING, std140) uniform uniform_block_t {
     scene_traversal_triangle_uniform_t objects;
 } uniform_block;
@@ -61,16 +70,20 @@ void main() {
                         uint index1 = uniform_block.objects.triangles[node.offset / 3 + i].index1;
                         uint index2 = uniform_block.objects.triangles[node.offset / 3 + i].index2;
 
+                        vec4 position0 = texelFetch(st_triangles_in_vertex_positions, ivec2(index0, 0), 0);
+                        vec4 position1 = texelFetch(st_triangles_in_vertex_positions, ivec2(index1, 0), 0);
+                        vec4 position2 = texelFetch(st_triangles_in_vertex_positions, ivec2(index2, 0), 0);
+                        vec4 normal0 = texelFetch(st_triangles_in_vertex_normals, ivec2(index0, 0), 0);
+                        vec4 normal1 = texelFetch(st_triangles_in_vertex_normals, ivec2(index1, 0), 0);
+                        vec4 normal2 = texelFetch(st_triangles_in_vertex_normals, ivec2(index2, 0), 0);
+                        vec2 uv0 = texelFetch(st_triangles_in_vertex_uvs, ivec2(index0, 0), 0).xy;
+                        vec2 uv1 = texelFetch(st_triangles_in_vertex_uvs, ivec2(index1, 0), 0).xy;
+                        vec2 uv2 = texelFetch(st_triangles_in_vertex_uvs, ivec2(index2, 0), 0).xy;
+
                         triangle_t triangle;
-                        triangle_deserialize(uniform_block.objects.vertices.position[index0],
-                                             uniform_block.objects.vertices.position[index1],
-                                             uniform_block.objects.vertices.position[index2],
-                                             uniform_block.objects.vertices.normal[index0],
-                                             uniform_block.objects.vertices.normal[index1],
-                                             uniform_block.objects.vertices.normal[index2],
-                                             (index0 % 2 == 0) ? uniform_block.objects.vertices.uv[index0 / 2].xy : uniform_block.objects.vertices.uv[index0 / 2].zw,
-                                             (index1 % 2 == 0) ? uniform_block.objects.vertices.uv[index1 / 2].xy : uniform_block.objects.vertices.uv[index1 / 2].zw,
-                                             (index2 % 2 == 0) ? uniform_block.objects.vertices.uv[index2 / 2].xy : uniform_block.objects.vertices.uv[index2 / 2].zw,
+                        triangle_deserialize(position0, position1, position2,
+                                             normal0, normal1, normal2,
+                                             uv0, uv1, uv2,
                                              uniform_block.objects.mat_id,
                                              triangle);
 
