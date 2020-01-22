@@ -124,7 +124,7 @@ if (MSVC)
       /W4
       /wd4505 # disable unused function
       /wd4324 # structure padded due to alignment specifer
-      /WX  # Warning are errors
+      #/WX  # Warning are errors
   )
 elseif(EMSCRIPTEN)
   target_compile_options(RaytracerLib

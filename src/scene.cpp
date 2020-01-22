@@ -568,17 +568,17 @@ Scene::load_cornell_box()
                             static_cast<uint16_t>(1)));                    // 2
   materials.emplace_back(std::make_unique<Metal>(vec3(0.8f, 0.8f, 0.8f))); // 3
   materials.emplace_back(
-    std::make_unique<EmissiveQuadraticDropOff>(vec3(0, 1.8f, 0), 1.0f)); // 4
+    std::make_unique<EmissiveQuadraticDropOff>(vec3(0, 18000.f, 0), 1.0f)); // 4
   materials.emplace_back(
-    std::make_unique<EmissiveQuadraticDropOff>(vec3(1.8f, 0, 1.8f), 1.0f)); // 5
+    std::make_unique<EmissiveQuadraticDropOff>(vec3(18000.f, 0, 18000.f), 1.0f)); // 5
   materials.emplace_back(std::make_unique<EmissiveQuadraticDropOff>(
-    vec3(2.0f, 2.0f, 2.0f), 1.0f)); // 6
+    vec3(20000.0f, 20000.0f, 20000.0f), 1.0f)); // 6
   materials.emplace_back(
     std::make_unique<Dielectric>(vec3(1.0f, 1.0f, 0.0f), 1.5f, 1.0f)); // 7
   materials.emplace_back(
     std::make_unique<Lambert>(vec3(1.0f, 0.0f, 0.0f))); // 8
   materials.emplace_back(
-    std::make_unique<Lambert>(vec3(0.0f, 0.5f, 1.0f))); // 9
+    std::make_unique<Lambert>(vec3(0.0f, 0.0f, 1.0f))); // 9
 
   std::vector<std::unique_ptr<Object>> list;
   list.emplace_back(std::make_unique<Sphere>(

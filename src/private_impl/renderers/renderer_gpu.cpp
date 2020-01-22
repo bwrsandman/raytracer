@@ -336,6 +336,12 @@ RendererGpu::encode_any_hit([[maybe_unused]] uint8_t recursion_count)
         glUniform1i(ah_out_energy_accumulation_direction,
                     AH_IN_ENERGY_ACCUMULATION_LOCATION);
       }
+      GLint ah_out_energy_attenuation_direction = glGetUniformLocation(
+        pipelines[i]->get_native_handle(), "ah_in_energy_attenuation");
+      if (ah_out_energy_attenuation_direction > 0) {
+        glUniform1i(ah_out_energy_attenuation_direction,
+                    AH_IN_ENERGY_ATTENUATION_LOCATION);
+      }
     }
     scene_traversal_textures[scene_traversal_framebuffer_active]
                             [AH_HIT_RECORD_0_LOCATION]
@@ -362,6 +368,9 @@ RendererGpu::encode_any_hit([[maybe_unused]] uint8_t recursion_count)
     raygen_textures[raygen_framebuffer_active]
                    [RG_OUT_ENERGY_ACCUMULATION_LOCATION]
                      ->bind(AH_IN_ENERGY_ACCUMULATION_LOCATION);
+    raygen_textures[raygen_framebuffer_active]
+                   [RG_OUT_ENERGY_ATTENUATION_LOCATION]
+                     ->bind(AH_IN_ENERGY_ATTENUATION_LOCATION);
     anyhit_uniform->bind(AH_UNIFORM_BINDING);
     raygen_framebuffer[1 - raygen_framebuffer_active]->bind();
     fullscreen_quad->draw();
@@ -397,6 +406,10 @@ RendererGpu::encode_shadow_ray_light_hit()
       glGetUniformLocation(shadow_ray_light_hit_pipeline->get_native_handle(),
                            "sr_in_energy_accumulation");
     glUniform1i(sr_in_energy_accumulation, SR_IN_ENERGY_ACCUMULATION_LOCATION);
+    GLint sr_in_energy_attenuation =
+      glGetUniformLocation(shadow_ray_light_hit_pipeline->get_native_handle(),
+                           "sr_in_energy_attenuation");
+    glUniform1i(sr_in_energy_attenuation, SR_IN_ENERGY_ATTENUATION_LOCATION);
     GLint sr_in_data = glGetUniformLocation(
       shadow_ray_light_hit_pipeline->get_native_handle(), "sr_in_data");
     glUniform1i(sr_in_data, SR_IN_DATA_LOCATION);
@@ -414,6 +427,9 @@ RendererGpu::encode_shadow_ray_light_hit()
   raygen_textures[raygen_framebuffer_active]
                  [RG_OUT_ENERGY_ACCUMULATION_LOCATION]
                    ->bind(SR_IN_ENERGY_ACCUMULATION_LOCATION);
+  raygen_textures[raygen_framebuffer_active]
+                 [RG_OUT_ENERGY_ATTENUATION_LOCATION]
+					->bind(SR_IN_ENERGY_ATTENUATION_LOCATION);
   raygen_textures[raygen_framebuffer_active][RG_OUT_SHADOW_RAY_DATA_LOCATION]
     ->bind(SR_IN_DATA_LOCATION);
   shadow_ray_light_hit_uniform->bind(SR_UNIFORM_BINDING);
@@ -820,6 +836,10 @@ RendererGpu::rebuild_raygen_buffers()
       width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba8f);
     raygen_textures[i][RG_OUT_ENERGY_ACCUMULATION_LOCATION]->set_debug_name(
       "frame energy accumulation " + std::to_string(i));
+    raygen_textures[i][RG_OUT_ENERGY_ATTENUATION_LOCATION] = Texture::create(
+      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba8f);
+    raygen_textures[i][RG_OUT_ENERGY_ATTENUATION_LOCATION]->set_debug_name(
+      "frame energy attenuation " + std::to_string(i));
     raygen_textures[i][RG_OUT_SHADOW_RAY_DIRECTION_LOCATION] = Texture::create(
       width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba16f);
     raygen_textures[i][RG_OUT_SHADOW_RAY_DIRECTION_LOCATION]->set_debug_name(
@@ -1135,6 +1155,10 @@ RendererGpu::debug_textures()
                       raygen_textures[raygen_framebuffer_active]
                                      [RG_OUT_ENERGY_ACCUMULATION_LOCATION]
                                        ->get_native_handle());
+  result.emplace_back("frame energy attenuation",
+                      raygen_textures[raygen_framebuffer_active]
+                                     [RG_OUT_ENERGY_ATTENUATION_LOCATION]
+                                       ->get_native_handle());
   result.emplace_back("shadow ray direction",
                       raygen_textures[raygen_framebuffer_active]
                                      [RG_OUT_SHADOW_RAY_DIRECTION_LOCATION]
@@ -1170,7 +1194,7 @@ RendererGpu::debug_textures()
       ->get_native_handle());
 
   result.emplace_back(
-    "accumulated energy",
+    "final accumulated image",
     accumulation_texture[accumulation_framebuffer_active]->get_native_handle());
 
   return result;

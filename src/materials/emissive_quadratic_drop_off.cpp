@@ -22,5 +22,5 @@ EmissiveQuadraticDropOff::fill_type_data(
 {
   payload.type = RayPayload::Type::Emissive;
   payload.emission =
-    albedo / (payload.distance * payload.distance * drop_off_factor);
+    albedo * 100000000000.f / (payload.distance * payload.distance * drop_off_factor);
 }

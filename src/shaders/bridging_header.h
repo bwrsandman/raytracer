@@ -340,8 +340,9 @@ random_point_on_unit_hemisphere_wang_hash(inout uint REF seed, vec3 REF normal)
 #define RG_OUT_RAY_ORIGIN_LOCATION 0
 #define RG_OUT_RAY_DIRECTION_LOCATION 1
 #define RG_OUT_ENERGY_ACCUMULATION_LOCATION 2
-#define RG_OUT_SHADOW_RAY_DIRECTION_LOCATION 3
-#define RG_OUT_SHADOW_RAY_DATA_LOCATION 4
+#define RG_OUT_ENERGY_ATTENUATION_LOCATION 3
+#define RG_OUT_SHADOW_RAY_DIRECTION_LOCATION 4
+#define RG_OUT_SHADOW_RAY_DATA_LOCATION 5
 
 // Scene Traversal inputs
 #define ST_OBJECT_BINDING 0
@@ -371,6 +372,7 @@ random_point_on_unit_hemisphere_wang_hash(inout uint REF seed, vec3 REF normal)
 #define AH_INCIDENT_RAY_ORIGIN_LOCATION 6
 #define AH_INCIDENT_RAY_DIRECTION_LOCATION 7
 #define AH_IN_ENERGY_ACCUMULATION_LOCATION 8
+#define AH_IN_ENERGY_ATTENUATION_LOCATION 9
 #define AH_UNIFORM_BINDING 0
 
 // Shadow Ray inputs
@@ -379,7 +381,8 @@ random_point_on_unit_hemisphere_wang_hash(inout uint REF seed, vec3 REF normal)
 #define SR_INCIDENT_RAY_DIRECTION_LOCATION 2
 #define SR_NEXT_RAY_DIRECTION_LOCATION 3
 #define SR_IN_ENERGY_ACCUMULATION_LOCATION 4
-#define SR_IN_DATA_LOCATION 5
+#define SR_IN_ENERGY_ATTENUATION_LOCATION 5
+#define SR_IN_DATA_LOCATION 6 // Delete later
 #define SR_UNIFORM_BINDING 0
 
 // Energy Accumulation input
