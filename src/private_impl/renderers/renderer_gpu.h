@@ -110,12 +110,19 @@ private:
   std::array<std::unique_ptr<Texture>, 6> scene_traversal_textures[2];
   std::unique_ptr<Framebuffer> scene_traversal_framebuffer[2];
   uint8_t scene_traversal_framebuffer_active;
+  std::unique_ptr<Buffer> scene_traversal_common;
   std::unique_ptr<Pipeline> scene_traversal_sphere_pipeline;
   std::unique_ptr<Buffer> scene_traversal_spheres;
   std::unique_ptr<Pipeline> scene_traversal_plane_pipeline;
   std::unique_ptr<Buffer> scene_traversal_planes;
   std::unique_ptr<Pipeline> scene_traversal_triangle_pipeline;
   std::unique_ptr<Buffer> scene_traversal_triangles;
+  std::unique_ptr<Texture> scene_traversal_triangle_vertex_positions;
+  std::unique_ptr<Texture> scene_traversal_triangle_vertex_normals;
+  std::unique_ptr<Texture> scene_traversal_triangle_vertex_tangents;
+  std::unique_ptr<Texture> scene_traversal_triangle_vertex_uvs;
+  std::unique_ptr<Texture> scene_traversal_triangle_bvh;
+  std::unique_ptr<Texture> scene_traversal_triangle_indices;
 
   std::unique_ptr<Buffer> anyhit_uniform;
   std::unique_ptr<Buffer> shadow_ray_light_hit_uniform;

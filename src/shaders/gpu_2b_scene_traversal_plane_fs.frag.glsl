@@ -44,6 +44,9 @@ void main() {
         plane_hit(ray, plane, T_MIN, rec.t - FLT_EPSILON, temp_rec);
         if (temp_rec.status == HIT_RECORD_STATUS_HIT && rec.t > temp_rec.t) {
             rec = temp_rec;
+            if (common_uniform_block.data.early_out == 1) {
+                break;
+            }
         }
     }
 

@@ -51,8 +51,8 @@ triangle_deserialize(vec4 p0,
 }
 
 void
-triangle_hit(ray_t ray,
-             triangle_t triangle,
+triangle_hit(triangle_t triangle,
+             ray_t ray,
              float t_min,
              float t_max,
              out hit_record_t rec)

@@ -35,4 +35,11 @@ layout(location = AH_INCIDENT_RAY_ORIGIN_LOCATION) out vec4
 layout(location = AH_INCIDENT_RAY_DIRECTION_LOCATION) out vec4
   ah_incident_ray_direction;
 
+// Uniforms
+layout(binding = ST_EARLY_OUT_BINDING, std140) uniform common_uniform_block_t
+{
+  scene_traversal_common_uniform_t data;
+}
+common_uniform_block;
+
 #endif // RAYTRACER_GPU_SHADERS_GPU_2_COMMON_H_
