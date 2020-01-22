@@ -19,6 +19,8 @@ layout(binding = ST_TRIANGLES_IN_VERTEX_UVS_LOCATION) uniform sampler2D
 st_triangles_in_vertex_uvs;
 layout(binding = ST_TRIANGLES_IN_BVH_LOCATION) uniform sampler2D
 st_triangles_in_bvh;
+layout(binding = ST_TRIANGLES_IN_INDICES_LOCATION) uniform usampler2D
+st_triangles_in_indices;
 
 layout (binding = ST_OBJECT_BINDING, std140) uniform uniform_block_t {
     scene_traversal_triangle_uniform_t objects;
@@ -66,19 +68,17 @@ void main() {
                 if (bvh_node_is_leaf(node)) {
                     for (uint i = 0; i < node.count / 3; i++)
                     {
-                        uint index0 = uniform_block.objects.triangles[node.offset / 3 + i].index0;
-                        uint index1 = uniform_block.objects.triangles[node.offset / 3 + i].index1;
-                        uint index2 = uniform_block.objects.triangles[node.offset / 3 + i].index2;
+                        uvec3 indices = texelFetch(st_triangles_in_indices, ivec2(node.offset / 3 + i, 0), 0).xyz;
 
-                        vec4 position0 = texelFetch(st_triangles_in_vertex_positions, ivec2(index0, 0), 0);
-                        vec4 position1 = texelFetch(st_triangles_in_vertex_positions, ivec2(index1, 0), 0);
-                        vec4 position2 = texelFetch(st_triangles_in_vertex_positions, ivec2(index2, 0), 0);
-                        vec4 normal0 = texelFetch(st_triangles_in_vertex_normals, ivec2(index0, 0), 0);
-                        vec4 normal1 = texelFetch(st_triangles_in_vertex_normals, ivec2(index1, 0), 0);
-                        vec4 normal2 = texelFetch(st_triangles_in_vertex_normals, ivec2(index2, 0), 0);
-                        vec2 uv0 = texelFetch(st_triangles_in_vertex_uvs, ivec2(index0, 0), 0).xy;
-                        vec2 uv1 = texelFetch(st_triangles_in_vertex_uvs, ivec2(index1, 0), 0).xy;
-                        vec2 uv2 = texelFetch(st_triangles_in_vertex_uvs, ivec2(index2, 0), 0).xy;
+                        vec4 position0 = texelFetch(st_triangles_in_vertex_positions, ivec2(indices[0], 0), 0);
+                        vec4 position1 = texelFetch(st_triangles_in_vertex_positions, ivec2(indices[1], 0), 0);
+                        vec4 position2 = texelFetch(st_triangles_in_vertex_positions, ivec2(indices[2], 0), 0);
+                        vec4 normal0 = texelFetch(st_triangles_in_vertex_normals, ivec2(indices[0], 0), 0);
+                        vec4 normal1 = texelFetch(st_triangles_in_vertex_normals, ivec2(indices[1], 0), 0);
+                        vec4 normal2 = texelFetch(st_triangles_in_vertex_normals, ivec2(indices[2], 0), 0);
+                        vec2 uv0 = texelFetch(st_triangles_in_vertex_uvs, ivec2(indices[0], 0), 0).xy;
+                        vec2 uv1 = texelFetch(st_triangles_in_vertex_uvs, ivec2(indices[1], 0), 0).xy;
+                        vec2 uv2 = texelFetch(st_triangles_in_vertex_uvs, ivec2(indices[2], 0), 0).xy;
 
                         triangle_t triangle;
                         triangle_deserialize(position0, position1, position2,

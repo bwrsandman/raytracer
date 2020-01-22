@@ -14,7 +14,7 @@ struct TextureFormatLookUp
   const uint8_t size;
 };
 
-std::array<TextureFormatLookUp, 21> TextureFormatLookUpTable = {
+std::array<TextureFormatLookUp, 40> TextureFormatLookUpTable = {
   /* r_snorm  */ TextureFormatLookUp{ GL_RED, GL_R8_SNORM, GL_BYTE, 1 },
   /* rg_snorm  */ TextureFormatLookUp{ GL_RG, GL_RG8_SNORM, GL_BYTE, 2 },
   /* rgb_snorm  */
@@ -37,12 +37,44 @@ std::array<TextureFormatLookUp, 21> TextureFormatLookUpTable = {
   /* rgb32f  */ TextureFormatLookUp{ GL_RGB, GL_RGB32F, GL_FLOAT, 12 },
   /* rgba32f */ TextureFormatLookUp{ GL_RGBA, GL_RGBA32F, GL_FLOAT, 16 },
 
+  /* r8i */ TextureFormatLookUp{ GL_RED_INTEGER, GL_R8I, GL_BYTE, 1 },
+  /* rg8i */ TextureFormatLookUp{ GL_RG_INTEGER, GL_RG8I, GL_BYTE, 2 },
+  /* rgb8i */ TextureFormatLookUp{ GL_RGB_INTEGER, GL_RGB8I, GL_BYTE, 3 },
   /* rgba8i */ TextureFormatLookUp{ GL_RGBA_INTEGER, GL_RGBA8I, GL_BYTE, 4 },
+
+  /* r16i */ TextureFormatLookUp{ GL_RED_INTEGER, GL_R16I, GL_SHORT, 2 },
+  /* rg16i */ TextureFormatLookUp{ GL_RG_INTEGER, GL_RG16I, GL_SHORT, 4 },
+  /* rgb16i */ TextureFormatLookUp{ GL_RGB_INTEGER, GL_RGB16I, GL_SHORT, 6 },
   /* rgba16i */ TextureFormatLookUp{ GL_RGBA_INTEGER, GL_RGBA16I, GL_SHORT, 8 },
+
+  /* r32i */ TextureFormatLookUp{ GL_RED_INTEGER, GL_R32I, GL_INT, 4 },
+  /* rg32i */ TextureFormatLookUp{ GL_RG_INTEGER, GL_RG32I, GL_INT, 8 },
+  /* rgb32i */ TextureFormatLookUp{ GL_RGB_INTEGER, GL_RGB32I, GL_INT, 12 },
   /* rgba32i */ TextureFormatLookUp{ GL_RGBA_INTEGER, GL_RGBA32I, GL_INT, 16 },
 
+  /* r8u */ TextureFormatLookUp{ GL_RED_INTEGER, GL_R8UI, GL_UNSIGNED_BYTE, 1 },
+  /* rg8u */
+  TextureFormatLookUp{ GL_RG_INTEGER, GL_RG8UI, GL_UNSIGNED_BYTE, 2 },
+  /* rgb8u */
+  TextureFormatLookUp{ GL_RGB_INTEGER, GL_RGB8UI, GL_UNSIGNED_BYTE, 3 },
+  /* rgba8u */
+  TextureFormatLookUp{ GL_RGBA_INTEGER, GL_RGBA8UI, GL_UNSIGNED_BYTE, 4 },
+
+  /* r16u */
+  TextureFormatLookUp{ GL_RED_INTEGER, GL_R16UI, GL_UNSIGNED_SHORT, 2 },
+  /* rg16u */
+  TextureFormatLookUp{ GL_RG_INTEGER, GL_RG16UI, GL_UNSIGNED_SHORT, 4 },
+  /* rgb16u */
+  TextureFormatLookUp{ GL_RGB_INTEGER, GL_RGB16UI, GL_UNSIGNED_SHORT, 6 },
   /* rgba16u */
   TextureFormatLookUp{ GL_RGBA_INTEGER, GL_RGBA16UI, GL_UNSIGNED_SHORT, 8 },
+
+  /* r32u */
+  TextureFormatLookUp{ GL_RED_INTEGER, GL_R32UI, GL_UNSIGNED_INT, 4 },
+  /* rg32u */
+  TextureFormatLookUp{ GL_RG_INTEGER, GL_RG32UI, GL_UNSIGNED_INT, 8 },
+  /* rgb32u */
+  TextureFormatLookUp{ GL_RGB_INTEGER, GL_RGB32UI, GL_UNSIGNED_INT, 12 },
   /* rgba32u */
   TextureFormatLookUp{ GL_RGBA_INTEGER, GL_RGBA32UI, GL_UNSIGNED_INT, 16 },
 };

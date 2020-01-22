@@ -243,9 +243,12 @@ RendererGpu::encode_scene_traversal(Texture& ray_direction)
         GLint st_vertex_uvs = glGetUniformLocation(
           pipelines[i]->get_native_handle(), "st_triangles_in_vertex_uvs");
         glUniform1i(st_vertex_uvs, ST_TRIANGLES_IN_VERTEX_UVS_LOCATION);
-        GLint st_in_bvh = glGetUniformLocation(
-          pipelines[i]->get_native_handle(), "st_triangles_in_bvh");
-        glUniform1i(st_in_bvh, ST_TRIANGLES_IN_BVH_LOCATION);
+        GLint st_bvh = glGetUniformLocation(pipelines[i]->get_native_handle(),
+                                            "st_triangles_in_bvh");
+        glUniform1i(st_bvh, ST_TRIANGLES_IN_BVH_LOCATION);
+        GLint st_indices = glGetUniformLocation(
+          pipelines[i]->get_native_handle(), "st_triangles_in_indices");
+        glUniform1i(st_indices, ST_TRIANGLES_IN_INDICES_LOCATION);
       }
     }
     raygen_textures[raygen_framebuffer_active][RG_OUT_RAY_ORIGIN_LOCATION]
@@ -273,6 +276,7 @@ RendererGpu::encode_scene_traversal(Texture& ray_direction)
       scene_traversal_triangle_vertex_uvs->bind(
         ST_TRIANGLES_IN_VERTEX_UVS_LOCATION);
       scene_traversal_triangle_bvh->bind(ST_TRIANGLES_IN_BVH_LOCATION);
+      scene_traversal_triangle_indices->bind(ST_TRIANGLES_IN_INDICES_LOCATION);
     }
     scene_traversal_framebuffer[1 - scene_traversal_framebuffer_active]->bind();
     scene_traversal_common->bind(ST_EARLY_OUT_BINDING);
@@ -490,8 +494,9 @@ RendererGpu::upload_scene(const std::vector<std::unique_ptr<Object>>& objects)
   bvh.p0[0].e[3] = 0; // offset
   bvh.p1[0].e[3] = 0; // count
   scene_traversal_triangle_vertex_t vertices;
+  uint32_t indices[MAX_NUM_TRIANGLES][3];
   uint32_t vertex_count = 0;
-  uint32_t triangle_count = 0;
+  uint32_t index_count = 0;
   uint32_t bvh_count = 0;
   for (const auto& obj : objects) {
     auto sphere = dynamic_cast<const Sphere*>(obj.get());
@@ -523,8 +528,8 @@ RendererGpu::upload_scene(const std::vector<std::unique_ptr<Object>>& objects)
       planes.count++;
     } else if (triangle_mesh != nullptr &&
                !triangle_mesh->bvh_optimized_indices.empty()) {
-      assert(triangle_count + triangle_mesh->bvh_optimized_indices.size() / 3 <=
-             MAX_NUM_TRIANGLES);
+      assert(index_count + triangle_mesh->bvh_optimized_indices.size() <=
+             MAX_NUM_TRIANGLES * 3);
       assert(vertex_count + triangle_mesh->positions.size() <=
              MAX_NUM_VERTICES);
       assert(bvh_count + triangle_mesh->bvh.size() <= MAX_NUM_BVH_NODES);
@@ -545,15 +550,14 @@ RendererGpu::upload_scene(const std::vector<std::unique_ptr<Object>>& objects)
       bvh_count += (uint32_t)triangle_mesh->bvh.size();
       for (uint32_t i = 0; i < triangle_mesh->bvh_optimized_indices.size() / 3;
            ++i) {
-        triangles.triangles[triangle_count + i].index0 =
-          vertex_count + triangle_mesh->bvh_optimized_indices[3 * i];
-        triangles.triangles[triangle_count + i].index1 =
-          vertex_count + triangle_mesh->bvh_optimized_indices[3 * i + 1];
-        triangles.triangles[triangle_count + i].index2 =
-          vertex_count + triangle_mesh->bvh_optimized_indices[3 * i + 2];
+        indices[index_count + i][0] =
+          vertex_count + triangle_mesh->bvh_optimized_indices[i * 3];
+        indices[index_count + i][1] =
+          vertex_count + triangle_mesh->bvh_optimized_indices[i * 3 + 1];
+        indices[index_count + i][2] =
+          vertex_count + triangle_mesh->bvh_optimized_indices[i * 3 + 2];
       }
-      triangle_count +=
-        (uint32_t)triangle_mesh->bvh_optimized_indices.size() / 3;
+      index_count += (uint32_t)triangle_mesh->bvh_optimized_indices.size();
       for (uint32_t i = 0; i < triangle_mesh->positions.size(); ++i) {
         vertices.position[vertex_count + i].e[0] =
           triangle_mesh->positions[i].e[0];
@@ -595,6 +599,7 @@ RendererGpu::upload_scene(const std::vector<std::unique_ptr<Object>>& objects)
   scene_traversal_triangle_vertex_uvs->upload(&vertices.uv,
                                               sizeof(vertices.uv));
   scene_traversal_triangle_bvh->upload(&bvh, sizeof(bvh));
+  scene_traversal_triangle_indices->upload(&indices, sizeof(indices));
 }
 
 void
@@ -900,6 +905,12 @@ RendererGpu::rebuild_scene_traversal()
                                                  Texture::Format::rgba32f);
   scene_traversal_triangle_bvh->set_debug_name(
     "triangle bvh aabb min + offset (first row) and max + count (second row)");
+  scene_traversal_triangle_indices =
+    Texture::create(MAX_NUM_TRIANGLES,
+                    1,
+                    Texture::MipMapFilter::nearest,
+                    Texture::Format::rgb32u);
+  scene_traversal_triangle_indices->set_debug_name("triangle indices");
 }
 
 void

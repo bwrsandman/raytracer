@@ -122,6 +122,7 @@ private:
   std::unique_ptr<Texture> scene_traversal_triangle_vertex_tangents;
   std::unique_ptr<Texture> scene_traversal_triangle_vertex_uvs;
   std::unique_ptr<Texture> scene_traversal_triangle_bvh;
+  std::unique_ptr<Texture> scene_traversal_triangle_indices;
 
   std::unique_ptr<Buffer> anyhit_uniform;
   std::unique_ptr<Buffer> shadow_ray_light_hit_uniform;
