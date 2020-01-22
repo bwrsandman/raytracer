@@ -243,6 +243,9 @@ RendererGpu::encode_scene_traversal(Texture& ray_direction)
         GLint st_vertex_uvs = glGetUniformLocation(
           pipelines[i]->get_native_handle(), "st_triangles_in_vertex_uvs");
         glUniform1i(st_vertex_uvs, ST_TRIANGLES_IN_VERTEX_UVS_LOCATION);
+        GLint st_in_bvh = glGetUniformLocation(
+          pipelines[i]->get_native_handle(), "st_triangles_in_bvh");
+        glUniform1i(st_in_bvh, ST_TRIANGLES_IN_BVH_LOCATION);
       }
     }
     raygen_textures[raygen_framebuffer_active][RG_OUT_RAY_ORIGIN_LOCATION]
@@ -260,14 +263,17 @@ RendererGpu::encode_scene_traversal(Texture& ray_direction)
       ST_IN_PREVIOUS_HIT_RECORD_4_LOCATION);
     scene_traversal_textures[scene_traversal_framebuffer_active][5]->bind(
       ST_IN_PREVIOUS_HIT_RECORD_5_LOCATION);
-    scene_traversal_triangle_vertex_positions->bind(
-      ST_TRIANGLES_IN_VERTEX_POSITIONS_LOCATION);
-    scene_traversal_triangle_vertex_normals->bind(
-      ST_TRIANGLES_IN_VERTEX_NORMALS_LOCATION);
-    scene_traversal_triangle_vertex_tangents->bind(
-      ST_TRIANGLES_IN_VERTEX_TANGENTS_LOCATION);
-    scene_traversal_triangle_vertex_uvs->bind(
-      ST_TRIANGLES_IN_VERTEX_UVS_LOCATION);
+    if (i == primitives_t::triangle) {
+      scene_traversal_triangle_vertex_positions->bind(
+        ST_TRIANGLES_IN_VERTEX_POSITIONS_LOCATION);
+      scene_traversal_triangle_vertex_normals->bind(
+        ST_TRIANGLES_IN_VERTEX_NORMALS_LOCATION);
+      scene_traversal_triangle_vertex_tangents->bind(
+        ST_TRIANGLES_IN_VERTEX_TANGENTS_LOCATION);
+      scene_traversal_triangle_vertex_uvs->bind(
+        ST_TRIANGLES_IN_VERTEX_UVS_LOCATION);
+      scene_traversal_triangle_bvh->bind(ST_TRIANGLES_IN_BVH_LOCATION);
+    }
     scene_traversal_framebuffer[1 - scene_traversal_framebuffer_active]->bind();
     scene_traversal_common->bind(ST_EARLY_OUT_BINDING);
     primitive_buffers[i]->bind(ST_OBJECT_BINDING);
@@ -480,8 +486,9 @@ RendererGpu::upload_scene(const std::vector<std::unique_ptr<Object>>& objects)
   scene_traversal_plane_uniform_t planes;
   planes.count = 0;
   scene_traversal_triangle_uniform_t triangles;
-  triangles.bvh[0].offset = 0;
-  triangles.bvh[0].count = 0;
+  scene_traversal_triangle_bvh_t bvh;
+  bvh.p0[0].e[3] = 0; // offset
+  bvh.p1[0].e[3] = 0; // count
   scene_traversal_triangle_vertex_t vertices;
   uint32_t vertex_count = 0;
   uint32_t triangle_count = 0;
@@ -522,21 +529,18 @@ RendererGpu::upload_scene(const std::vector<std::unique_ptr<Object>>& objects)
              MAX_NUM_VERTICES);
       assert(bvh_count + triangle_mesh->bvh.size() <= MAX_NUM_BVH_NODES);
       for (uint32_t i = 0; i < triangle_mesh->bvh.size(); ++i) {
-        triangles.bvh[bvh_count + i].aabb_min.e[0] =
-          triangle_mesh->bvh[i].bounds.min.e[0];
-        triangles.bvh[bvh_count + i].aabb_min.e[1] =
-          triangle_mesh->bvh[i].bounds.min.e[1];
-        triangles.bvh[bvh_count + i].aabb_min.e[2] =
-          triangle_mesh->bvh[i].bounds.min.e[2];
-        triangles.bvh[bvh_count + i].aabb_max.e[0] =
-          triangle_mesh->bvh[i].bounds.max.e[0];
-        triangles.bvh[bvh_count + i].aabb_max.e[1] =
-          triangle_mesh->bvh[i].bounds.max.e[1];
-        triangles.bvh[bvh_count + i].aabb_max.e[2] =
-          triangle_mesh->bvh[i].bounds.max.e[2];
-        triangles.bvh[bvh_count + i].offset =
-          triangle_mesh->bvh[i].index_offset;
-        triangles.bvh[bvh_count + i].count = triangle_mesh->bvh[i].index_count;
+        // aabb min
+        bvh.p0[bvh_count + i].e[0] = triangle_mesh->bvh[i].bounds.min.e[0];
+        bvh.p0[bvh_count + i].e[1] = triangle_mesh->bvh[i].bounds.min.e[1];
+        bvh.p0[bvh_count + i].e[2] = triangle_mesh->bvh[i].bounds.min.e[2];
+        // aabb max
+        bvh.p1[bvh_count + i].e[0] = triangle_mesh->bvh[i].bounds.max.e[0];
+        bvh.p1[bvh_count + i].e[1] = triangle_mesh->bvh[i].bounds.max.e[1];
+        bvh.p1[bvh_count + i].e[2] = triangle_mesh->bvh[i].bounds.max.e[2];
+        // offset
+        bvh.p0[bvh_count + i].e[3] = triangle_mesh->bvh[i].index_offset;
+        // count
+        bvh.p1[bvh_count + i].e[3] = triangle_mesh->bvh[i].index_count;
       }
       bvh_count += (uint32_t)triangle_mesh->bvh.size();
       for (uint32_t i = 0; i < triangle_mesh->bvh_optimized_indices.size() / 3;
@@ -590,6 +594,7 @@ RendererGpu::upload_scene(const std::vector<std::unique_ptr<Object>>& objects)
                                                    sizeof(vertices.tangent));
   scene_traversal_triangle_vertex_uvs->upload(&vertices.uv,
                                               sizeof(vertices.uv));
+  scene_traversal_triangle_bvh->upload(&bvh, sizeof(bvh));
 }
 
 void
@@ -889,6 +894,12 @@ RendererGpu::rebuild_scene_traversal()
                     Texture::MipMapFilter::nearest,
                     Texture::Format::rg_snorm);
   scene_traversal_triangle_vertex_uvs->set_debug_name("triangle vertex uvs");
+  scene_traversal_triangle_bvh = Texture::create(MAX_NUM_BVH_NODES,
+                                                 2,
+                                                 Texture::MipMapFilter::nearest,
+                                                 Texture::Format::rgba32f);
+  scene_traversal_triangle_bvh->set_debug_name(
+    "triangle bvh aabb min + offset (first row) and max + count (second row)");
 }
 
 void

@@ -132,16 +132,13 @@ struct alignas(16) scene_traversal_triangle_triangle_t
 
 struct alignas(16) scene_traversal_triangle_bvh_t
 {
-  vec4 aabb_min;
-  vec4 aabb_max;
-  uint32_t offset; // index or left_bvh
-  uint32_t count;
+  vec4 p0[MAX_NUM_BVH_NODES]; // aabb min + offset
+  vec4 p1[MAX_NUM_BVH_NODES]; // aabb max + count
 };
 
 struct alignas(16) scene_traversal_triangle_uniform_t
 {
   scene_traversal_triangle_triangle_t triangles[MAX_NUM_TRIANGLES];
-  scene_traversal_triangle_bvh_t bvh[MAX_NUM_BVH_NODES];
   uint32_t mat_id;
 };
 
@@ -368,6 +365,7 @@ random_point_on_unit_hemisphere_wang_hash(inout uint REF seed, vec3 REF normal)
 #define ST_TRIANGLES_IN_VERTEX_NORMALS_LOCATION 9
 #define ST_TRIANGLES_IN_VERTEX_TANGENTS_LOCATION 10
 #define ST_TRIANGLES_IN_VERTEX_UVS_LOCATION 11
+#define ST_TRIANGLES_IN_BVH_LOCATION 12
 
 // Any Hit inputs
 #define AH_HIT_RECORD_0_LOCATION 0

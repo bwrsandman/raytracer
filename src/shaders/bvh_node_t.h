@@ -64,16 +64,12 @@ bvh_node_is_leaf(bvh_node_t node)
 }
 
 void
-bvh_node_deserialize(vec4 aabb_min,
-                     vec4 aabb_max,
-                     uint offset,
-                     uint count,
-                     out bvh_node_t node)
+bvh_node_deserialize(vec4 p0, vec4 p1, out bvh_node_t node)
 {
-  node.bounds.min = aabb_min.xyz;
-  node.bounds.max = aabb_max.xyz;
-  node.offset = offset;
-  node.count = count;
+  node.bounds.min = p0.xyz;
+  node.bounds.max = p1.xyz;
+  node.offset = uint(p0.w);
+  node.count = uint(p1.w);
 }
 
 #endif // RAYTRACER_BVH_NODE_T_H_

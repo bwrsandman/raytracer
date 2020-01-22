@@ -17,6 +17,8 @@ layout(binding = ST_TRIANGLES_IN_VERTEX_TANGENTS_LOCATION) uniform sampler2D
 st_triangles_in_vertex_tangents;
 layout(binding = ST_TRIANGLES_IN_VERTEX_UVS_LOCATION) uniform sampler2D
 st_triangles_in_vertex_uvs;
+layout(binding = ST_TRIANGLES_IN_BVH_LOCATION) uniform sampler2D
+st_triangles_in_bvh;
 
 layout (binding = ST_OBJECT_BINDING, std140) uniform uniform_block_t {
     scene_traversal_triangle_uniform_t objects;
@@ -43,10 +45,8 @@ void main() {
     rec.bvh_hits = uint(old_ah_hit_record_5.z);
 
     bvh_node_t root_node;
-    bvh_node_deserialize(uniform_block.objects.bvh[0].aabb_min,
-                         uniform_block.objects.bvh[0].aabb_max,
-                         uniform_block.objects.bvh[0].offset,
-                         uniform_block.objects.bvh[0].count,
+    bvh_node_deserialize(texelFetch(st_triangles_in_bvh, ivec2(0, 0), 0),
+                         texelFetch(st_triangles_in_bvh, ivec2(0, 1), 0),
                          root_node);
 
     if (root_node.offset != 0 || bvh_node_is_leaf(root_node)) {
@@ -99,15 +99,11 @@ void main() {
                         }
                     }
                 } else {
-                    bvh_node_deserialize(uniform_block.objects.bvh[node.offset].aabb_min,
-                                         uniform_block.objects.bvh[node.offset].aabb_max,
-                                         uniform_block.objects.bvh[node.offset].offset,
-                                         uniform_block.objects.bvh[node.offset].count,
+                    bvh_node_deserialize(texelFetch(st_triangles_in_bvh, ivec2(node.offset, 0), 0),
+                                         texelFetch(st_triangles_in_bvh, ivec2(node.offset, 1), 0),
                                          nodes_to_visit[end]);
-                    bvh_node_deserialize(uniform_block.objects.bvh[node.offset + 1].aabb_min,
-                                         uniform_block.objects.bvh[node.offset + 1].aabb_max,
-                                         uniform_block.objects.bvh[node.offset + 1].offset,
-                                         uniform_block.objects.bvh[node.offset + 1].count,
+                    bvh_node_deserialize(texelFetch(st_triangles_in_bvh, ivec2(node.offset + 1, 0), 0),
+                                         texelFetch(st_triangles_in_bvh, ivec2(node.offset + 1, 1), 0),
                                          nodes_to_visit[end + 1]);
                     end += 2;
                 }
