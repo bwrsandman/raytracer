@@ -52,7 +52,7 @@ void main() {
                          root_node);
 
     if (root_node.offset != 0 || bvh_node_is_leaf(root_node)) {
-        bvh_node_t nodes_to_visit[MAX_NUM_BVH_NODES];
+        bvh_node_t nodes_to_visit[NODE_TO_VISIT_QUEUE_SIZE];
         uint start = 0;
         uint end = 0;
         nodes_to_visit[end] = root_node;
