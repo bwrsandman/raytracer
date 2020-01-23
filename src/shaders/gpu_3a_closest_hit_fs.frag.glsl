@@ -93,11 +93,14 @@ main()
       uint light_index =
         uint(uniform_block.data.light_count * rand_wang_hash(seed));
       vec4 position = uniform_block.data.light_position_data[light_index];
-      rg_out_shadow_ray_direction.xyz = position.xyz;
+      vec3 l = position.xyz - rec.position;
+      rg_out_shadow_ray_direction.xyz = normalize(l);
       rg_out_shadow_ray_direction.w = RAY_STATUS_ACTIVE;
       rg_out_shadow_ray_data.x =
         length(position.xyz - rec.position) - 2 * FLT_EPSILON;
       rg_out_shadow_ray_data.y = uint(light_index);
+      rg_out_shadow_ray_data.z = dot(rec.normal, l);
+      rg_out_shadow_ray_data.w = dot(l, l);
     }
   } else if (material_type == MATERIAL_TYPE_DIELECTRIC) {
     float ref_idx = material_data.r;

@@ -137,8 +137,12 @@ RendererGpu::encode_raygen()
   constexpr vec4 clear_color = { 0.0f, 0.0f, 0.0f, 0.0f };
   auto debug_group = ScopedDebugGroup("raygen");
   for (auto& framebuffer : raygen_framebuffer) {
-    framebuffer->clear(
-      { clear_color, clear_color, clear_color, clear_color, clear_color });
+    framebuffer->clear({ clear_color,
+                         clear_color,
+                         clear_color,
+                         clear_color,
+                         clear_color,
+                         clear_color });
   }
   raygen_framebuffer[raygen_framebuffer_active]->bind();
   raygen_pipeline->bind();
@@ -755,7 +759,12 @@ RendererGpu::run(const Scene& world)
 
         constexpr vec4 clear_color = { 0.0f, 0.0f, 0.0f, 0.0f };
         raygen_framebuffer[1 - raygen_framebuffer_active]->clear(
-          { clear_color, clear_color, clear_color, clear_color, clear_color });
+          { clear_color,
+            clear_color,
+            clear_color,
+            clear_color,
+            clear_color,
+            clear_color });
 
         // Primary ray
 #if !__EMSCRIPTEN__
@@ -833,11 +842,11 @@ RendererGpu::rebuild_raygen_buffers()
     raygen_textures[i][RG_OUT_RAY_DIRECTION_LOCATION]->set_debug_name(
       "ray direction " + std::to_string(i));
     raygen_textures[i][RG_OUT_ENERGY_ACCUMULATION_LOCATION] = Texture::create(
-      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba8f);
+      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32f);
     raygen_textures[i][RG_OUT_ENERGY_ACCUMULATION_LOCATION]->set_debug_name(
       "frame energy accumulation " + std::to_string(i));
     raygen_textures[i][RG_OUT_ENERGY_ATTENUATION_LOCATION] = Texture::create(
-      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba8f);
+      width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32f);
     raygen_textures[i][RG_OUT_ENERGY_ATTENUATION_LOCATION]->set_debug_name(
       "frame energy attenuation " + std::to_string(i));
     raygen_textures[i][RG_OUT_SHADOW_RAY_DIRECTION_LOCATION] = Texture::create(

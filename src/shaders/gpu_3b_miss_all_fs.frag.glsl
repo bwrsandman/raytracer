@@ -76,10 +76,10 @@ main()
   }
 
   // Draw sky
-  const vec4 top = vec4(0.5, 0.7, 1.0, 1.0f); // vec4(0.f, 0.f, 0.f, 0.f); // 
-  const vec4 bot = vec4(1.0, 1.0, 1.0, 1.0f); // vec4(0.f, 0.f, 0.f, 0.f); // 
+  const vec4 top = vec4(0.5, 0.7, 1.0, 1.0f);
+  const vec4 bot = vec4(1.0, 1.0, 1.0, 1.0f);
 
-  rg_out_energy_accumulation =
+  rg_out_energy_accumulation = energy_accumulation +
     energy_attenuation * mix(top, bot, 0.5f * (-ray_direction.y + 1.0f));
   rg_out_energy_accumulation.a = 1.0f / uniform_block.data.frame_count;
 }

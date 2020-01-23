@@ -46,13 +46,13 @@ main()
   vec4 ray_direction = texelFetch(sr_incident_ray_direction, iid, 0);
   vec4 energy_accumulation = texelFetch(sr_in_energy_accumulation, iid, 0);
   vec4 energy_attenuation = texelFetch(sr_in_energy_attenuation, iid, 0);
+  vec4 data = texelFetch(sr_hit_record_5, iid, 0);
 
   rg_out_ray_origin = texelFetch(sr_incident_ray_origin, iid, 0);
   rg_out_ray_direction = texelFetch(sr_next_ray_direction, iid, 0);
 
   // View to light is not obscured
-  if (texelFetch(sr_hit_record_5, iid, 0).x == HIT_RECORD_STATUS_MISS &&
-      ray_direction.w != RAY_STATUS_DEAD) {
+  if (data.x == HIT_RECORD_STATUS_MISS && ray_direction.w != RAY_STATUS_DEAD) {
     vec4 data = texelFetch(sr_in_data, iid, 0);
     float t = data.x;
     uint light_index = uint(data.y);
@@ -60,7 +60,7 @@ main()
     vec4 color = uniform_block.data.light_color_data[light_index];
 
     rg_out_energy_accumulation.rgb =
-      energy_accumulation.rgb + energy_attenuation.rgb * color.rgb;
+      energy_accumulation.rgb + (data.z * energy_attenuation.rgb * color.rgb) / data.w;
   } else {
     rg_out_energy_accumulation = energy_accumulation;
   }
