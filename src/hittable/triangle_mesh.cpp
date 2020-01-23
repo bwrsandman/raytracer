@@ -10,6 +10,7 @@ using Raytracer::Aabb;
 using Raytracer::hit_record;
 using Raytracer::Ray;
 using Raytracer::Hittable::MeshVertexData;
+using Raytracer::Hittable::Object;
 using Raytracer::Hittable::TriangleMesh;
 using Raytracer::Math::vec3;
 
@@ -447,4 +448,22 @@ Raytracer::Hittable::TriangleMesh::build_bvh()
   }
 
   // TODO: shorten bvh
+}
+
+uint16_t
+TriangleMesh::get_mat_id() const
+{
+  return mat_id;
+}
+
+std::unique_ptr<Object>
+TriangleMesh::copy() const
+{
+  std::vector<vec3> positions_copy = positions;
+  std::vector<MeshVertexData> vertex_data_copy = vertex_data;
+  std::vector<uint16_t> indices_copy = indices;
+  return std::make_unique<TriangleMesh>(std::move(positions_copy),
+                                        std::move(vertex_data_copy),
+                                        std::move(indices_copy),
+                                        mat_id);
 }

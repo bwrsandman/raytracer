@@ -6,6 +6,7 @@
 using Raytracer::Aabb;
 using Raytracer::hit_record;
 using Raytracer::Ray;
+using Raytracer::Hittable::Object;
 using Raytracer::Hittable::Plane;
 using Raytracer::Math::vec2;
 using Raytracer::Math::vec3;
@@ -88,4 +89,16 @@ Plane::bounding_box(Aabb& box)
 {
   box = Aabb{ min, max };
   return true;
+}
+
+uint16_t
+Plane::get_mat_id() const
+{
+  return mat_id;
+}
+
+std::unique_ptr<Object>
+Plane::copy() const
+{
+  return std::make_unique<Plane>(min, max, n, mat_id);
 }

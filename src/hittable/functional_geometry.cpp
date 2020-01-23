@@ -11,6 +11,7 @@ using Raytracer::Aabb;
 using Raytracer::hit_record;
 using Raytracer::Ray;
 using Raytracer::Hittable::FunctionalGeometry;
+using Raytracer::Hittable::Object;
 using Raytracer::Math::vec3;
 
 FunctionalGeometry::FunctionalGeometry(const vec3& center,
@@ -140,4 +141,16 @@ FunctionalGeometry::bounding_box(Aabb& box)
 
   box = Aabb{ min, max };
   return true;
+}
+
+uint16_t
+FunctionalGeometry::get_mat_id() const
+{
+  return mat_id;
+}
+
+std::unique_ptr<Object>
+FunctionalGeometry::copy() const
+{
+  return std::make_unique<FunctionalGeometry>(center, max_steps, sdf, mat_id);
 }

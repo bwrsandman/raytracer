@@ -81,7 +81,7 @@ private:
   void create_pipelines();
 
   void encode_raygen();
-  void encode_scene_traversal(Texture& ray_direction);
+  void encode_scene_traversal(Texture& ray_direction, bool shadow_ray);
   void encode_any_hit(uint8_t recursion_count);
   void encode_shadow_ray_light_hit();
   void encode_accumulation();

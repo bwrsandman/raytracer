@@ -9,6 +9,7 @@
 using Raytracer::Aabb;
 using Raytracer::hit_record;
 using Raytracer::Ray;
+using Raytracer::Hittable::Object;
 using Raytracer::Hittable::Sphere;
 using Raytracer::Math::vec3;
 
@@ -72,4 +73,16 @@ Sphere::bounding_box(Aabb& box)
               center + vec3(radius, radius, radius) };
 
   return true;
+}
+
+uint16_t
+Sphere::get_mat_id() const
+{
+  return mat_id;
+}
+
+std::unique_ptr<Object>
+Sphere::copy() const
+{
+  return std::make_unique<Sphere>(center, radius, mat_id);
 }

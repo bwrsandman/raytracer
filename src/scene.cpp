@@ -609,6 +609,27 @@ Scene::load_cornell_box()
                                             vec3(0.f, 1.f, 0.f),
                                             static_cast<uint16_t>(1)));
 
+  list.emplace_back(std::make_unique<Plane>(vec3(-2.6f, 3.0f, -4.f),
+                                            vec3(2.6f, 3.0f, 0.0f),
+                                            vec3(0.f, -1.f, 0.f),
+                                            static_cast<uint16_t>(1)));
+
+  // Lights
+  list.emplace_back(std::make_unique<Plane>(vec3(-0.5f, 2.9f, -2.0f),
+                                            vec3(0.5f, 2.9f, -1.0f),
+                                            vec3(0.f, -1.f, 0.f),
+                                            static_cast<uint16_t>(6)));
+
+  list.emplace_back(std::make_unique<Plane>(vec3(1.0f, 2.5f, -3.0f),
+                                            vec3(1.5f, 2.5f, 0.0f),
+                                            vec3(0.f, -1.f, 0.f),
+                                            static_cast<uint16_t>(4)));
+
+  list.emplace_back(std::make_unique<Plane>(vec3(-1.5f, 2.5f, -3.0f),
+                                            vec3(-1.0f, 2.5f, 0.0f),
+                                            vec3(0.f, -1.f, 0.f),
+                                            static_cast<uint16_t>(5)));
+
   // small box rotated
   vec3 translation(1.5f, -0.5f, -2.1f);
 
@@ -773,12 +794,18 @@ Scene::load_cornell_box()
   list.emplace_back(std::move(mesh));
 
   std::vector<std::unique_ptr<Object>> light_list;
-  light_list.emplace_back(
-    std::make_unique<Point>(vec3(1, 1.5f, -1), static_cast<uint16_t>(4)));
-  light_list.emplace_back(
-    std::make_unique<Point>(vec3(-1, 1.5f, -1), static_cast<uint16_t>(5)));
-  light_list.emplace_back(
-    std::make_unique<Point>(vec3(0, 2, 0.5f), static_cast<uint16_t>(6)));
+  for (auto& obj : list) {
+    auto mat_id = obj->get_mat_id();
+    if (mat_id == std::numeric_limits<uint16_t>::max()) {
+      continue;
+    }
+    auto& mat = materials[mat_id];
+    auto emissive = dynamic_cast<EmissiveQuadraticDropOff*>(mat.get());
+    if (emissive == nullptr) {
+      continue;
+    }
+    light_list.emplace_back(obj->copy());
+  }
 
   // Construct scene graph
   std::vector<SceneNode> nodes;
