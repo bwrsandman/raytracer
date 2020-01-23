@@ -550,6 +550,8 @@ Scene::load_whitted_scene()
 std::unique_ptr<Scene>
 Scene::load_cornell_box()
 {
+  auto duck_scene = load_from_gltf("Duck.gltf");
+
   std::vector<std::unique_ptr<Texture>> textures;
   std::vector<std::unique_ptr<Material>> materials;
 
@@ -566,7 +568,7 @@ Scene::load_cornell_box()
     std::make_unique<Metal>(vec3(0.8f, 0.6f, 0.2f),
                             std::numeric_limits<uint16_t>::max(),
                             static_cast<uint16_t>(1)));                    // 2
-  materials.emplace_back(std::make_unique<Metal>(vec3(0.8f, 0.8f, 0.8f))); // 3
+  materials.emplace_back(std::make_unique<Metal>(vec3(0.8f, 0.8f, 0.4f))); // 3
   materials.emplace_back(
     std::make_unique<EmissiveQuadraticDropOff>(vec3(0, 1.8f, 0), 1.0f)); // 4
   materials.emplace_back(
@@ -581,8 +583,22 @@ Scene::load_cornell_box()
     std::make_unique<Lambert>(vec3(0.0f, 0.0f, 1.0f))); // 9
 
   std::vector<std::unique_ptr<Object>> list;
+
+  auto duck_mesh = duck_scene->get_world()[0]->copy();
+  auto duck_mesh_typed = dynamic_cast<TriangleMesh*>(duck_mesh.get());
+  duck_mesh_typed->mat_id = 0;
+  for (auto& p : duck_mesh_typed->positions) {
+    std::swap(p.e[0], p.e[2]);
+    p.e[1] -= 130.0f;
+    p.e[2] -= 300.0f;
+    p /= 128.0f;
+  }
+  duck_mesh_typed->build_bvh();
+  list.emplace_back(std::move(duck_mesh));
+
   list.emplace_back(std::make_unique<Sphere>(
-    vec3(0, -0.5f, -2), 0.5f, static_cast<uint16_t>(0)));
+    vec3(1.5f, -0.5f, -2), 0.5f, static_cast<uint16_t>(3)));
+
   list.emplace_back(std::make_unique<Sphere>(
     vec3(-1.5f, -0.5f, -2.1f), 0.5f, static_cast<uint16_t>(7)));
   list.emplace_back(std::make_unique<Sphere>(
@@ -629,169 +645,6 @@ Scene::load_cornell_box()
                                             vec3(-1.0f, 2.5f, 0.0f),
                                             vec3(0.f, -1.f, 0.f),
                                             static_cast<uint16_t>(5)));
-
-  // small box rotated
-  vec3 translation(1.5f, -0.5f, -2.1f);
-
-  constexpr float radians = 20.0f * (float)M_PI / 180.0f;
-  auto rotation_cos = std::cos(radians);
-  auto rotation_sin = std::sin(radians);
-  float rotated_back_left_x = -0.25f * rotation_cos - (-0.5f) * rotation_sin;
-  float rotated_back_left_z = -0.25f * rotation_sin + (-0.5f) * rotation_cos;
-  float rotated_back_right_x = 0.25f * rotation_cos - (-0.5f) * rotation_sin;
-  float rotated_back_right_z = 0.25f * rotation_sin + (-0.5f) * rotation_cos;
-  float rotated_front_left_x = -0.25f * rotation_cos - 0.5f * rotation_sin;
-  float rotated_front_left_z = -0.25f * rotation_sin + 0.5f * rotation_cos;
-  float rotated_front_right_x = 0.25f * rotation_cos - 0.5f * rotation_sin;
-  float rotated_front_right_z = 0.25f * rotation_sin + 0.5f * rotation_cos;
-
-  std::vector<vec3> box_positions = {
-    // Front
-    translation + vec3{ rotated_front_right_x, -0.5f, rotated_front_right_z },
-    translation + vec3{ rotated_front_right_x, 0.5f, rotated_front_right_z },
-    translation + vec3{ rotated_front_left_x, 0.5f, rotated_front_left_z },
-    translation + vec3{ rotated_front_left_x, -0.5f, rotated_front_left_z },
-    // Back
-    translation + vec3{ rotated_back_right_x, -0.5f, rotated_back_right_z },
-    translation + vec3{ rotated_back_right_x, 0.5f, rotated_back_right_z },
-    translation + vec3{ rotated_back_left_x, 0.5f, rotated_back_left_z },
-    translation + vec3{ rotated_back_left_x, -0.5f, rotated_back_left_z },
-    // Top
-    translation + vec3{ rotated_front_right_x, 0.5f, rotated_front_right_z },
-    translation + vec3{ rotated_front_left_x, 0.5f, rotated_front_left_z },
-    translation + vec3{ rotated_back_left_x, 0.5f, rotated_back_left_z },
-    translation + vec3{ rotated_back_right_x, 0.5f, rotated_back_right_z },
-    // Bottom
-    translation + vec3{ rotated_front_right_x, -0.5f, rotated_front_right_z },
-    translation + vec3{ rotated_front_left_x, -0.5f, rotated_front_left_z },
-    translation + vec3{ rotated_back_left_x, -0.5f, rotated_back_left_z },
-    translation + vec3{ rotated_back_right_x, -0.5f, rotated_back_right_z },
-    // Left
-    translation + vec3{ rotated_front_left_x, 0.5f, rotated_front_left_z },
-    translation + vec3{ rotated_front_left_x, -0.5f, rotated_front_left_z },
-    translation + vec3{ rotated_back_left_x, -0.5f, rotated_back_left_z },
-    translation + vec3{ rotated_back_left_x, 0.5f, rotated_back_left_z },
-    // Right
-    translation + vec3{ rotated_front_right_x, 0.5f, rotated_front_right_z },
-    translation + vec3{ rotated_front_right_x, -0.5f, rotated_front_right_z },
-    translation + vec3{ rotated_back_right_x, -0.5f, rotated_back_right_z },
-    translation + vec3{ rotated_back_right_x, 0.5f, rotated_back_right_z },
-  };
-  std::vector<MeshVertexData> box_vertex_data = {
-    // Front
-    { { 0, 0 },
-      { -rotation_sin, 0, rotation_cos },
-      { rotation_cos, 0, -rotation_sin } },
-    { { 0, 1 },
-      { -rotation_sin, 0, rotation_cos },
-      { rotation_cos, 0, -rotation_sin } },
-    { { 1, 1 },
-      { -rotation_sin, 0, rotation_cos },
-      { rotation_cos, 0, -rotation_sin } },
-    { { 1, 0 },
-      { -rotation_sin, 0, rotation_cos },
-      { rotation_cos, 0, -rotation_sin } },
-    // Back
-    { { 0, 0 },
-      { rotation_sin, 0, -rotation_cos },
-      { -rotation_cos, 0, rotation_sin } },
-    { { 0, 1 },
-      { rotation_sin, 0, -rotation_cos },
-      { -rotation_cos, 0, rotation_sin } },
-    { { 1, 1 },
-      { rotation_sin, 0, -rotation_cos },
-      { -rotation_cos, 0, rotation_sin } },
-    { { 1, 0 },
-      { rotation_sin, 0, -rotation_cos },
-      { -rotation_cos, 0, rotation_sin } },
-    // Top
-    { { 0, 0 }, { 0, 1, 0 }, { 1, 0, 0 } },
-    { { 0, 1 }, { 0, 1, 0 }, { 1, 0, 0 } },
-    { { 1, 1 }, { 0, 1, 0 }, { 1, 0, 0 } },
-    { { 1, 0 }, { 0, 1, 0 }, { 1, 0, 0 } },
-    // Bottom
-    { { 0, 0 }, { 0, -1, 0 }, { -1, 0, 0 } },
-    { { 0, 1 }, { 0, -1, 0 }, { -1, 0, 0 } },
-    { { 1, 1 }, { 0, -1, 0 }, { -1, 0, 0 } },
-    { { 1, 0 }, { 0, -1, 0 }, { -1, 0, 0 } },
-    // Left
-    { { 0, 0 },
-      { -rotation_cos, 0, -rotation_sin },
-      { -rotation_sin, 0, rotation_cos } },
-    { { 0, 1 },
-      { -rotation_cos, 0, -rotation_sin },
-      { -rotation_sin, 0, rotation_cos } },
-    { { 1, 1 },
-      { -rotation_cos, 0, -rotation_sin },
-      { -rotation_sin, 0, rotation_cos } },
-    { { 1, 0 },
-      { -rotation_cos, 0, -rotation_sin },
-      { -rotation_sin, 0, rotation_cos } },
-    // Right
-    { { 0, 0 },
-      { rotation_cos, 0, rotation_sin },
-      { rotation_sin, 0, -rotation_cos } },
-    { { 0, 1 },
-      { rotation_cos, 0, rotation_sin },
-      { rotation_sin, 0, -rotation_cos } },
-    { { 1, 1 },
-      { rotation_cos, 0, rotation_sin },
-      { rotation_sin, 0, -rotation_cos } },
-    { { 1, 0 },
-      { rotation_cos, 0, rotation_sin },
-      { rotation_sin, 0, -rotation_cos } },
-  };
-  std::vector<uint16_t> box_indices = {
-    // Front
-    0,
-    1,
-    2,
-    2,
-    3,
-    0,
-    // Back
-    4,
-    5,
-    6,
-    6,
-    7,
-    4,
-    // Top
-    8,
-    9,
-    10,
-    10,
-    11,
-    8,
-    // Bottom
-    12,
-    13,
-    14,
-    14,
-    15,
-    12,
-    // Left
-    16,
-    17,
-    18,
-    18,
-    19,
-    16,
-    // Right
-    20,
-    21,
-    22,
-    22,
-    23,
-    20,
-  };
-
-  auto mesh = std::make_unique<TriangleMesh>(std::move(box_positions),
-                                             std::move(box_vertex_data),
-                                             std::move(box_indices),
-                                             static_cast<uint16_t>(3));
-  mesh->build_bvh();
-  list.emplace_back(std::move(mesh));
 
   std::vector<std::unique_ptr<Object>> light_list;
   for (auto& obj : list) {
