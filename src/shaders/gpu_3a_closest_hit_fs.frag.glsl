@@ -124,8 +124,8 @@ main()
 
       vec3 absorb =
         vec3(exp(albedo.x * dist), exp(albedo.y * dist), exp(albedo.z * dist));
-      rg_out_energy_accumulation.xyz =
-        rg_out_energy_accumulation.xyz * absorb.xyz;
+      rg_out_energy_attenuation.xyz =
+      energy_attenuation.xyz * absorb.xyz;
     }
   } else {
     rg_out_energy_attenuation =
