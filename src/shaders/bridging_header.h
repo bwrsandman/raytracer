@@ -114,7 +114,7 @@ struct alignas(16) scene_traversal_plane_uniform_t
 #define MAX_NUM_VERTICES 0x2000
 #define MAX_NUM_TRIANGLES 0x2000
 #define MAX_NUM_BVH_NODES 0x2000
-#define NODE_TO_VISIT_QUEUE_SIZE 256
+#define NODE_TO_VISIT_STACK_SIZE 16
 
 struct alignas(16) scene_traversal_triangle_vertex_t
 {
