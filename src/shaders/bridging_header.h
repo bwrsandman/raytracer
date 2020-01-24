@@ -146,6 +146,9 @@ struct alignas(16) scene_traversal_triangle_uniform_t
 #define LIGHT_TYPE_SPHERE 1
 #define LIGHT_TYPE_PLANE 2
 
+#define NORMAL_RAY 0
+#define NEE_RANDOM_RAY 1
+
 struct alignas(16) light_t
 {
   vec4 p0; // point center, sphere center + radius, plane min
@@ -169,6 +172,7 @@ struct alignas(16) anyhit_uniform_data_t
 struct alignas(16) shadow_ray_light_hit_uniform_data_t
 {
   vec4 light_color_data[MAX_NUM_LIGHTS];
+  uint32_t light_count;
 };
 
 /// Construct a float with half-open range [0:1] using low 23 bits.
@@ -424,7 +428,7 @@ random_point_on_light(light_t REF light, vec3 REF origin, inout uint REF seed)
 #define SR_NEXT_RAY_DIRECTION_LOCATION 3
 #define SR_IN_ENERGY_ACCUMULATION_LOCATION 4
 #define SR_IN_ENERGY_ATTENUATION_LOCATION 5
-#define SR_IN_DATA_LOCATION 6 // Delete later
+#define SR_IN_DATA_LOCATION 6 
 #define SR_UNIFORM_BINDING 0
 
 // Energy Accumulation input

@@ -34,7 +34,7 @@ layout(location = RG_OUT_SHADOW_RAY_DATA_LOCATION) out vec4
 
 layout(binding = SR_UNIFORM_BINDING, std140) uniform uniform_block_t
 {
-  shadow_ray_light_hit_uniform_data_t data;
+  shadow_ray_light_hit_uniform_data_t uniform_data;
 }
 uniform_block;
 
@@ -57,12 +57,13 @@ main()
     float t = data.x;
     uint light_index = uint(data.y);
 
-    vec4 color = uniform_block.data.light_color_data[light_index];
+    vec4 color = uniform_block.uniform_data.light_color_data[light_index];
 
     rg_out_energy_accumulation.rgb =
-      energy_accumulation.rgb + (data.z * energy_attenuation.rgb * color.rgb) / data.w;
+      uniform_block.uniform_data.light_count * energy_accumulation.rgb +
+      (data.z * energy_attenuation.rgb * color.rgb) / data.w;
   } else {
     rg_out_energy_accumulation = energy_accumulation;
   }
-    rg_out_energy_attenuation = energy_attenuation;
+  rg_out_energy_attenuation = energy_attenuation;
 }

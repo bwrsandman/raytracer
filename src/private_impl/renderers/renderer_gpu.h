@@ -97,7 +97,7 @@ private:
   uint16_t width;
   uint16_t height;
 
-  uint8_t max_recursion_depth = 8;
+  uint8_t max_recursion_depth = 10;
 
   std::unique_ptr<Framebuffer> backbuffer;
 

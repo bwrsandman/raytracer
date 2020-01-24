@@ -635,7 +635,7 @@ RendererGpu::upload_anyhit_uniforms(const Scene& world)
     {}, 0, {}, 0, frame_count, width,
   };
   shadow_ray_light_hit_uniform_data_t shadow_ray_light_hit_uniform_data{
-    {},
+    {}, 0,
   };
   for (const auto& mat : world.get_material_list()) {
     auto lambert = dynamic_cast<const Lambert*>(mat.get());
@@ -759,6 +759,7 @@ RendererGpu::upload_anyhit_uniforms(const Scene& world)
       .e[2] = emissive->albedo.e[2];
 
     anyhit_uniform_data.light_count++;
+    shadow_ray_light_hit_uniform_data.light_count++;
   }
   anyhit_uniform->upload(&anyhit_uniform_data, sizeof(anyhit_uniform_data));
   shadow_ray_light_hit_uniform->upload(
@@ -898,7 +899,7 @@ RendererGpu::rebuild_raygen_buffers()
     raygen_textures[i][RG_OUT_RAY_ORIGIN_LOCATION] = Texture::create(
       width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba32f);
     raygen_textures[i][RG_OUT_RAY_ORIGIN_LOCATION]->set_debug_name(
-      "ray origin " + std::to_string(i));
+      "ray origin (xyz), NEE random ray (w) " + std::to_string(i));
     raygen_textures[i][RG_OUT_RAY_DIRECTION_LOCATION] = Texture::create(
       width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba16f);
     raygen_textures[i][RG_OUT_RAY_DIRECTION_LOCATION]->set_debug_name(
@@ -1216,7 +1217,7 @@ RendererGpu::debug_textures()
   auto result = std::vector<std::pair<std::string, uintptr_t>>();
 
   result.emplace_back(
-    "ray origin",
+    "ray origin (xyz), NEE random ray (w)",
     raygen_textures[raygen_framebuffer_active][RG_OUT_RAY_ORIGIN_LOCATION]
       ->get_native_handle());
   result.emplace_back(

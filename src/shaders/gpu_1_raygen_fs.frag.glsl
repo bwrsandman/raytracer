@@ -45,7 +45,7 @@ main()
 
   direction = normalize(direction);
 
-  rg_out_ray_origin = vec4(new_origin, 1);
+  rg_out_ray_origin = vec4(new_origin, NORMAL_RAY);
   rg_out_ray_direction = vec4(direction, RAY_STATUS_ACTIVE);
   rg_out_energy_accumulation = vec4(0, 0, 0, 0);
   rg_out_energy_attenuation = vec4(1, 1, 1, 0);
