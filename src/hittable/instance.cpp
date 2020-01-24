@@ -6,13 +6,14 @@
 #include "hit_record.h"
 #include "ray.h"
 
-using Raytracer::Hittable::Translate;
-using Raytracer::Hittable::Rotate_y;
-using Raytracer::Math::vec3;
 using Raytracer::hit_record;
 using Raytracer::Ray;
+using Raytracer::Hittable::Object;
+using Raytracer::Hittable::Rotate_y;
+using Raytracer::Hittable::Translate;
+using Raytracer::Math::vec3;
 
-Translate::Translate(Object* _p, vec3 _offset)
+Translate::Translate(const Object* _p, vec3 _offset)
   : p(_p)
   , offset(_offset)
 {}
@@ -34,9 +35,21 @@ Translate::hit(const Ray& r,
   return false;
 }
 
+uint16_t
+Translate::get_mat_id() const
+{
+  return std::numeric_limits<uint16_t>::max();
+}
 
-Rotate_y::Rotate_y(Object* _p, float _angle)
+std::unique_ptr<Object>
+Translate::copy() const
+{
+  return std::make_unique<Translate>(p, offset);
+}
+
+Rotate_y::Rotate_y(const Object* _p, float _angle)
   : p(_p)
+  , angle(_angle)
   , sin_theta(0.f)
   , cos_theta(0.f)
 {
@@ -80,4 +93,16 @@ Rotate_y::hit(const Ray& r,
   }
 
   return false;
+}
+
+uint16_t
+Rotate_y::get_mat_id() const
+{
+  return std::numeric_limits<uint16_t>::max();
+}
+
+std::unique_ptr<Object>
+Rotate_y::copy() const
+{
+  return std::make_unique<Rotate_y>(p, angle);
 }

@@ -92,12 +92,12 @@ main()
     if (uniform_block.data.light_count > 0) {
       uint light_index =
         uint(uniform_block.data.light_count * rand_wang_hash(seed));
-      vec4 position = uniform_block.data.light_position_data[light_index];
-      vec3 l = position.xyz - rec.position;
+      vec3 point = random_point_on_light(uniform_block.data.lights[light_index],
+                                         rec.position, seed);
+      vec3 l = point - rec.position;
       rg_out_shadow_ray_direction.xyz = normalize(l);
       rg_out_shadow_ray_direction.w = RAY_STATUS_ACTIVE;
-      rg_out_shadow_ray_data.x =
-        length(position.xyz - rec.position) - 2 * FLT_EPSILON;
+      rg_out_shadow_ray_data.x = length(l) - 20 * FLT_EPSILON;
       rg_out_shadow_ray_data.y = uint(light_index);
       rg_out_shadow_ray_data.z = dot(rec.normal, l);
       rg_out_shadow_ray_data.w = dot(l, l);
@@ -127,6 +127,10 @@ main()
       rg_out_energy_attenuation.xyz =
       energy_attenuation.xyz * absorb.xyz;
     }
+  } else if (material_type == MATERIAL_TYPE_EMISSIVE) {
+    rg_out_energy_attenuation.xyz = energy_attenuation.xyz;
+    rg_out_energy_accumulation.xyz = energy_accumulation.xyz + energy_attenuation.xyz * material_data.xyz;
+    rg_out_ray_direction.w = RAY_STATUS_DEAD;
   } else {
     rg_out_energy_attenuation =
       energy_attenuation *

@@ -32,7 +32,7 @@ main()
   float random_point_y = rand_wang_hash(seed) / uniform_block.data.height;
 
   // depth of field
-  vec3 rand_in_disk = uniform_block.data.camera.lens_radius *
+  vec3 rand_in_disk = 0 * uniform_block.data.camera.lens_radius *
                       random_point_in_unit_disk_wang_hash(seed);
   vec3 offset = uniform_block.data.camera.u * rand_in_disk.x +
                 uniform_block.data.camera.v * rand_in_disk.y;

@@ -4,10 +4,11 @@
 #include "hit_record.h"
 #include "ray.h"
 
-using Raytracer::Hittable::LineSegment;
-using Raytracer::Math::vec3;
 using Raytracer::hit_record;
 using Raytracer::Ray;
+using Raytracer::Hittable::LineSegment;
+using Raytracer::Hittable::Object;
+using Raytracer::Math::vec3;
 
 LineSegment::LineSegment(const vec3 pos[2], uint16_t m)
   : position{ pos[0], pos[1] }
@@ -50,4 +51,16 @@ LineSegment::hit(const Ray& r,
   }
 
   return false;
+}
+
+uint16_t
+LineSegment::get_mat_id() const
+{
+  return mat_id;
+}
+
+std::unique_ptr<Object>
+LineSegment::copy() const
+{
+  return std::make_unique<LineSegment>(position, mat_id);
 }

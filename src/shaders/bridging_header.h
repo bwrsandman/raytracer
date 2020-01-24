@@ -99,7 +99,7 @@ struct alignas(16) scene_traversal_sphere_uniform_t
   uint32_t count;
 };
 
-#define MAX_NUM_PLANES 4
+#define MAX_NUM_PLANES 0x10
 
 struct alignas(16) scene_traversal_plane_uniform_t
 {
@@ -114,7 +114,7 @@ struct alignas(16) scene_traversal_plane_uniform_t
 #define MAX_NUM_VERTICES 0x2000
 #define MAX_NUM_TRIANGLES 0x2000
 #define MAX_NUM_BVH_NODES 0x2000
-#define NODE_TO_VISIT_QUEUE_SIZE 256
+#define NODE_TO_VISIT_STACK_SIZE 16
 
 struct alignas(16) scene_traversal_triangle_vertex_t
 {
@@ -140,15 +140,27 @@ struct alignas(16) scene_traversal_triangle_uniform_t
 #define MATERIAL_TYPE_LAMBERT 1
 #define MATERIAL_TYPE_METAL 2
 #define MATERIAL_TYPE_DIELECTRIC 3
+#define MATERIAL_TYPE_EMISSIVE 4
 
-#define MAX_NUM_MATERIALS 16
+#define LIGHT_TYPE_POINT 0
+#define LIGHT_TYPE_SPHERE 1
+#define LIGHT_TYPE_PLANE 2
+
+struct alignas(16) light_t
+{
+  vec4 p0; // point center, sphere center + radius, plane min
+  vec4 p1; // point (unused), sphere (unused), plane max + axis
+  uint32_t type;
+};
+
 #define MAX_NUM_LIGHTS 16
+#define MAX_NUM_MATERIALS 16
 struct alignas(16) anyhit_uniform_data_t
 {
   /// color (rgb) / refraction index+ni+albedo, type (a)
   vec4 material_data[MAX_NUM_MATERIALS];
-  vec4 light_position_data[MAX_NUM_LIGHTS];
   uint32_t material_count;
+  light_t lights[MAX_NUM_LIGHTS];
   uint32_t light_count;
   uint32_t frame_count;
   uint32_t width;
@@ -211,6 +223,12 @@ rand_wang_hash(inout uint32_t REF seed)
   seed *= 0x27d4eb2d;
   seed = seed ^ (seed >> 15);
   return uint_to_normalized_float(seed);
+}
+
+static vec2
+random_point_in_unit_square_wang_hash(inout uint32_t REF seed)
+{
+  return vec2(rand_wang_hash(seed), rand_wang_hash(seed));
 }
 
 static vec3
@@ -322,6 +340,30 @@ random_point_on_unit_hemisphere_wang_hash(inout uint REF seed, vec3 REF normal)
   }
 
   return normalize(point); // project onto surface
+}
+
+static vec3
+random_point_on_light(light_t REF light, vec3 REF origin, inout uint REF seed)
+{
+  if (light.type == LIGHT_TYPE_POINT) {
+    return vec3(light.p0[0], light.p0[1], light.p0[2]);
+  } else if (light.type == LIGHT_TYPE_SPHERE) {
+    vec3 pos = vec3(light.p0[0], light.p0[1], light.p0[2]);
+    vec3 normal = normalize(origin - pos);
+    return pos + random_point_on_unit_hemisphere_wang_hash(seed, normal) *
+                   light.p0[3];
+  } else if (light.type == LIGHT_TYPE_PLANE) {
+    vec2 rand = random_point_in_unit_square_wang_hash(seed);
+    vec3 extent = light.p1.xyz - light.p0.xyz;
+    if (light.p1[3] == 0) { // yz plane
+      return light.p0.xyz + extent * vec3(0, rand[0], rand[1]);
+    } else if (light.p1[3] == 1) { // xz plane
+      return light.p0.xyz + extent * vec3(rand[0], 0, rand[1]);
+    } else { // xy plane
+      return light.p0.xyz + extent * vec3(rand[0], rand[1], 0);
+    }
+  }
+  return vec3(light.p0[0], light.p0[1], light.p0[2]);
 }
 #endif
 

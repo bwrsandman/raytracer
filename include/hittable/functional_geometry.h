@@ -33,6 +33,8 @@ struct FunctionalGeometry : public Object
            float t_min,
            float t_max,
            hit_record& rec) const override;
+  uint16_t get_mat_id() const override;
+  std::unique_ptr<Object> copy() const override;
   bool bounding_box(Aabb& box);
 
   const signed_distance_function_t sdf;

@@ -52,17 +52,16 @@ void main() {
                          root_node);
 
     if (root_node.offset != 0 || bvh_node_is_leaf(root_node)) {
-        bvh_node_t nodes_to_visit[NODE_TO_VISIT_QUEUE_SIZE];
-        uint start = 0;
+        bvh_node_t nodes_to_visit[NODE_TO_VISIT_STACK_SIZE];
         uint end = 0;
         nodes_to_visit[end] = root_node;
         end += 1;
 
         bool break_out = false;
 
-        while (start < end) {
-            bvh_node_t node = nodes_to_visit[start];
-            start += 1;
+        while (end > 0 && end + 2 < NODE_TO_VISIT_STACK_SIZE) {
+            end -= 1;
+            bvh_node_t node = nodes_to_visit[end];
             if (aabb_hit(node.bounds, ray, T_MIN, rec.t - FLT_EPSILON)) {
                 rec.bvh_hits += 1;
                 if (bvh_node_is_leaf(node)) {

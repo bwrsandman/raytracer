@@ -154,7 +154,7 @@ RendererGpu::encode_raygen()
 }
 
 void
-RendererGpu::encode_scene_traversal(Texture& ray_direction)
+RendererGpu::encode_scene_traversal(Texture& ray_direction, bool shadow_ray)
 {
   constexpr vec4 clear_color = { 0.0f, 0.0f, 0.0f, 1.0f };
   auto debug_group = ScopedDebugGroup("scene traversal");
@@ -258,8 +258,14 @@ RendererGpu::encode_scene_traversal(Texture& ray_direction)
     raygen_textures[raygen_framebuffer_active][RG_OUT_RAY_ORIGIN_LOCATION]
       ->bind(ST_IN_RAY_ORIGIN_LOCATION);
     ray_direction.bind(ST_IN_RAY_DIRECTION_LOCATION);
-    scene_traversal_textures[scene_traversal_framebuffer_active][0]->bind(
-      ST_IN_PREVIOUS_HIT_RECORD_0_LOCATION);
+    if (shadow_ray && i == 0) {
+      raygen_textures[raygen_framebuffer_active]
+                     [RG_OUT_SHADOW_RAY_DATA_LOCATION]
+                       ->bind(ST_IN_PREVIOUS_HIT_RECORD_0_LOCATION);
+    } else {
+      scene_traversal_textures[scene_traversal_framebuffer_active][0]->bind(
+        ST_IN_PREVIOUS_HIT_RECORD_0_LOCATION);
+    }
     scene_traversal_textures[scene_traversal_framebuffer_active][1]->bind(
       ST_IN_PREVIOUS_HIT_RECORD_1_LOCATION);
     scene_traversal_textures[scene_traversal_framebuffer_active][2]->bind(
@@ -626,7 +632,7 @@ void
 RendererGpu::upload_anyhit_uniforms(const Scene& world)
 {
   anyhit_uniform_data_t anyhit_uniform_data{
-    {}, {}, 0, 0, frame_count, width,
+    {}, 0, {}, 0, frame_count, width,
   };
   shadow_ray_light_hit_uniform_data_t shadow_ray_light_hit_uniform_data{
     {},
@@ -635,6 +641,7 @@ RendererGpu::upload_anyhit_uniforms(const Scene& world)
     auto lambert = dynamic_cast<const Lambert*>(mat.get());
     auto metal = dynamic_cast<const Metal*>(mat.get());
     auto dielectric = dynamic_cast<const Dielectric*>(mat.get());
+    auto emissive = dynamic_cast<const EmissiveQuadraticDropOff*>(mat.get());
     assert(anyhit_uniform_data.material_count < MAX_NUM_MATERIALS);
     if (lambert) {
       anyhit_uniform_data.material_data[anyhit_uniform_data.material_count]
@@ -668,6 +675,15 @@ RendererGpu::upload_anyhit_uniforms(const Scene& world)
         .e[2] = floatshift;
       anyhit_uniform_data.material_data[anyhit_uniform_data.material_count]
         .e[3] = MATERIAL_TYPE_DIELECTRIC;
+    } else if (emissive) {
+      anyhit_uniform_data.material_data[anyhit_uniform_data.material_count]
+        .e[0] = emissive->albedo.e[0];
+      anyhit_uniform_data.material_data[anyhit_uniform_data.material_count]
+        .e[1] = emissive->albedo.e[1];
+      anyhit_uniform_data.material_data[anyhit_uniform_data.material_count]
+        .e[2] = emissive->albedo.e[2];
+      anyhit_uniform_data.material_data[anyhit_uniform_data.material_count]
+        .e[3] = MATERIAL_TYPE_EMISSIVE;
     } else {
       anyhit_uniform_data.material_data[anyhit_uniform_data.material_count]
         .e[3] = MATERIAL_TYPE_UNKNOWN;
@@ -675,30 +691,74 @@ RendererGpu::upload_anyhit_uniforms(const Scene& world)
     anyhit_uniform_data.material_count++;
   }
   for (const auto& obj : world.get_lights()) {
-    auto light = dynamic_cast<const Point*>(obj.get());
-    if (light != nullptr) {
-      assert(anyhit_uniform_data.light_count < MAX_NUM_LIGHTS);
-      const auto& mat = world.get_material(light->mat_id);
-      auto emissive = dynamic_cast<const EmissiveQuadraticDropOff*>(&mat);
-      if (emissive != nullptr) {
-        anyhit_uniform_data.light_position_data[anyhit_uniform_data.light_count]
-          .e[0] = light->position.e[0];
-        anyhit_uniform_data.light_position_data[anyhit_uniform_data.light_count]
-          .e[1] = light->position.e[1];
-        anyhit_uniform_data.light_position_data[anyhit_uniform_data.light_count]
-          .e[2] = light->position.e[2];
-        shadow_ray_light_hit_uniform_data
-          .light_color_data[anyhit_uniform_data.light_count]
-          .e[0] = emissive->albedo.e[0];
-        shadow_ray_light_hit_uniform_data
-          .light_color_data[anyhit_uniform_data.light_count]
-          .e[1] = emissive->albedo.e[1];
-        shadow_ray_light_hit_uniform_data
-          .light_color_data[anyhit_uniform_data.light_count]
-          .e[2] = emissive->albedo.e[2];
-        anyhit_uniform_data.light_count++;
-      }
+    auto point = dynamic_cast<const Point*>(obj.get());
+    auto sphere = dynamic_cast<const Sphere*>(obj.get());
+    auto plane = dynamic_cast<const Plane*>(obj.get());
+    auto mat_id = obj->get_mat_id();
+    if (mat_id == std::numeric_limits<uint16_t>::max()) {
+      continue;
     }
+    const auto& mat = world.get_material(mat_id);
+    auto emissive = dynamic_cast<const EmissiveQuadraticDropOff*>(&mat);
+    if (emissive == nullptr) {
+      continue;
+    }
+    if (point != nullptr || sphere != nullptr || plane != nullptr) {
+      assert(anyhit_uniform_data.light_count < MAX_NUM_LIGHTS);
+    }
+
+    if (point != nullptr) {
+      anyhit_uniform_data.lights[anyhit_uniform_data.light_count].type =
+        LIGHT_TYPE_POINT;
+      anyhit_uniform_data.lights[anyhit_uniform_data.light_count].p0.e[0] =
+        point->position.e[0];
+      anyhit_uniform_data.lights[anyhit_uniform_data.light_count].p0.e[1] =
+        point->position.e[1];
+      anyhit_uniform_data.lights[anyhit_uniform_data.light_count].p0.e[2] =
+        point->position.e[2];
+    } else if (sphere != nullptr) {
+      anyhit_uniform_data.lights[anyhit_uniform_data.light_count].type =
+        LIGHT_TYPE_SPHERE;
+      anyhit_uniform_data.lights[anyhit_uniform_data.light_count].p0.e[0] =
+        sphere->center.e[0];
+      anyhit_uniform_data.lights[anyhit_uniform_data.light_count].p0.e[1] =
+        sphere->center.e[1];
+      anyhit_uniform_data.lights[anyhit_uniform_data.light_count].p0.e[2] =
+        sphere->center.e[2];
+      anyhit_uniform_data.lights[anyhit_uniform_data.light_count].p0.e[3] =
+        sphere->radius;
+    } else if (plane != nullptr) {
+      anyhit_uniform_data.lights[anyhit_uniform_data.light_count].type =
+        LIGHT_TYPE_PLANE;
+      anyhit_uniform_data.lights[anyhit_uniform_data.light_count].p0.e[0] =
+        plane->min.e[0];
+      anyhit_uniform_data.lights[anyhit_uniform_data.light_count].p0.e[1] =
+        plane->min.e[1];
+      anyhit_uniform_data.lights[anyhit_uniform_data.light_count].p0.e[2] =
+        plane->min.e[2];
+      anyhit_uniform_data.lights[anyhit_uniform_data.light_count].p1.e[0] =
+        plane->max.e[0];
+      anyhit_uniform_data.lights[anyhit_uniform_data.light_count].p1.e[1] =
+        plane->max.e[1];
+      anyhit_uniform_data.lights[anyhit_uniform_data.light_count].p1.e[2] =
+        plane->max.e[2];
+      anyhit_uniform_data.lights[anyhit_uniform_data.light_count].p1.e[3] =
+        plane->n.x() != 0.f ? 0 : (plane->n.y() != 0.f ? 1 : 2);
+    } else {
+      continue;
+    }
+
+    shadow_ray_light_hit_uniform_data
+      .light_color_data[anyhit_uniform_data.light_count]
+      .e[0] = emissive->albedo.e[0];
+    shadow_ray_light_hit_uniform_data
+      .light_color_data[anyhit_uniform_data.light_count]
+      .e[1] = emissive->albedo.e[1];
+    shadow_ray_light_hit_uniform_data
+      .light_color_data[anyhit_uniform_data.light_count]
+      .e[2] = emissive->albedo.e[2];
+
+    anyhit_uniform_data.light_count++;
   }
   anyhit_uniform->upload(&anyhit_uniform_data, sizeof(anyhit_uniform_data));
   shadow_ray_light_hit_uniform->upload(
@@ -775,7 +835,8 @@ RendererGpu::run(const Scene& world)
         };
         scene_traversal_common->upload(&st_primary, sizeof(st_primary));
         encode_scene_traversal(*raygen_textures[raygen_framebuffer_active]
-                                               [RG_OUT_RAY_DIRECTION_LOCATION]);
+                                               [RG_OUT_RAY_DIRECTION_LOCATION],
+                               false);
 #if !__EMSCRIPTEN__
         glQueryCounter(each_intersection_queries[j].main_traversal,
                        GL_TIMESTAMP);
@@ -792,7 +853,8 @@ RendererGpu::run(const Scene& world)
         scene_traversal_common->upload(&st_shadow, sizeof(st_shadow));
         encode_scene_traversal(
           *raygen_textures[raygen_framebuffer_active]
-                          [RG_OUT_SHADOW_RAY_DIRECTION_LOCATION]);
+                          [RG_OUT_SHADOW_RAY_DIRECTION_LOCATION],
+          true);
 #if !__EMSCRIPTEN__
         glQueryCounter(each_intersection_queries[j].shadow_ray_traversal,
                        GL_TIMESTAMP);
@@ -856,7 +918,8 @@ RendererGpu::rebuild_raygen_buffers()
     raygen_textures[i][RG_OUT_SHADOW_RAY_DATA_LOCATION] = Texture::create(
       width, height, Texture::MipMapFilter::nearest, Texture::Format::rgba16f);
     raygen_textures[i][RG_OUT_SHADOW_RAY_DATA_LOCATION]->set_debug_name(
-      "shadow ray (x: t, y: mat_id, zw: unused) " + std::to_string(i));
+      "shadow ray (x: t, y: mat_id, z: dot(-l, n) w: distance squared) " +
+      std::to_string(i));
     raygen_framebuffer[i] = Framebuffer::create(
       raygen_textures[i].data(), (uint8_t)raygen_textures[i].size());
   }
