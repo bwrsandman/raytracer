@@ -550,7 +550,7 @@ Scene::load_whitted_scene()
 std::unique_ptr<Scene>
 Scene::load_cornell_box()
 {
-  //auto duck_scene = load_from_gltf("Duck.gltf");
+  auto duck_scene = load_from_gltf("Duck.gltf");
 
   std::vector<std::unique_ptr<Texture>> textures;
   std::vector<std::unique_ptr<Material>> materials;
@@ -584,7 +584,7 @@ Scene::load_cornell_box()
 
   std::vector<std::unique_ptr<Object>> list;
 
-  /*auto duck_mesh = duck_scene->get_world()[0]->copy();
+  auto duck_mesh = duck_scene->get_world()[0]->copy();
   auto duck_mesh_typed = dynamic_cast<TriangleMesh*>(duck_mesh.get());
   duck_mesh_typed->mat_id = 0;
   for (auto& p : duck_mesh_typed->positions) {
@@ -594,7 +594,7 @@ Scene::load_cornell_box()
     p /= 128.0f;
   }
   duck_mesh_typed->build_bvh();
-  list.emplace_back(std::move(duck_mesh));*/
+  list.emplace_back(std::move(duck_mesh));
 
   list.emplace_back(std::make_unique<Sphere>(
     vec3(1.5f, -0.5f, -2), 0.5f, static_cast<uint16_t>(3)));

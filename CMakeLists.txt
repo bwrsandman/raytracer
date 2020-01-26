@@ -16,7 +16,7 @@ set(assets
   # ${CMAKE_CURRENT_SOURCE_DIR}/assets/whitted/whitted_floor.png
   # ${CMAKE_CURRENT_SOURCE_DIR}/assets/models/BoxTextured.gltf
   # ${CMAKE_CURRENT_SOURCE_DIR}/assets/models/DamagedHelmet.gltf
-  # ${CMAKE_CURRENT_SOURCE_DIR}/assets/models/Duck.gltf
+  ${CMAKE_CURRENT_SOURCE_DIR}/assets/models/Duck.gltf
   # ${CMAKE_CURRENT_SOURCE_DIR}/assets/models/Sponza.gltf
 )
 
