@@ -59,9 +59,11 @@ main()
 
     vec4 color = uniform_block.uniform_data.light_color_data[light_index];
 
+    float recip_pdf = energy_attenuation.w; // uniform_block.uniform_data.light_count; //
+
     rg_out_energy_accumulation.rgb =
-      uniform_block.uniform_data.light_count * energy_accumulation.rgb +
-      (data.z * energy_attenuation.rgb * color.rgb) / data.w;
+      energy_accumulation.rgb +
+      (data.z * recip_pdf * energy_attenuation.rgb * color.rgb) / data.w;
   } else {
     rg_out_energy_accumulation = energy_accumulation;
   }

@@ -96,11 +96,24 @@ main()
       random_point_on_unit_hemisphere_wang_hash(seed, rec.normal);
     rg_out_ray_direction.w = RAY_STATUS_ACTIVE;
     if (uniform_block.data.light_count > 0) {
-      uint light_index =
-        uint(uniform_block.data.light_count * rand_wang_hash(seed));
-      vec3 point = random_point_on_light(
-        uniform_block.data.lights[light_index], rec.position, seed);
-      vec3 l = point - rec.position;
+    
+//      uint light_index =
+//        uint(uniform_block.data.light_count * rand_wang_hash(seed));
+//
+//      vec3 point = random_point_on_light(
+//        uniform_block.data.lights[light_index], rec.position, seed);
+//      vec3 l = point - rec.position;
+
+      uint light_index = 0;
+      vec4 random_light =
+        random_light_destination(uniform_block.data.lights,
+                                 uniform_block.data.light_count,
+                                 rec.position,
+                                 seed,
+                                 light_index);
+      rg_out_energy_attenuation.w = (1/random_light.w);
+      vec3 l = random_light.xyz - rec.position;
+
       rg_out_shadow_ray_direction.xyz = normalize(l);
       rg_out_shadow_ray_direction.w = RAY_STATUS_ACTIVE;
       rg_out_shadow_ray_data.x = length(l) - 20 * FLT_EPSILON;
@@ -146,11 +159,11 @@ main()
       rg_out_energy_accumulation.xyz =
         energy_accumulation.xyz + energy_attenuation.xyz * material_data.xyz;
 
-	 /* vec3 l = normalize(rec.position - ray_origin.xyz);
-      rg_out_energy_accumulation.rgb =
-        uniform_block.data.light_count * energy_accumulation.rgb +
-        (dot(rec.normal, l) * energy_attenuation.rgb * material_data.xyz) /
-          dot(l, l);*/
+	 // vec3 l = normalize(rec.position - ray_origin.xyz);
+     // rg_out_energy_accumulation.rgb =
+     //   uniform_block.data.light_count * energy_accumulation.rgb +
+     //   (dot(rec.normal, l) * energy_attenuation.rgb * material_data.xyz) /
+     //     dot(l, l);
       rg_out_ray_direction.w = RAY_STATUS_DEAD;
     }
   } 

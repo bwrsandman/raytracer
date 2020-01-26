@@ -369,6 +369,83 @@ random_point_on_light(light_t REF light, vec3 REF origin, inout uint REF seed)
   }
   return vec3(light.p0[0], light.p0[1], light.p0[2]);
 }
+
+static vec4
+random_light_destination(light_t REF lights[MAX_NUM_LIGHTS],
+                         uint light_count,
+                         vec3 REF origin,
+                         inout uint REF seed,
+                         out uint REF light_index)
+{
+  vec4 pdfs[MAX_NUM_LIGHTS];
+  float pdf_total = 0;
+  vec3 direction, normal_light;
+  float area;
+
+  for (int i = 0; i < light_count; i++) {
+    light_t light = lights[i];
+    vec3 dest_point;
+
+    if (light.type == LIGHT_TYPE_POINT) {
+      dest_point = vec3(light.p0[0], light.p0[1], light.p0[2]);
+      direction = normalize(dest_point - origin);
+      normal_light = -direction;
+      area = 0.001f;
+
+    } else if (light.type == LIGHT_TYPE_SPHERE) {
+      vec3 pos = vec3(light.p0[0], light.p0[1], light.p0[2]);
+      vec3 normal = normalize(origin - pos);
+      dest_point =
+        pos +
+        random_point_on_unit_hemisphere_wang_hash(seed, normal) * light.p0[3];
+
+      direction = normalize(dest_point - origin);
+      normal_light = -direction;
+      area = 2 * M_PI * light.p0[3] * light.p0[3];
+
+    } else if (light.type == LIGHT_TYPE_PLANE) {
+      vec2 rand = random_point_in_unit_square_wang_hash(seed);
+      vec3 extent = light.p1.xyz - light.p0.xyz;
+
+      if (light.p1[3] == 0) { // yz plane
+        dest_point = light.p0.xyz + extent * vec3(0, rand[0], rand[1]);
+        area = extent.y * extent.z;
+        normal_light = vec3(1.f, 0.f, 0.f);
+      } else if (light.p1[3] == 1) { // xz plane
+        dest_point = light.p0.xyz + extent * vec3(rand[0], 0, rand[1]);
+        area = extent.x * extent.z;
+        normal_light = vec3(0.f, 1.f, 0.f);
+      } else { // xy plane
+        dest_point = light.p0.xyz + extent * vec3(rand[0], rand[1], 0);
+        area = extent.x * extent.y;
+        normal_light = vec3(0.f, 0.f, 1.f);
+      }
+      direction = normalize(dest_point - origin);
+    }
+    float solid_angle =
+      (area * dot(normal_light, direction)) / dot(direction, direction);
+    pdfs[i] = vec4(dest_point.xyz, 1 / solid_angle);
+
+    pdf_total += pdfs[i].w;
+  }
+
+  for (int i = 0; i < light_count; i++) {
+    pdfs[i].w = pdfs[i].w / pdf_total;
+  }
+
+  float rand = rand_wang_hash(seed);// * pdf_total;
+  float min_rand = pdfs[0].w;
+  int index = 0;
+
+  while (index < light_count - 1) {
+    if (rand <= min_rand) {
+      break;
+    }
+    min_rand += pdfs[++index].w;
+  }
+  light_index = index;
+  return pdfs[index];
+}
 #endif
 
 // Vertex shader inputs
