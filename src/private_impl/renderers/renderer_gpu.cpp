@@ -239,20 +239,30 @@ RendererGpu::encode_scene_traversal(Texture& ray_direction, bool shadow_ray)
                     ST_TRIANGLES_IN_VERTEX_POSITIONS_LOCATION);
         GLint st_vertex_normals = glGetUniformLocation(
           pipelines[i]->get_native_handle(), "st_triangles_in_vertex_normals");
-        glUniform1i(st_vertex_normals, ST_TRIANGLES_IN_VERTEX_NORMALS_LOCATION);
+        if (st_vertex_normals > 0) {
+          glUniform1i(st_vertex_normals, ST_TRIANGLES_IN_VERTEX_NORMALS_LOCATION);
+        }
         GLint st_vertex_tangents = glGetUniformLocation(
           pipelines[i]->get_native_handle(), "st_triangles_in_vertex_tangents");
-        glUniform1i(st_vertex_tangents,
-                    ST_TRIANGLES_IN_VERTEX_TANGENTS_LOCATION);
+        if (st_vertex_tangents > 0) {
+          glUniform1i(st_vertex_tangents,
+                      ST_TRIANGLES_IN_VERTEX_TANGENTS_LOCATION);
+        }
         GLint st_vertex_uvs = glGetUniformLocation(
           pipelines[i]->get_native_handle(), "st_triangles_in_vertex_uvs");
-        glUniform1i(st_vertex_uvs, ST_TRIANGLES_IN_VERTEX_UVS_LOCATION);
+        if (st_vertex_uvs > 0) {
+          glUniform1i(st_vertex_uvs, ST_TRIANGLES_IN_VERTEX_UVS_LOCATION);
+        }
         GLint st_bvh = glGetUniformLocation(pipelines[i]->get_native_handle(),
                                             "st_triangles_in_bvh");
-        glUniform1i(st_bvh, ST_TRIANGLES_IN_BVH_LOCATION);
+        if (st_bvh > 0) {
+          glUniform1i(st_bvh, ST_TRIANGLES_IN_BVH_LOCATION);
+        }
         GLint st_indices = glGetUniformLocation(
           pipelines[i]->get_native_handle(), "st_triangles_in_indices");
-        glUniform1i(st_indices, ST_TRIANGLES_IN_INDICES_LOCATION);
+        if (st_indices > 0) {
+          glUniform1i(st_indices, ST_TRIANGLES_IN_INDICES_LOCATION);
+        }
       }
     }
     raygen_textures[raygen_framebuffer_active][RG_OUT_RAY_ORIGIN_LOCATION]
@@ -313,22 +323,34 @@ RendererGpu::encode_any_hit([[maybe_unused]] uint8_t recursion_count)
     {
       GLint ah_hit_record_0 = glGetUniformLocation(
         pipelines[i]->get_native_handle(), "ah_hit_record_0");
-      glUniform1i(ah_hit_record_0, AH_HIT_RECORD_0_LOCATION);
+      if (ah_hit_record_0 > 0) {
+        glUniform1i(ah_hit_record_0, AH_HIT_RECORD_0_LOCATION);
+      }
       GLint ah_hit_record_1 = glGetUniformLocation(
         pipelines[i]->get_native_handle(), "ah_hit_record_1");
-      glUniform1i(ah_hit_record_1, AH_HIT_RECORD_1_LOCATION);
+      if (ah_hit_record_1 > 0) {
+        glUniform1i(ah_hit_record_1, AH_HIT_RECORD_1_LOCATION);
+      }
       GLint ah_hit_record_2 = glGetUniformLocation(
         pipelines[i]->get_native_handle(), "ah_hit_record_2");
-      glUniform1i(ah_hit_record_2, AH_HIT_RECORD_2_LOCATION);
+      if (ah_hit_record_2 > 0) {
+        glUniform1i(ah_hit_record_2, AH_HIT_RECORD_2_LOCATION);
+      }
       GLint ah_hit_record_3 = glGetUniformLocation(
         pipelines[i]->get_native_handle(), "ah_hit_record_3");
-      glUniform1i(ah_hit_record_3, AH_HIT_RECORD_3_LOCATION);
+      if (ah_hit_record_3 > 0) {
+        glUniform1i(ah_hit_record_3, AH_HIT_RECORD_3_LOCATION);
+      }
       GLint ah_hit_record_4 = glGetUniformLocation(
         pipelines[i]->get_native_handle(), "ah_hit_record_4");
-      glUniform1i(ah_hit_record_4, AH_HIT_RECORD_4_LOCATION);
+      if (ah_hit_record_4 > 0) {
+        glUniform1i(ah_hit_record_4, AH_HIT_RECORD_4_LOCATION);
+      }
       GLint ah_hit_record_5 = glGetUniformLocation(
         pipelines[i]->get_native_handle(), "ah_hit_record_5");
-      glUniform1i(ah_hit_record_5, AH_HIT_RECORD_5_LOCATION);
+      if (ah_hit_record_5 > 0) {
+        glUniform1i(ah_hit_record_5, AH_HIT_RECORD_5_LOCATION);
+      }
       GLint ah_incident_ray_origin = glGetUniformLocation(
         pipelines[i]->get_native_handle(), "ah_incident_ray_origin");
       if (ah_incident_ray_origin > 0) {

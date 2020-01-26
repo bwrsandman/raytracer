@@ -13,6 +13,10 @@ layout(location = RG_OUT_ENERGY_ACCUMULATION_LOCATION) out vec4
   rg_out_energy_accumulation;
 layout(location = RG_OUT_ENERGY_ATTENUATION_LOCATION) out vec4
   rg_out_energy_attenuation;
+layout(location = RG_OUT_SHADOW_RAY_DIRECTION_LOCATION) out vec4
+  rg_out_shadow_ray_direction;
+layout(location = RG_OUT_SHADOW_RAY_DATA_LOCATION) out vec4
+  rg_out_shadow_ray_data;
 
 layout(binding = RG_RAY_CAMERA_BINDING, std140) uniform uniform_block_t
 {
