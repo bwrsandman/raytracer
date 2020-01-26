@@ -82,7 +82,7 @@ Ui::run(std::unique_ptr<Scene>& scene,
 
   auto debug_textures = renderer.debug_textures();
   if (show_textures && !debug_textures.empty()) {
-    if (ImGui::Begin("Intermediate Textures", &show_textures)) {
+    if (ImGui::Begin("Intermediate Textures", &show_textures, ImVec2(400, 400))) {
       ImGui::Columns(2);
       ImGuiIO& io = ImGui::GetIO();
       ImVec2 size = io.DisplaySize;
