@@ -122,47 +122,47 @@ Ui::run(std::unique_ptr<Scene>& scene,
       renderer.set_recursion_depth((uint8_t)recursion_depth);
     }
 
-    ImGui::Text("Load Scene");
-    if (ImGui::Button("Whitted")) {
-      SDL_SetWindowSize(window, 512, 512);
-      scene = Scene::load_whitted_scene();
-    }
-    ImGui::SameLine();
-    if (ImGui::Button("Cornel Box")) {
-      scene = Scene::load_cornell_box();
-    }
-    if (ImGui::Button("Mandrelbulb")) {
-      scene = Scene::load_mandrelbulb();
-    }
-    ImGui::Text("Load glTF Scene");
-    if (ImGui::Button("BoxTextured.gltf")) {
-      scene = Scene::load_from_gltf("BoxTextured.gltf");
-      renderer.set_debug_data(10);
-    }
-    if (ImGui::IsItemHovered()) {
-      ImGui::SetTooltip("12 triangles");
-    }
-    if (ImGui::Button("Duck.gltf")) {
-      scene = Scene::load_from_gltf("Duck.gltf");
-      renderer.set_debug_data(100);
-    }
-    if (ImGui::IsItemHovered()) {
-      ImGui::SetTooltip("4,212 triangles");
-    }
-    if (ImGui::Button("DamagedHelmet.gltf")) {
-      scene = Scene::load_from_gltf("DamagedHelmet.gltf");
-      renderer.set_debug_data(100);
-    }
-    if (ImGui::IsItemHovered()) {
-      ImGui::SetTooltip("15,452 triangles");
-    }
-    if (ImGui::Button("Sponza.gltf")) {
-      scene = Scene::load_from_gltf("Sponza.gltf");
-      renderer.set_debug_data(50000);
-    }
-    if (ImGui::IsItemHovered()) {
-      ImGui::SetTooltip("785,900 triangles");
-    }
+    // ImGui::Text("Load Scene");
+    // if (ImGui::Button("Whitted")) {
+    //   SDL_SetWindowSize(window, 512, 512);
+    //   scene = Scene::load_whitted_scene();
+    // }
+    // ImGui::SameLine();
+    // if (ImGui::Button("Cornel Box")) {
+    //   scene = Scene::load_cornell_box();
+    // }
+    // if (ImGui::Button("Mandrelbulb")) {
+    //   scene = Scene::load_mandrelbulb();
+    // }
+    // ImGui::Text("Load glTF Scene");
+    // if (ImGui::Button("BoxTextured.gltf")) {
+    //   scene = Scene::load_from_gltf("BoxTextured.gltf");
+    //   renderer.set_debug_data(10);
+    // }
+    // if (ImGui::IsItemHovered()) {
+    //   ImGui::SetTooltip("12 triangles");
+    // }
+    // if (ImGui::Button("Duck.gltf")) {
+    //   scene = Scene::load_from_gltf("Duck.gltf");
+    //   renderer.set_debug_data(100);
+    // }
+    // if (ImGui::IsItemHovered()) {
+    //   ImGui::SetTooltip("4,212 triangles");
+    // }
+    // if (ImGui::Button("DamagedHelmet.gltf")) {
+    //   scene = Scene::load_from_gltf("DamagedHelmet.gltf");
+    //   renderer.set_debug_data(100);
+    // }
+    // if (ImGui::IsItemHovered()) {
+    //   ImGui::SetTooltip("15,452 triangles");
+    // }
+    // if (ImGui::Button("Sponza.gltf")) {
+    //   scene = Scene::load_from_gltf("Sponza.gltf");
+    //   renderer.set_debug_data(50000);
+    // }
+    // if (ImGui::IsItemHovered()) {
+    //   ImGui::SetTooltip("785,900 triangles");
+    // }
     if (ImGui::CollapsingHeader("Camera", ImGuiTreeNodeFlags_DefaultOpen)) {
       ImGui::Text("Use WASD to move the camera and\n"
                   "Arrow keys for Panning and Tilting.\n"
