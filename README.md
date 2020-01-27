@@ -5,6 +5,11 @@
 
 ![image](https://user-images.githubusercontent.com/1013356/73201242-e1c54f80-4138-11ea-8e63-15cc56f2785b.png)
 
+## Pipeline
+
+![Screenshot from 2020-01-27 16-28-55](https://user-images.githubusercontent.com/1013356/73202738-f9520780-413b-11ea-8873-fb202db178ac.png)
+
+
 ## Building
 Building the project requires CMake and a package manager.
 There are many options for package managers.
