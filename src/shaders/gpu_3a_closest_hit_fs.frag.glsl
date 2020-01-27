@@ -111,7 +111,7 @@ main()
                                  rec.position,
                                  seed,
                                  light_index);
-      rg_out_energy_attenuation.w = (1/random_light.w);
+      rg_out_energy_attenuation.w = random_light.w;
       vec3 l = random_light.xyz - rec.position;
 
       rg_out_shadow_ray_direction.xyz = normalize(l);

@@ -305,7 +305,7 @@ material_dielectric_scatter(inout uint32_t seed,
     cosine =
       sqrt(1 - refraction_index * refraction_index * (1.0f - cosine * cosine));
   } else {
-	// outside in
+    // outside in
     outward_normal = normal;
     ni_over_nt = 1.0f / refraction_index;
     cosine = -cosine;
@@ -377,8 +377,10 @@ random_light_destination(light_t REF lights[MAX_NUM_LIGHTS],
                          inout uint REF seed,
                          out uint REF light_index)
 {
-  vec4 pdfs[MAX_NUM_LIGHTS];
+  vec4 returns[MAX_NUM_LIGHTS];
+  float pdfs[MAX_NUM_LIGHTS];
   float pdf_total = 0;
+
   vec3 direction, normal_light;
   float area;
 
@@ -422,29 +424,37 @@ random_light_destination(light_t REF lights[MAX_NUM_LIGHTS],
       }
       direction = normalize(dest_point - origin);
     }
-    float solid_angle =
-      (area * dot(normal_light, direction)) / dot(direction, direction);
-    pdfs[i] = vec4(dest_point.xyz, 1 / solid_angle);
+    pdfs[i] = dot(direction, direction) / (area * dot(normal_light, direction));
 
-    pdf_total += pdfs[i].w;
+    returns[i] =
+      vec4(dest_point.xyz,
+           (area * dot(normal_light, direction)) / dot(direction, direction));
+
+    if (abs(returns[i].w) < 0.1) {
+      returns[i].w = 0.1;
+      pdfs[i] = 10;
+    }
+
+    pdf_total += pdfs[i];
   }
 
   for (int i = 0; i < light_count; i++) {
-    pdfs[i].w = pdfs[i].w / pdf_total;
+    pdfs[i] /= pdf_total;
+    returns[i].w *= pdf_total;
   }
 
-  float rand = rand_wang_hash(seed);// * pdf_total;
-  float min_rand = pdfs[0].w;
+  float rand = rand_wang_hash(seed); // * pdf_total;
+  float min_rand = pdfs[0];
   int index = 0;
 
   while (index < light_count - 1) {
     if (rand <= min_rand) {
       break;
     }
-    min_rand += pdfs[++index].w;
+    min_rand += pdfs[++index];
   }
   light_index = index;
-  return pdfs[index];
+  return returns[index];
 }
 #endif
 
@@ -505,7 +515,7 @@ random_light_destination(light_t REF lights[MAX_NUM_LIGHTS],
 #define SR_NEXT_RAY_DIRECTION_LOCATION 3
 #define SR_IN_ENERGY_ACCUMULATION_LOCATION 4
 #define SR_IN_ENERGY_ATTENUATION_LOCATION 5
-#define SR_IN_DATA_LOCATION 6 
+#define SR_IN_DATA_LOCATION 6
 #define SR_UNIFORM_BINDING 0
 
 // Energy Accumulation input
