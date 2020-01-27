@@ -1,4 +1,5 @@
 # Raytracer
+[![Try it now](https://img.shields.io/badge/Try%20It-Online-blue.svg)](https://bwrsandman.github.io/raytracer)
 
 *by Sandy Carter and Anne van Ede*
 
