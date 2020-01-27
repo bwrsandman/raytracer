@@ -2,6 +2,8 @@
 
 *by Sandy Carter and Anne van Ede*
 
+![image](https://user-images.githubusercontent.com/1013356/73201242-e1c54f80-4138-11ea-8e63-15cc56f2785b.png)
+
 ## Building
 Building the project requires CMake and a package manager.
 There are many options for package managers.
